@@ -1,6 +1,121 @@
-'use client';
+"use client";
 
-import { useStudentOverview } from '@/hooks/useStudents';
+import { Crosshair, ClipboardText, CalendarCheck, BookOpen, Robot, Briefcase, Heart } from "@phosphor-icons/react";
+import WelcomeCard from "@/src/components/cards/WelcomeCard";
+import StatCard from "@/src/components/cards/StatCard";
+import QuickAccessCard from "@/src/components/cards/QuickAccessCard";
+import ScheduleCard from "@/src/components/cards/ScheduleCard";
+import DeadlinesCard from "@/src/components/cards/DeadlinesCard";
+
+// Mock data - replace with real data from API
+const userData = {
+  name: "Aravind Kumar",
+  course: "B.Tech Computer Science - Year 3",
+  college: "MIT College of Engineering",
+};
+
+const stats = {
+  dailyGoal: { value: 3, total: 4, unit: "hours" },
+  testsToday: { value: 2, total: 3, unit: "tests" },
+  attendance: { value: 92, total: 100, unit: "%" },
+};
+
+const scheduleItems = [
+  {
+    time: "9",
+    period: "AM" as const,
+    title: "Data Structures & Algorithms",
+    type: "Lecture" as const,
+    duration: "1 hour",
+    room: "Room 301",
+  },
+  {
+    time: "11",
+    period: "AM" as const,
+    title: "Database Management Systems Lab",
+    type: "Lab" as const,
+    duration: "2 hours",
+    room: "Computer Lab 2",
+  },
+  {
+    time: "3",
+    period: "PM" as const,(base) sameer@sameer-B550M-DS3H:~/Desktop/Edgeupcollegefake$ git push origin sameer
+Username for 'https://github.com': edgeup1034 
+Password for 'https://edgeup1034@github.com': 
+
+    title: "Software Engineering",
+    type: "Lecture" as const,
+    duration: "1 hour",
+    room: "Room 205",
+  },
+];
+
+const deadlineItems = [
+  {
+    title: "DSA Assignment - Graph Algorithms",
+    type: "Assignment" as const,
+    date: "December 18, 2024",
+    description: "Implement BFS and DFS algorithms",
+    daysLeft: 3,
+  },
+  {
+    title: "DBMS Project Submission",
+    type: "Project" as const,
+    date: "December 22, 2024",
+    description: "Library management system with SQL",
+    daysLeft: 7,
+  },
+  {
+    title: "Internal Assessment - Operating Systems",
+    type: "Exam" as const,
+    date: "January 5, 2025",
+    description: "Covers Process Management & Scheduling",
+    daysLeft: 21,
+  },
+  {
+    title: "Internship Application - TechCorp",
+    type: "Career" as const,
+    date: "January 15, 2025",
+    description: "Summer internship opportunity",
+    daysLeft: 31,
+  },
+];
+
+const quickAccessItems = [
+  {
+    icon: BookOpen,
+    title: "Study Center",
+    href: "/student/study-center",
+    description: "Access courses",
+  },
+  {
+    icon: Robot,
+    title: "Smart Assistant",
+    href: "/student/smart-assistant",
+    description: "AI-powered help",
+  },
+  {
+    icon: Briefcase,
+    title: "Career Guide",
+    href: "/student/career-placement-guide",
+    description: "Plan your career",
+  },
+  {
+    icon: Heart,
+    title: "Wellness",
+    href: "/student/mental-health-wellness",
+    description: "Mental health",
+  },
+];
+
+// Get formatted date
+const today = new Date();
+const formattedDate = today.toLocaleDateString("en-US", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 
 export default function StudentOverviewPage() {
   const { overview, loading, error, refresh } = useStudentOverview();
@@ -78,75 +193,67 @@ export default function StudentOverviewPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Student Overview
-        </h1>
-        <button
-          onClick={refresh}
-          className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-        >
-          Refresh
-        </button>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Row 1: Welcome Card (span 3) + Attendance Stat (span 1) */}
+      <WelcomeCard
+        name={userData.name}
+        course={userData.course}
+        college={userData.college}
+      />
+      <StatCard
+        icon={CalendarCheck}
+        label="Attendance"
+        value={stats.attendance.value}
+        total={stats.attendance.total}
+        unit={stats.attendance.unit}
+        variant="success"
+      />
 
-      <p className="text-gray-600 dark:text-gray-400">
-        Welcome to your student dashboard. Here&apos;s an overview of student statistics.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className={`${stat.bgColor} rounded-lg p-6 border border-gray-200 dark:border-gray-700`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {stat.label}
-                </p>
-                <p className={`text-3xl font-bold ${stat.textColor} mt-1`}>
-                  {stat.value}
-                </p>
-              </div>
-              <span className="text-3xl">{stat.icon}</span>
-            </div>
-          </div>
+      {/* Row 2: Daily Goal + Tests Today + Quick Access (span 2) */}
+      <StatCard
+        icon={Crosshair}
+        label="Daily Goal"
+        value={stats.dailyGoal.value}
+        total={stats.dailyGoal.total}
+        unit={stats.dailyGoal.unit}
+      />
+      <StatCard
+        icon={ClipboardText}
+        label="Tests Today"
+        value={stats.testsToday.value}
+        total={stats.testsToday.total}
+        unit={stats.testsToday.unit}
+        variant="warning"
+      />
+      <div className="col-span-full md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {quickAccessItems.slice(0, 2).map((item) => (
+          <QuickAccessCard
+            key={item.href}
+            icon={item.icon}
+            title={item.title}
+            href={item.href}
+            description={item.description}
+          />
         ))}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Quick Statistics
-        </h2>
-        <div className="space-y-3">
-          <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-gray-600 dark:text-gray-400">Active Rate</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {overview && overview.totalStudents > 0
-                ? `${((overview.activeStudents / overview.totalStudents) * 100).toFixed(1)}%`
-                : '0%'}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-gray-600 dark:text-gray-400">Graduation Rate</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {overview && overview.totalStudents > 0
-                ? `${((overview.graduatedStudents / overview.totalStudents) * 100).toFixed(1)}%`
-                : '0%'}
-            </span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-gray-600 dark:text-gray-400">Suspension Rate</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {overview && overview.totalStudents > 0
-                ? `${((overview.suspendedStudents / overview.totalStudents) * 100).toFixed(1)}%`
-                : '0%'}
-            </span>
-          </div>
-        </div>
+      {/* Row 3-4: Schedule (span 2, row span 2) + Quick Access Cards + Deadlines */}
+      <ScheduleCard date={formattedDate} items={scheduleItems} />
+
+      <div className="col-span-full md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {quickAccessItems.slice(2, 4).map((item) => (
+          <QuickAccessCard
+            key={item.href}
+            icon={item.icon}
+            title={item.title}
+            href={item.href}
+            description={item.description}
+          />
+        ))}
       </div>
+
+      {/* Row 5: Deadlines */}
+      <DeadlinesCard items={deadlineItems} />
     </div>
   );
 }
