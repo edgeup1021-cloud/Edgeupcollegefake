@@ -1,0 +1,69 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { getDatabaseConfig } from '../config/database.config';
+
+// Student entities
+import {
+  StudentUser,
+  StudentProfile,
+  StudentEnrollment,
+  StudentGrade,
+  StudentAttendance,
+  StudentSchedule,
+  StudentNotification,
+} from './entities/student';
+
+// Teacher entities
+import {
+  TeacherUser,
+  TeacherCourse,
+  TeacherCourseOffering,
+  TeacherAssignment,
+  TeacherClassSession,
+} from './entities/teacher';
+
+// Management entities
+import {
+  AdminUser,
+  Campus,
+  Department,
+  Program,
+  Financial,
+} from './entities/management';
+
+const entities = [
+  // Student
+  StudentUser,
+  StudentProfile,
+  StudentEnrollment,
+  StudentGrade,
+  StudentAttendance,
+  StudentSchedule,
+  StudentNotification,
+  // Teacher
+  TeacherUser,
+  TeacherCourse,
+  TeacherCourseOffering,
+  TeacherAssignment,
+  TeacherClassSession,
+  // Management
+  AdminUser,
+  Campus,
+  Department,
+  Program,
+  Financial,
+];
+
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: getDatabaseConfig,
+    }),
+    TypeOrmModule.forFeature(entities),
+  ],
+  exports: [TypeOrmModule],
+})
+export class DatabaseModule {}

@@ -1,4 +1,4 @@
-import TopNavbar from "@/src/components/ui/student/TopNavbar";
+import TopNavbar from "@/src/components/student/TopNavbar";
 
 export default function StudentLayout({
   children,

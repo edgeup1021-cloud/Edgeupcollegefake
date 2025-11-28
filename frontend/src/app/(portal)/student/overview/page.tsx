@@ -1,11 +1,12 @@
 "use client";
 
 import { Crosshair, ClipboardText, CalendarCheck, BookOpen, Robot, Briefcase, Heart } from "@phosphor-icons/react";
-import WelcomeCard from "@/src/components/cards/WelcomeCard";
-import StatCard from "@/src/components/cards/StatCard";
-import QuickAccessCard from "@/src/components/cards/QuickAccessCard";
-import ScheduleCard from "@/src/components/cards/ScheduleCard";
-import DeadlinesCard from "@/src/components/cards/DeadlinesCard";
+import WelcomeCard from "@/src/components/common/cards/WelcomeCard";
+import StatCard from "@/src/components/common/cards/StatCard";
+import QuickAccessCard from "@/src/components/common/cards/QuickAccessCard";
+import ScheduleCard from "@/src/components/common/cards/ScheduleCard";
+import DeadlinesCard from "@/src/components/common/cards/DeadlinesCard";
+import { useStudentOverview } from "@/src/hooks/student/useStudents";
 
 // Mock data - replace with real data from API
 const userData = {
@@ -39,10 +40,7 @@ const scheduleItems = [
   },
   {
     time: "3",
-    period: "PM" as const,(base) sameer@sameer-B550M-DS3H:~/Desktop/Edgeupcollegefake$ git push origin sameer
-Username for 'https://github.com': edgeup1034 
-Password for 'https://edgeup1034@github.com': 
-
+    period: "PM" as const,
     title: "Software Engineering",
     type: "Lecture" as const,
     duration: "1 hour",
