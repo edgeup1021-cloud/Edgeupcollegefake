@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import logo from "@/src/assets/logo.png";
 import {
   LayoutGrid,
   BookOpen,
@@ -17,7 +19,14 @@ import {
   X,
 } from "lucide-react";
 import { useTheme } from "@/src/components/providers/ThemeProvider";
-import NavDropdown from "./NavDropdown";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/src/components/ui/navigation-menu";
 import UserMenu from "./UserMenu";
 
 const studyItems = [
@@ -66,45 +75,129 @@ export default function TopNavbar() {
   return (
     <>
       <nav className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo */}
             <Link href="/student/overview" className="flex items-center">
-              <span className="text-2xl font-bold">
-                <span className="text-teal-500">edge</span>
-                <span className="text-blue-600">Up</span>
-              </span>
+              <Image
+                src={logo}
+                alt="EdgeUp"
+                height={36}
+                className="w-auto"
+                priority
+              />
             </Link>
 
             {/* Center: Navigation (Desktop) */}
-            <div className="hidden md:flex items-center gap-1">
-              <Link
-                href="/student/overview"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isOverviewActive
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Overview
-              </Link>
+            <NavigationMenu className="hidden md:flex">
+              <NavigationMenuList>
+                {/* Overview Link */}
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href="/student/overview"
+                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        isOverviewActive
+                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      Overview
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
 
-              <NavDropdown label="Study" items={studyItems} />
-              <NavDropdown label="Career" items={careerItems} />
+                {/* Study Dropdown */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
+                    Study
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-1 p-2">
+                      {studyItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.href}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href={item.href}
+                                className="flex items-start gap-3 rounded-lg p-3 hover:bg-brand-light/50 dark:hover:bg-brand-primary/10 transition-colors"
+                              >
+                                <div className="p-2 rounded-lg bg-brand-primary/10 text-brand-primary">
+                                  <Icon className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-white">
+                                    {item.label}
+                                  </div>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
 
-              <Link
-                href="/student/mental-health-wellness"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isWellnessActive
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
-                <Heart className="w-4 h-4" />
-                Wellness
-              </Link>
-            </div>
+                {/* Career Dropdown */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
+                    Career
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-1 p-2">
+                      {careerItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.href}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                href={item.href}
+                                className="flex items-start gap-3 rounded-lg p-3 hover:bg-brand-light/50 dark:hover:bg-brand-primary/10 transition-colors"
+                              >
+                                <div className="p-2 rounded-lg bg-brand-secondary/10 text-brand-secondary">
+                                  <Icon className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-white">
+                                    {item.label}
+                                  </div>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                {/* Wellness Link */}
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href="/student/mental-health-wellness"
+                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        isWellnessActive
+                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      <Heart className="w-4 h-4" />
+                      Wellness
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
@@ -155,7 +248,7 @@ export default function TopNavbar() {
                 type="text"
                 placeholder="Search courses, resources, or anything..."
                 autoFocus
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary"
               />
             </div>
           </div>
@@ -170,7 +263,7 @@ export default function TopNavbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isOverviewActive
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
                     : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
@@ -193,7 +286,7 @@ export default function TopNavbar() {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
                           : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -219,7 +312,7 @@ export default function TopNavbar() {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
                           : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -237,7 +330,7 @@ export default function TopNavbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                     isWellnessActive
-                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                      ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
                       : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                 >

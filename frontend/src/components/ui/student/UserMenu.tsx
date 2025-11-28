@@ -24,7 +24,7 @@ export default function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
+        <div className="w-8 h-8 bg-gradient-to-br from-brand-secondary to-brand-primary rounded-full flex items-center justify-center">
           <User className="w-4 h-4 text-white" />
         </div>
       </button>
@@ -35,7 +35,7 @@ export default function UserMenu() {
           {/* User Info */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-brand-secondary to-brand-primary rounded-full flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -45,16 +45,16 @@ export default function UserMenu() {
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   B.Tech Computer Science - Year 3
                 </div>
-                <div className="text-xs text-teal-600 dark:text-teal-400">
+                <div className="text-xs text-brand-secondary dark:text-brand-secondary">
                   MIT College of Engineering
                 </div>
               </div>
             </div>
 
             {/* Role Badge */}
-            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-50 dark:bg-teal-900/30 rounded-full">
-              <GraduationCap className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
+            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-light dark:bg-brand-secondary/20 rounded-full">
+              <GraduationCap className="w-3.5 h-3.5 text-brand-secondary dark:text-brand-secondary" />
+              <span className="text-xs font-medium text-brand-secondary dark:text-brand-secondary">
                 Student
               </span>
             </div>
