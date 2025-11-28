@@ -31,3 +31,14 @@ pnpm-debug.log*
 # Optional: Turbo / SWC / other caches
 .turbo/
 .swc/
+
+# Vercel
+  .vercel
+
+  # Testing
+  coverage/
+
+  # Package manager locks (optional - keep one)
+  # package-lock.json
+  # yarn.lock
+  # pnpm-lock.yaml
