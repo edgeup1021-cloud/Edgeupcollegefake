@@ -159,7 +159,8 @@ export default function StudentOverviewPage() {
     );
   }
 
-  const stats = [
+  // Overview stats from API (currently unused but available for future use)
+  const _overviewStats = [
     {
       label: 'Total Students',
       value: overview?.totalStudents ?? 0,
