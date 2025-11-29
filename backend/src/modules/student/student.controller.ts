@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
 @Controller('student')
@@ -35,6 +37,22 @@ export class StudentController {
   @Public() // Make public for now, add auth later
   getOverview() {
     return this.studentService.getOverview();
+  }
+
+  // GET /api/student/:id/dashboard - Get student dashboard data
+  // IMPORTANT: This route MUST be before :id to avoid "dashboard" being parsed incorrectly
+  @Get(':id/dashboard')
+  @UseGuards(JwtAuthGuard)
+  async getDashboard(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    // Students can only access their own dashboard
+    // Admins can access any student's dashboard
+    if (user.role !== UserRole.ADMIN && Number(user.id) !== id) {
+      throw new ForbiddenException('You can only access your own dashboard');
+    }
+    return this.studentService.getDashboard(id);
   }
 
   // GET /api/student/:id - Get student by ID

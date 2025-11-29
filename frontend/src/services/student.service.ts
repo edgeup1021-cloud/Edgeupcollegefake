@@ -10,6 +10,7 @@ import type {
   CreateStudentInput,
   UpdateStudentInput,
   StudentOverview,
+  StudentDashboard,
 } from '../types/student.types';
 
 export { ApiClientError as StudentApiError };
@@ -68,4 +69,14 @@ export async function deleteStudent(id: number): Promise<Student> {
  */
 export async function getStudentOverview(): Promise<StudentOverview> {
   return api.get<StudentOverview>('/student/overview');
+}
+
+/**
+ * Fetch student dashboard data
+ * Returns profile, stats, schedule, deadlines, and notifications
+ * @param studentId - Student's unique identifier
+ * @throws StudentApiError if student not found (404) or unauthorized (403)
+ */
+export async function getStudentDashboard(studentId: number): Promise<StudentDashboard> {
+  return api.get<StudentDashboard>(`/student/${studentId}/dashboard`);
 }

@@ -15,11 +15,13 @@ import {
   updateStudent,
   deleteStudent,
   getStudentOverview,
+  getStudentDashboard,
   StudentApiError,
 } from '@/src/services/student.service';
 import type {
   Student,
   StudentOverview,
+  StudentDashboard,
   CreateStudentInput,
   UpdateStudentInput,
 } from '@/src/types/student.types';
@@ -213,4 +215,44 @@ export function useStudentOverview() {
   }, [refresh]);
 
   return { overview, loading, error, refresh };
+}
+
+/**
+ * Hook for fetching student dashboard data
+ * @param studentId - Student's unique identifier
+ */
+export function useStudentDashboard(studentId: number | null) {
+  const [dashboard, setDashboard] = useState<StudentDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (studentId === null) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await getStudentDashboard(studentId);
+      setDashboard(data);
+      setError(null);
+    } catch (err) {
+      if (err instanceof StudentApiError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [studentId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { dashboard, loading, error, refresh };
 }

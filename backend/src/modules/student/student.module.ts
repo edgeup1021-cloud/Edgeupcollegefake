@@ -10,11 +10,22 @@ import {
   StudentAttendance,
   StudentSchedule,
   StudentNotification,
+  StudentStudySession,
+  StudentAssessment,
+  StudentActivityLog,
 } from '../../database/entities/student';
+import {
+  TeacherCourse,
+  TeacherCourseOffering,
+  TeacherAssignment,
+  TeacherClassSession,
+} from '../../database/entities/teacher';
+import { Campus } from '../../database/entities/management';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      // Student entities
       StudentUser,
       StudentProfile,
       StudentEnrollment,
@@ -22,6 +33,16 @@ import {
       StudentAttendance,
       StudentSchedule,
       StudentNotification,
+      StudentStudySession,
+      StudentAssessment,
+      StudentActivityLog,
+      // Teacher entities (for dashboard queries)
+      TeacherCourse,
+      TeacherCourseOffering,
+      TeacherAssignment,
+      TeacherClassSession,
+      // Management entities
+      Campus,
     ]),
   ],
   controllers: [StudentController],

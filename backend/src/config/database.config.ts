@@ -11,6 +11,6 @@ export const getDatabaseConfig = (
   password: configService.get<string>('database.password'),
   database: configService.get<string>('database.database'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  synchronize: false, // Never true in production - use migrations
-  logging: configService.get<string>('nodeEnv') === 'development',
+  synchronize: false, // Disabled - use manual SQL for schema changes
+  logging: false, // Set to true or ['error', 'warn'] to enable query logging
 });

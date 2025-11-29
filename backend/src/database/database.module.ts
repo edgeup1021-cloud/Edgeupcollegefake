@@ -12,6 +12,9 @@ import {
   StudentAttendance,
   StudentSchedule,
   StudentNotification,
+  StudentStudySession,
+  StudentAssessment,
+  StudentActivityLog,
 } from './entities/student';
 
 // Teacher entities
@@ -41,6 +44,9 @@ const entities = [
   StudentAttendance,
   StudentSchedule,
   StudentNotification,
+  StudentStudySession,
+  StudentAssessment,
+  StudentActivityLog,
   // Teacher
   TeacherUser,
   TeacherCourse,

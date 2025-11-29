@@ -53,3 +53,35 @@ export enum AdminRole {
   ADMIN = 'Admin',
   VIEWER = 'Viewer',
 }
+
+// Attendance status for student_attendance table
+export enum AttendanceStatus {
+  PRESENT = 'present',
+  ABSENT = 'absent',
+  LATE = 'late',
+  EXCUSED = 'excused',
+}
+
+// Assessment status for student_assessments table
+export enum StudentAssessmentStatus {
+  UPCOMING = 'upcoming',
+  COMPLETED = 'completed',
+  MISSED = 'missed',
+}
+
+// Assessment types for student_assessments table
+export enum StudentAssessmentType {
+  QUIZ = 'Quiz',
+  TEST = 'Test',
+  MIDTERM = 'Midterm',
+  FINAL = 'Final',
+  VIVA = 'Viva',
+}
+
+// Activity types for student_activity_logs table
+export enum ActivityType {
+  LOGIN = 'login',
+  STUDY = 'study',
+  SUBMISSION = 'submission',
+  ATTENDANCE = 'attendance',
+}

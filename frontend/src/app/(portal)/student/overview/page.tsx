@@ -6,78 +6,9 @@ import StatCard from "@/src/components/common/cards/StatCard";
 import QuickAccessCard from "@/src/components/common/cards/QuickAccessCard";
 import ScheduleCard from "@/src/components/common/cards/ScheduleCard";
 import DeadlinesCard from "@/src/components/common/cards/DeadlinesCard";
-import { useStudentOverview } from "@/src/hooks/student/useStudents";
-
-// Mock data - replace with real data from API
-const userData = {
-  name: "Aravind Kumar",
-  course: "B.Tech Computer Science - Year 3",
-  college: "MIT College of Engineering",
-};
-
-const stats = {
-  dailyGoal: { value: 3, total: 4, unit: "hours" },
-  testsToday: { value: 2, total: 3, unit: "tests" },
-  attendance: { value: 92, total: 100, unit: "%" },
-};
-
-const scheduleItems = [
-  {
-    time: "9",
-    period: "AM" as const,
-    title: "Data Structures & Algorithms",
-    type: "Lecture" as const,
-    duration: "1 hour",
-    room: "Room 301",
-  },
-  {
-    time: "11",
-    period: "AM" as const,
-    title: "Database Management Systems Lab",
-    type: "Lab" as const,
-    duration: "2 hours",
-    room: "Computer Lab 2",
-  },
-  {
-    time: "3",
-    period: "PM" as const,
-    title: "Software Engineering",
-    type: "Lecture" as const,
-    duration: "1 hour",
-    room: "Room 205",
-  },
-];
-
-const deadlineItems = [
-  {
-    title: "DSA Assignment - Graph Algorithms",
-    type: "Assignment" as const,
-    date: "December 18, 2024",
-    description: "Implement BFS and DFS algorithms",
-    daysLeft: 3,
-  },
-  {
-    title: "DBMS Project Submission",
-    type: "Project" as const,
-    date: "December 22, 2024",
-    description: "Library management system with SQL",
-    daysLeft: 7,
-  },
-  {
-    title: "Internal Assessment - Operating Systems",
-    type: "Exam" as const,
-    date: "January 5, 2025",
-    description: "Covers Process Management & Scheduling",
-    daysLeft: 21,
-  },
-  {
-    title: "Internship Application - TechCorp",
-    type: "Career" as const,
-    date: "January 15, 2025",
-    description: "Summer internship opportunity",
-    daysLeft: 31,
-  },
-];
+import { useStudentDashboard } from "@/src/hooks/student/useStudents";
+import { useAuth } from "@/src/hooks/useAuth";
+import type { StudentDashboardScheduleItem, StudentDashboardDeadline } from "@/src/types/student.types";
 
 const quickAccessItems = [
   {
@@ -115,10 +46,66 @@ const formattedDate = today.toLocaleDateString("en-US", {
   day: "numeric",
 });
 
-export default function StudentOverviewPage() {
-  const { overview, loading, error, refresh } = useStudentOverview();
+// Helper to format deadline date
+function formatDeadlineDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
-  if (loading) {
+// Map schedule item to component props
+function mapScheduleItem(item: StudentDashboardScheduleItem) {
+  // Map backend session types to frontend component types
+  const typeMap: Record<string, "Lecture" | "Lab" | "Tutorial"> = {
+    Lecture: "Lecture",
+    Lab: "Lab",
+    Tutorial: "Tutorial",
+    Seminar: "Lecture", // Map seminar to lecture as fallback
+  };
+
+  return {
+    time: item.time,
+    period: item.period,
+    title: item.title,
+    type: typeMap[item.type] || "Lecture",
+    duration: item.duration,
+    room: item.room || "TBD",
+  };
+}
+
+// Map deadline item to component props
+function mapDeadlineItem(item: StudentDashboardDeadline) {
+  // Map backend assignment types to frontend component types
+  const typeMap: Record<string, "Assignment" | "Project" | "Exam" | "Career"> = {
+    assignment: "Assignment",
+    Assignment: "Assignment",
+    project: "Project",
+    Project: "Project",
+    exam: "Exam",
+    Exam: "Exam",
+    quiz: "Exam",
+    Quiz: "Exam",
+    career: "Career",
+    Career: "Career",
+  };
+
+  return {
+    title: item.title,
+    type: typeMap[item.type] || "Assignment",
+    date: formatDeadlineDate(item.dueDate),
+    description: item.description || "",
+    daysLeft: item.daysLeft,
+  };
+}
+
+export default function StudentOverviewPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const { dashboard, loading, error, refresh } = useStudentDashboard(user?.id ?? null);
+
+  if (authLoading || loading) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -146,7 +133,7 @@ export default function StudentOverviewPage() {
         </h1>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-600 dark:text-red-400">
-            Failed to load overview data: {error}
+            Failed to load dashboard data: {error}
           </p>
           <button
             onClick={refresh}
@@ -159,37 +146,48 @@ export default function StudentOverviewPage() {
     );
   }
 
-  // Overview stats from API (currently unused but available for future use)
-  const _overviewStats = [
-    {
-      label: 'Total Students',
-      value: overview?.totalStudents ?? 0,
-      icon: '👥',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-      textColor: 'text-blue-600 dark:text-blue-400',
+  if (!dashboard) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Student Overview
+        </h1>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <p className="text-yellow-600 dark:text-yellow-400">
+            Please log in to view your dashboard.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract data from dashboard
+  const userData = {
+    name: `${dashboard.profile.firstName} ${dashboard.profile.lastName}`,
+    course: dashboard.profile.program || "Program not set",
+    college: dashboard.profile.college || "College not set",
+  };
+
+  const stats = {
+    dailyGoal: {
+      value: dashboard.stats.dailyGoal.current,
+      total: dashboard.stats.dailyGoal.target,
+      unit: "hours",
     },
-    {
-      label: 'Active Students',
-      value: overview?.activeStudents ?? 0,
-      icon: '✅',
-      bgColor: 'bg-green-50 dark:bg-green-900/20',
-      textColor: 'text-green-600 dark:text-green-400',
+    testsToday: {
+      value: dashboard.stats.testsToday.completed,
+      total: dashboard.stats.testsToday.total,
+      unit: "tests",
     },
-    {
-      label: 'Suspended',
-      value: overview?.suspendedStudents ?? 0,
-      icon: '⚠️',
-      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-      textColor: 'text-orange-600 dark:text-orange-400',
+    attendance: {
+      value: dashboard.stats.attendance.percentage,
+      total: 100,
+      unit: "%",
     },
-    {
-      label: 'Graduated',
-      value: overview?.graduatedStudents ?? 0,
-      icon: '🎓',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-      textColor: 'text-purple-600 dark:text-purple-400',
-    },
-  ];
+  };
+
+  const scheduleItems = dashboard.schedule.map(mapScheduleItem);
+  const deadlineItems = dashboard.deadlines.map(mapDeadlineItem);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

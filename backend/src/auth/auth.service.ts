@@ -29,7 +29,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private passwordService: PasswordService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     // Try to find user in each table
@@ -219,22 +219,31 @@ export class AuthService {
 
   async getProfile(userId: number, userType: string) {
     let user: any;
+    let role: UserRole = UserRole.STUDENT; // Default value
 
     if (userType === UserType.STUDENT) {
       user = await this.studentRepository.findOne({ where: { id: userId } });
+      role = UserRole.STUDENT;
     } else if (userType === UserType.TEACHER) {
       user = await this.teacherRepository.findOne({ where: { id: userId } });
+      role = UserRole.TEACHER;
     } else if (userType === UserType.ADMIN) {
       user = await this.adminRepository.findOne({ where: { id: userId } });
+      role = UserRole.ADMIN;
+    } else {
+      throw new UnauthorizedException('Invalid user type');
     }
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    // Remove sensitive data
+    // Remove sensitive data and add role
     const { passwordHash, ...result } = user;
-    return result;
+    return {
+      ...result,
+      role,
+    };
   }
 
   private async generateTokens(user: {

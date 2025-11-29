@@ -64,7 +64,8 @@ export default function StatCard({
   unit = "",
   variant = "default",
 }: StatCardProps) {
-  const percentage = (value / total) * 100;
+  // Safely calculate percentage, handling edge cases
+  const percentage = total > 0 ? Math.min(Math.max((value / total) * 100, 0), 100) : 0;
 
   const variantStyles = {
     default: {

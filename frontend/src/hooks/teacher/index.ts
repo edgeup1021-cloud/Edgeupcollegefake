@@ -4,5 +4,5 @@
  * Add teacher-specific hooks here as they are created.
  */
 
-// export * from './useTeacherOverview';
-// export * from './useTeacherCourses';
+// Placeholder export to make this a valid module
+export {};

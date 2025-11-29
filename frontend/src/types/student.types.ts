@@ -55,3 +55,81 @@ export interface ApiError {
   message: string | string[];
   error?: string;
 }
+
+// Student Dashboard Types
+export interface StudentDashboardProfile {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  program: string | null;
+  batch: string | null;
+  college: string | null;
+  profileImage: string | null;
+}
+
+export interface StudentDashboardAttendance {
+  percentage: number;
+  totalClasses: number;
+  attendedClasses: number;
+}
+
+export interface StudentDashboardDailyGoal {
+  current: number;
+  target: number;
+}
+
+export interface StudentDashboardTestsToday {
+  completed: number;
+  total: number;
+}
+
+export interface StudentDashboardStats {
+  attendance: StudentDashboardAttendance;
+  gpa: number | null;
+  completedCourses: number;
+  totalCredits: number;
+  dailyGoal: StudentDashboardDailyGoal;
+  testsToday: StudentDashboardTestsToday;
+  dayStreak: number;
+}
+
+export interface StudentDashboardScheduleItem {
+  id: number;
+  time: string;
+  period: 'AM' | 'PM';
+  title: string;
+  type: string;
+  duration: string;
+  room: string | null;
+}
+
+export interface StudentDashboardDeadline {
+  id: number;
+  title: string;
+  type: string;
+  dueDate: string;
+  description: string | null;
+  daysLeft: number;
+  courseName: string;
+}
+
+export interface StudentDashboardNotification {
+  id: number;
+  title: string;
+  type: string;
+  createdAt: string;
+}
+
+export interface StudentDashboardNotifications {
+  unreadCount: number;
+  recent: StudentDashboardNotification[];
+}
+
+export interface StudentDashboard {
+  profile: StudentDashboardProfile;
+  stats: StudentDashboardStats;
+  schedule: StudentDashboardScheduleItem[];
+  deadlines: StudentDashboardDeadline[];
+  notifications: StudentDashboardNotifications;
+}
