@@ -45,11 +45,12 @@ const registerSchema = z
     confirmPassword: z.string().min(1, "Please confirm your password"),
     role: z.enum(["student", "teacher"]),
     // Student fields
-    admissionNo: z.string().optional(),
-    program: z.string().optional(),
-    batch: z.string().optional(),
+     admissionNo: z.string().min(1, "Admission number is required"),
+     program: z.string().min(1, "Program is required"),
+     batch: z.string().min(1, "Batch is required"),
+     section: z.string().min(1, "Section is required"),
     // Teacher fields
-    designation: z.string().optional(),
+     designation: z.string().min(1, "Designation is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -96,6 +97,7 @@ export default function RegisterPage() {
       program: "",
       batch: "",
       designation: "",
+      section: "",
     },
   });
 
@@ -135,6 +137,7 @@ export default function RegisterPage() {
           admissionNo: submitData.admissionNo,
           ...(submitData.program && { program: submitData.program }),
           ...(submitData.batch && { batch: submitData.batch }),
+          ...(submitData.section && { section: submitData.section }),
         }),
         ...(submitData.role === "teacher" && {
           ...(submitData.designation && { designation: submitData.designation }),
@@ -248,30 +251,40 @@ export default function RegisterPage() {
                 error={errors.admissionNo?.message}
                 {...register("admissionNo")}
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InputField
-                  label="Program (Optional)"
-                  placeholder="Computer Science"
-                  icon={GraduationCap}
-                  {...register("program")}
-                />
-                <InputField
-                  label="Batch (Optional)"
-                  placeholder="2024"
-                  icon={GraduationCap}
-                  {...register("batch")}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <InputField
+                    label="Program"
+                    placeholder="Computer Science"
+                    icon={GraduationCap}
+                    error={errors.program?.message}
+                    {...register("program")}
+                  />
+                  <InputField
+                    label="Batch"
+                    placeholder="2024"
+                    icon={GraduationCap}
+                    error={errors.batch?.message}
+                    {...register("batch")}
+                  />
+                  <InputField
+                    label="Section"
+                    placeholder="A"
+                    icon={GraduationCap}
+                    error={errors.section?.message}
+                    {...register("section")}
+                  />
               </div>
             </>
           )}
 
           {role === "teacher" && (
             <InputField
-              label="Designation (Optional)"
+                label="Designation"
               placeholder="Assistant Professor"
               icon={Briefcase}
               {...register("designation")}
-            />
+                error={errors.designation?.message}
+              />
           )}
 
           {/* Password fields */}
