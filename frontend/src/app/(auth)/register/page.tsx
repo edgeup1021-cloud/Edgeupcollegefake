@@ -44,13 +44,13 @@ const registerSchema = z
       ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     role: z.enum(["student", "teacher"]),
-    // Student fields
-     admissionNo: z.string().min(1, "Admission number is required"),
-     program: z.string().min(1, "Program is required"),
-     batch: z.string().min(1, "Batch is required"),
-     section: z.string().min(1, "Section is required"),
-    // Teacher fields
-     designation: z.string().min(1, "Designation is required"),
+    // Student fields (optional initially, validated by refinement)
+     admissionNo: z.string().optional(),
+     program: z.string().optional(),
+     batch: z.string().optional(),
+     section: z.string().optional(),
+    // Teacher fields (optional initially, validated by refinement)
+     designation: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -66,6 +66,54 @@ const registerSchema = z
     {
       message: "Admission number is required for students",
       path: ["admissionNo"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "student") {
+        return data.program && data.program.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Program is required for students",
+      path: ["program"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "student") {
+        return data.batch && data.batch.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Batch is required for students",
+      path: ["batch"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "student") {
+        return data.section && data.section.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Section is required for students",
+      path: ["section"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "teacher") {
+        return data.designation && data.designation.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Designation is required for teachers",
+      path: ["designation"],
     }
   );
 
@@ -144,10 +192,12 @@ export default function RegisterPage() {
         }),
       };
 
+      console.log("Submitting registration with payload:", registerPayload);
       await registerUser(registerPayload);
       // Redirect is handled by AuthContext
-    } catch {
+    } catch (err) {
       // Error is handled by AuthContext
+      console.error("Registration error:", err);
     }
   };
 

@@ -169,6 +169,7 @@ export class AuthService {
         admissionNo: registerDto.admissionNo,
         program: registerDto.program,
         batch: registerDto.batch,
+        section: registerDto.section,
       });
       userType = UserType.STUDENT;
     } else if (role === UserRole.TEACHER) {

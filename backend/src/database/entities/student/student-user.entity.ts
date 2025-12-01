@@ -25,20 +25,21 @@ export class StudentUser {
   @Column({ name: 'last_name', length: 100 })
   lastName: string;
 
-  @Column({ length: 255, unique: true })
-  email: string;
+    @Column({ length: 255, unique: true })
+    email: string;
 
-  @Column({ type: 'varchar', length: 32, nullable: true })
-  phone: string | null;
-
-  @Column({ type: 'varchar', name: 'password_hash', length: 255, nullable: true })
-  passwordHash: string | null;
+    @Column({ type: 'varchar', name: 'password_hash', length: 255, nullable: true })
+    passwordHash: string | null;
 
   @Column({ type: 'varchar', length: 128, nullable: true })
   program: string | null;
 
   @Column({ type: 'varchar', length: 32, nullable: true })
   batch: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  section: string | null;
+
 
   @Column({ name: 'campus_id', type: 'bigint', unsigned: true, nullable: true })
   campusId: number | null;

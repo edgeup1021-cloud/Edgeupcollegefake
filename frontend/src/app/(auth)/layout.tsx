@@ -13,7 +13,7 @@ export default function AuthLayout({
       {/* Left side - Brand panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-dark relative overflow-hidden">
         {/* Background gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand-dark to-brand-primary/30" />
+        <div className="absolute inset-0 bg-linear-to-br from-brand-dark via-brand-dark to-brand-primary/30" />
 
         {/* Geometric decoration */}
         <svg

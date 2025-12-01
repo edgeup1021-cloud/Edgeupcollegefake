@@ -39,9 +39,13 @@ export class RegisterDto {
   @IsOptional()
   program?: string;
 
-  @IsString()
-  @IsOptional()
-  batch?: string;
+    @IsString()
+    @IsOptional()
+    section?: string;
+  
+    @IsString()
+    @IsOptional()
+    batch?: string;
 
   // For teacher registration
   @IsString()
