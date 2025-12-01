@@ -5,13 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { EnvelopeSimple } from "@phosphor-icons/react";
 
-import { useAuth } from "@/src/contexts/AuthContext";
-import { loginSchema, type LoginFormData } from "@/src/lib/validations/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import {
   InputField,
   PasswordField,
   AuthButton,
-} from "@/src/components/ui/auth";
+} from "@/components/ui/auth";
 
 export default function LoginPage() {
   const { login, isLoading, error, clearError } = useAuth();

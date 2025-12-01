@@ -1,5 +1,5 @@
-import TopNavbar from "@/src/components/student/TopNavbar";
-import { ProtectedRoute } from "@/src/components/auth";
+import TopNavbar from "@/components/student/TopNavbar";
+import { ProtectedRoute } from "@/components/auth";
 
 export default function StudentLayout({
   children,

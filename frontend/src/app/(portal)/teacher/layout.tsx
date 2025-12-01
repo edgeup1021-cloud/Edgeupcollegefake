@@ -1,4 +1,4 @@
-import { ProtectedRoute } from "@/src/components/auth";
+import { ProtectedRoute } from "@/components/auth";
 
 export default function TeacherLayout({
   children,

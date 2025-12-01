@@ -17,14 +17,14 @@ import {
   getStudentOverview,
   getStudentDashboard,
   StudentApiError,
-} from '@/src/services/student.service';
+} from '@/services/student.service';
 import type {
   Student,
   StudentOverview,
   StudentDashboard,
   CreateStudentInput,
   UpdateStudentInput,
-} from '@/src/types/student.types';
+} from '@/types/student.types';
 
 interface UseStudentsState {
   students: Student[];

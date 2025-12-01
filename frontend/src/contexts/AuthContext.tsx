@@ -9,13 +9,13 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import * as authService from "@/src/services/auth.service";
+import * as authService from "@/services/auth.service";
 import type {
   User,
   LoginCredentials,
   RegisterData,
   AuthResponse,
-} from "@/src/types/auth.types";
+} from "@/types/auth.types";
 
 interface AuthState {
   user: User | null;

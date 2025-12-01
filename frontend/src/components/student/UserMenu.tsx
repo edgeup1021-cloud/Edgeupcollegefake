@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { User, Settings, LogOut, GraduationCap, Briefcase, Shield } from "lucide-react";
-import { useAuth } from "@/src/hooks/useAuth";
-import { useStudentDashboard } from "@/src/hooks/student/useStudents";
-import { UserRole } from "@/src/types/auth.types";
+import { useAuth } from "@/hooks/useAuth";
+import { useStudentDashboard } from "@/hooks/student/useStudents";
+import { UserRole } from "@/types/auth.types";
 
 // Role icons and labels
 const roleConfig: Record<UserRole, { icon: typeof GraduationCap; label: string }> = {

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { User, Settings, LogOut, Building2 } from "lucide-react";
-import { useAuth } from "@/src/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);

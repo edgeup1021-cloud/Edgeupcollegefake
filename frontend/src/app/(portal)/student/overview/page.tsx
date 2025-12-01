@@ -1,14 +1,14 @@
 "use client";
 
 import { Crosshair, ClipboardText, CalendarCheck, BookOpen, Robot, Briefcase, Heart } from "@phosphor-icons/react";
-import WelcomeCard from "@/src/components/common/cards/WelcomeCard";
-import StatCard from "@/src/components/common/cards/StatCard";
-import QuickAccessCard from "@/src/components/common/cards/QuickAccessCard";
-import ScheduleCard from "@/src/components/common/cards/ScheduleCard";
-import DeadlinesCard from "@/src/components/common/cards/DeadlinesCard";
-import { useStudentDashboard } from "@/src/hooks/student/useStudents";
-import { useAuth } from "@/src/hooks/useAuth";
-import type { StudentDashboardScheduleItem, StudentDashboardDeadline } from "@/src/types/student.types";
+import WelcomeCard from "@/components/common/cards/WelcomeCard";
+import StatCard from "@/components/common/cards/StatCard";
+import QuickAccessCard from "@/components/common/cards/QuickAccessCard";
+import ScheduleCard from "@/components/common/cards/ScheduleCard";
+import DeadlinesCard from "@/components/common/cards/DeadlinesCard";
+import { useStudentDashboard } from "@/hooks/student/useStudents";
+import { useAuth } from "@/hooks/useAuth";
+import type { StudentDashboardScheduleItem, StudentDashboardDeadline } from "@/types/student.types";
 
 const quickAccessItems = [
   {

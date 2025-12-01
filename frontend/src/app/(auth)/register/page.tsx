@@ -14,13 +14,13 @@ import {
   ArrowLeft,
 } from "@phosphor-icons/react";
 
-import { useAuth } from "@/src/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   InputField,
   PasswordField,
   AuthButton,
   RoleSelector,
-} from "@/src/components/ui/auth";
+} from "@/components/ui/auth";
 
 // Combined schema for both roles
 const registerSchema = z
