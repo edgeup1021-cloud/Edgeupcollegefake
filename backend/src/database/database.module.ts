@@ -15,6 +15,7 @@ import {
   StudentStudySession,
   StudentAssessment,
   StudentActivityLog,
+  CalendarEvent,
 } from './entities/student';
 
 // Teacher entities
@@ -47,6 +48,7 @@ const entities = [
   StudentStudySession,
   StudentAssessment,
   StudentActivityLog,
+  CalendarEvent,
   // Teacher
   TeacherUser,
   TeacherCourse,
@@ -72,4 +74,4 @@ const entities = [
   ],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
