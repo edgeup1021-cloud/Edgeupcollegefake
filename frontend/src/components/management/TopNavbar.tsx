@@ -17,14 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+import CompactDropdown from "@/components/ui/compact-dropdown";
 import UserMenu from "./UserMenu";
 
 const analyticsItems = [
@@ -72,79 +65,42 @@ export default function TopNavbar() {
             </Link>
 
             {/* Center: Navigation (Desktop) */}
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                {/* Institutional Health Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/management/institutional-health"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isHealthActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                      Institutional Health
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+            <div className="hidden md:flex items-center space-x-1">
+              {/* Institutional Health Link */}
+              <Link
+                href="/management/institutional-health"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isHealthActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Institutional Health
+              </Link>
 
-                {/* Analytics Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Analytics
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-1 p-2">
-                      {analyticsItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="flex items-start gap-3 rounded-lg p-3 hover:bg-brand-light/50 dark:hover:bg-brand-primary/10 transition-colors"
-                              >
-                                <div className="p-2 rounded-lg bg-brand-primary/10 text-brand-primary">
-                                  <Icon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {item.label}
-                                  </div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {item.description}
-                                  </p>
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              {/* Analytics Dropdown */}
+              <CompactDropdown
+                items={analyticsItems}
+                trigger="Analytics"
+                themeColor="purple"
+                columns={1}
+                width="300px"
+              />
 
-                {/* Finance Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/management/financial-management"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isFinanceActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <DollarSign className="w-4 h-4" />
-                      Finance
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+              {/* Finance Link */}
+              <Link
+                href="/management/financial-management"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isFinanceActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <DollarSign className="w-4 h-4" />
+                Finance
+              </Link>
+            </div>
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">

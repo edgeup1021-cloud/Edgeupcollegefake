@@ -26,15 +26,8 @@ import {
   Users,
 } from "lucide-react";
  
-  import {
-    NavigationMenu,
-    NavigationMenuItem,
-    NavigationMenuLink,
-    NavigationMenuList,
-    NavigationMenuTrigger,
-    NavigationMenuContent,
-  } from "@/components/ui/navigation-menu";
 import { useTheme } from "../providers/ThemeProvider";
+import CompactDropdown from "@/components/ui/compact-dropdown";
 import UserMenu from "./UserMenu";
 // Study Center Items
 const studyCenterItems = [
@@ -257,254 +250,71 @@ export default function TopNavbar() {
             </Link>
 
             {/* Center: Navigation (Desktop) */}
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                {/* Overview Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/student/overview"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isOverviewActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                      Overview
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+            <div className="hidden md:flex items-center space-x-1">
+              {/* Overview Link */}
+              <Link
+                href="/student/overview"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isOverviewActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Overview
+              </Link>
 
-                {/* Study Center Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Study
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[420px] gap-2 p-4">
-                      {studyCenterItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200"
-                              >
-                                <div className="flex items-center h-full rounded-lg bg-blue-100 dark:bg-blue-900/30 p-2 group-hover:bg-blue-200 dark:group-hover:bg-blue-800/50 transition-colors">
-                                  <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div className="flex flex-col justify-center flex-1 min-w-0">
-                                  <span className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
-                                    {item.label}
-                                  </span>
-                                  {item.description && (
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                                      {item.description}
-                                    </span>
-                                  )}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              {/* Compact Dropdowns */}
+              <CompactDropdown
+                items={studyCenterItems}
+                trigger="Study"
+                themeColor="blue"
+                columns={2}
+                width="300px"
+                enableSearch={studyCenterItems.length > 6}
+              />
 
-                {/* Smart Assistant Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Assistant
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[420px] gap-2 p-4">
-                      {smartAssistantItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all duration-200"
-                              >
-                                <div className="rounded-lg bg-purple-100 dark:bg-purple-900/30 p-2 group-hover:bg-purple-200 dark:group-hover:bg-purple-800/50 transition-colors">
-                                  <Icon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
-                                    {item.label}
-                                  </div>
-                                  {item.description && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              <CompactDropdown
+                items={smartAssistantItems}
+                trigger="Assistant"
+                themeColor="purple"
+                columns={2}
+                width="280px"
+              />
 
-                {/* Career Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Career
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[420px] gap-2 p-4">
-                      {careerItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all duration-200"
-                              >
-                                <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/50 transition-colors">
-                                  <Icon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
-                                    {item.label}
-                                  </div>
-                                  {item.description && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              <CompactDropdown
+                items={careerItems}
+                trigger="Career"
+                themeColor="amber"
+                columns={2}
+                width="320px"
+                enableSearch={true}
+              />
 
-                {/* Job Matcher Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Jobs
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[420px] gap-2 p-4">
-                      {jobMatcherItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200"
-                              >
-                                <div className="rounded-lg bg-green-100 dark:bg-green-900/30 p-2 group-hover:bg-green-200 dark:group-hover:bg-green-800/50 transition-colors">
-                                  <Icon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
-                                    {item.label}
-                                  </div>
-                                  {item.description && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              <CompactDropdown
+                items={jobMatcherItems}
+                trigger="Jobs"
+                themeColor="green"
+                columns={1}
+                width="280px"
+              />
 
-                {/* Wellness Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Wellness
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[420px] gap-2 p-4">
-                      {wellnessItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all duration-200"
-                              >
-                                <div className="rounded-lg bg-rose-100 dark:bg-rose-900/30 p-2 group-hover:bg-rose-200 dark:group-hover:bg-rose-800/50 transition-colors">
-                                  <Icon className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
-                                    {item.label}
-                                  </div>
-                                  {item.description && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              <CompactDropdown
+                items={wellnessItems}
+                trigger="Wellness"
+                themeColor="rose"
+                columns={2}
+                width="280px"
+              />
 
-                {/* Examinations Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Exams
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[420px] gap-2 p-4">
-                      {examinationItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all duration-200"
-                              >
-                                <div className="rounded-lg bg-indigo-100 dark:bg-indigo-900/30 p-2 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/50 transition-colors">
-                                  <Icon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
-                                    {item.label}
-                                  </div>
-                                  {item.description && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+              <CompactDropdown
+                items={examinationItems}
+                trigger="Exams"
+                themeColor="indigo"
+                columns={1}
+                width="280px"
+              />
+            </div>
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">

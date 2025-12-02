@@ -399,26 +399,26 @@ export default function TasksAssignmentsPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search tasks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
             />
           </div>
 
           {/* Filters */}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as TaskType | "ALL")}
-              className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+              className="px-2 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
             >
               <option value="ALL">All Types</option>
               <option value="HOMEWORK">Homework</option>
@@ -429,7 +429,7 @@ export default function TasksAssignmentsPage() {
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value as Priority | "ALL")}
-              className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+              className="px-2 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
             >
               <option value="ALL">All Priorities</option>
               <option value="HIGH">High Priority</option>
@@ -442,39 +442,36 @@ export default function TasksAssignmentsPage() {
 
       {/* Create/Edit Task Form */}
       {showCreateForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${editingTask ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                {editingTask ? <Edit3 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className={`p-1.5 rounded-md ${editingTask ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                {editingTask ? <Edit3 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {editingTask ? 'Edit Task' : 'Create New Task'}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {editingTask ? 'Update task details below' : 'Fill out the form to create a new task'}
-                </p>
               </div>
             </div>
             <button
               onClick={editingTask ? cancelEdit : () => setShowCreateForm(false)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Task Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Task Type
               </label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({...formData, type: e.target.value as TaskType})}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               >
                 <option value="HOMEWORK">Homework</option>
@@ -485,13 +482,13 @@ export default function TasksAssignmentsPage() {
 
             {/* Subject */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Subject
               </label>
               <select
                 value={formData.subject}
                 onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               >
                 <option value="">Select Subject</option>
@@ -503,14 +500,14 @@ export default function TasksAssignmentsPage() {
 
             {/* Title */}
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Task Title
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 placeholder="e.g., Calculus Problem Set - Chapter 5"
                 required
               />
@@ -518,14 +515,14 @@ export default function TasksAssignmentsPage() {
 
             {/* Description */}
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                rows={2}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 placeholder="Detailed instructions for students..."
                 required
               />
@@ -533,27 +530,27 @@ export default function TasksAssignmentsPage() {
 
             {/* Due Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Due Date
               </label>
               <input
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               />
             </div>
 
             {/* Priority */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Priority Level
               </label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({...formData, priority: e.target.value as Priority})}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               >
                 <option value="LOW">Low Priority</option>
@@ -564,13 +561,13 @@ export default function TasksAssignmentsPage() {
 
             {/* Class */}
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Assign to Class
               </label>
               <select
                 value={formData.class}
                 onChange={(e) => setFormData({...formData, class: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               >
                 <option value="">Select Class</option>
@@ -582,31 +579,31 @@ export default function TasksAssignmentsPage() {
 
             {/* File Upload Section */}
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Attachments (Optional)
               </label>
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
-                <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Drop files here or click to upload supporting materials
+              <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-md p-2 text-center hover:border-brand-primary transition-colors">
+                <Upload className="w-4 h-4 text-gray-400 mx-auto mb-1" />
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Drop files here or click to upload
                 </p>
                 <input type="file" multiple className="hidden" />
               </div>
             </div>
 
             {/* Submit Buttons */}
-            <div className="lg:col-span-2 flex gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="lg:col-span-2 flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
               <button
                 type="submit"
-                className="flex items-center gap-2 flex-1 bg-brand-primary text-white py-3 px-4 rounded-lg hover:bg-brand-primary/90 transition-colors font-medium"
+                className="flex items-center gap-2 flex-1 bg-brand-primary text-white py-2 px-3 rounded-md hover:bg-brand-primary/90 transition-colors text-sm font-medium"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-3 h-3" />
                 {editingTask ? 'Update Task' : 'Create Task'}
               </button>
               <button
                 type="button"
                 onClick={editingTask ? cancelEdit : () => setShowCreateForm(false)}
-                className="px-6 py-3 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+                className="px-4 py-2 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
               >
                 Cancel
               </button>
@@ -616,7 +613,7 @@ export default function TasksAssignmentsPage() {
       )}
 
       {/* Tasks List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredTasks.map((task) => {
           const overdue = isOverdue(task.dueDate);
           const daysUntil = getDaysUntilDue(task.dueDate);
@@ -625,7 +622,7 @@ export default function TasksAssignmentsPage() {
           return (
             <div
               key={task.id}
-              className={`bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+              className={`bg-white dark:bg-gray-800 rounded-xl p-4 border transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
                 overdue 
                   ? 'border-red-200 bg-red-50/30 dark:border-red-800 dark:bg-red-900/10'
                   : urgentDeadline
@@ -634,9 +631,9 @@ export default function TasksAssignmentsPage() {
               }`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-xl ${
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg ${
                     task.type === 'HOMEWORK' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                     : task.type === 'ASSIGNMENT' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
                     : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
@@ -644,54 +641,54 @@ export default function TasksAssignmentsPage() {
                     {getTaskIcon(task.type)}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                         {task.type}
                       </span>
                       <span className="text-xs text-gray-500">•</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                      <span className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                         {task.subject}
                       </span>
                     </div>
                   </div>
                 </div>
-                <span className={`px-3 py-1.5 text-xs font-bold rounded-full border-2 ${getPriorityColor(task.priority)}`}>
+                <span className={`px-2 py-1 text-xs font-bold rounded-full border ${getPriorityColor(task.priority)}`}>
                   {task.priority}
                 </span>
               </div>
 
               {/* Title & Description */}
-              <div className="mb-5">
-                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+              <div className="mb-3">
+                <h3 className="font-semibold text-base text-gray-900 dark:text-white mb-1 line-clamp-2 leading-tight">
                   {task.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
                   {task.description}
                 </p>
               </div>
 
               {/* Due Date - Enhanced */}
-              <div className={`p-4 rounded-xl mb-5 ${
+              <div className={`p-2.5 rounded-lg mb-3 ${
                 overdue 
-                  ? 'bg-red-100 border-2 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                  ? 'bg-red-100 border border-red-200 dark:bg-red-900/20 dark:border-red-800'
                   : urgentDeadline
-                  ? 'bg-orange-100 border-2 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
-                  : 'bg-gray-50 border-2 border-gray-200 dark:bg-gray-700 dark:border-gray-600'
+                  ? 'bg-orange-100 border border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+                  : 'bg-gray-50 border border-gray-200 dark:bg-gray-700 dark:border-gray-600'
               }`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {overdue ? (
-                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                     ) : urgentDeadline ? (
-                      <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                      <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                     ) : (
-                      <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     )}
                     <div>
                       <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                         Due Date
                       </p>
-                      <p className={`text-sm font-bold ${
+                      <p className={`text-xs font-bold ${
                         overdue 
                           ? 'text-red-700 dark:text-red-300'
                           : urgentDeadline
@@ -704,18 +701,18 @@ export default function TasksAssignmentsPage() {
                   </div>
                   <div className="text-right">
                     {overdue ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-200 text-red-800 text-xs font-bold rounded-full dark:bg-red-800 dark:text-red-200">
-                        <AlertCircle className="w-3 h-3" />
-                        {getDaysOverdue(task.dueDate)} days overdue
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-200 text-red-800 text-xs font-bold rounded-full dark:bg-red-800 dark:text-red-200">
+                        <AlertCircle className="w-2.5 h-2.5" />
+                        {getDaysOverdue(task.dueDate)}d overdue
                       </span>
                     ) : urgentDeadline ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-200 text-orange-800 text-xs font-bold rounded-full dark:bg-orange-800 dark:text-orange-200">
-                        <Clock className="w-3 h-3" />
-                        {daysUntil} days left
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-orange-200 text-orange-800 text-xs font-bold rounded-full dark:bg-orange-800 dark:text-orange-200">
+                        <Clock className="w-2.5 h-2.5" />
+                        {daysUntil}d left
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded-full dark:bg-gray-600 dark:text-gray-300">
-                        {daysUntil} days left
+                      <span className="px-1.5 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-full dark:bg-gray-600 dark:text-gray-300">
+                        {daysUntil}d left
                       </span>
                     )}
                   </div>
@@ -723,40 +720,40 @@ export default function TasksAssignmentsPage() {
               </div>
 
               {/* Class & Status */}
-              <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-brand-primary rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-brand-primary rounded-full"></div>
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                     {task.class}
                   </span>
                 </div>
-                <span className={`px-3 py-1.5 text-xs font-bold rounded-full ${getStatusColor(task.status)} border-2 border-current`}>
+                <span className={`px-2 py-1 text-xs font-bold rounded-full ${getStatusColor(task.status)} border border-current`}>
                   {task.status}
                 </span>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button 
                   onClick={() => handleViewSubmissions(task)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-3 px-4 rounded-xl text-sm hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold"
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-2 px-3 rounded-lg text-xs hover:shadow-md hover:scale-[1.02] transition-all duration-200 font-medium"
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-3 h-3" />
                   View Submissions
                 </button>
                 <button 
                   onClick={() => handleEdit(task)}
-                  className="p-3 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-200 dark:hover:bg-blue-900/30 rounded-xl transition-all duration-200 hover:scale-110"
+                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-200 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 hover:scale-105"
                   title="Edit Task"
                 >
-                  <Edit3 className="w-5 h-5" />
+                  <Edit3 className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => handleDelete(task)}
-                  className="p-3 text-red-600 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-200 dark:hover:bg-red-900/30 rounded-xl transition-all duration-200 hover:scale-110"
+                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-200 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:scale-105"
                   title="Delete Task"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>

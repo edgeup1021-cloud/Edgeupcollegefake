@@ -24,6 +24,12 @@ const teacherQuickAccessItems = [
     description: "Create and grade assessments with AI",
   },
   {
+    icon: ClipboardList,
+    title: "Tasks & Assignments",
+    href: "/teacher/tasks-assignments",
+    description: "Create and manage student assignments",
+  },
+  {
     icon: BookOpen,
     title: "Content & Curriculum",
     href: "/teacher/content-curriculum",
@@ -40,12 +46,6 @@ const teacherQuickAccessItems = [
     title: "Professional Learning",
     href: "/teacher/professional-learning",
     description: "Enhance your teaching skills",
-  },
-  {
-    icon: LayoutGrid,
-    title: "Overview Dashboard",
-    href: "/teacher/overview",
-    description: "Return to your main dashboard",
   },
 ];
 
