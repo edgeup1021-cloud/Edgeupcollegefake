@@ -9,6 +9,12 @@ import {
   TeacherAssignment,
   TeacherClassSession,
 } from '../../database/entities/teacher';
+import {
+  StudentEnrollment,
+  StudentAssignmentSubmission,
+} from '../../database/entities/student';
+import { CalendarModule } from '../student/calendar/calendar.module';
+import { AssignmentsService } from './services/assignments.service';
 
 @Module({
   imports: [
@@ -18,10 +24,13 @@ import {
       TeacherCourseOffering,
       TeacherAssignment,
       TeacherClassSession,
+      StudentEnrollment,
+      StudentAssignmentSubmission,
     ]),
+    CalendarModule,
   ],
   controllers: [TeacherController],
-  providers: [TeacherService],
+  providers: [TeacherService, AssignmentsService],
   exports: [TeacherService],
 })
 export class TeacherModule {}

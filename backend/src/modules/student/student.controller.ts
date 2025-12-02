@@ -19,10 +19,15 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { SubmissionsService } from './services/submissions.service';
+import { SubmitAssignmentDto } from './dto/submission';
 
 @Controller('student')
 export class StudentController {
-  constructor(private readonly studentService: StudentService) {}
+  constructor(
+    private readonly studentService: StudentService,
+    private readonly submissionsService: SubmissionsService,
+  ) {}
 
   // GET /api/student - List all students
   @Get()
@@ -84,5 +89,32 @@ export class StudentController {
   @Public() // Make public for now, add auth later
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.studentService.remove(id);
+  }
+
+  // GET /api/student/:id/assignments - Get all assignments for student
+  @Get(':id/assignments')
+  @Public()
+  getAssignments(@Param('id', ParseIntPipe) studentId: number) {
+    return this.submissionsService.getStudentAssignments(studentId);
+  }
+
+  // POST /api/student/:id/assignments/submit - Submit assignment
+  @Post(':id/assignments/submit')
+  @Public()
+  submitAssignment(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Body() dto: SubmitAssignmentDto,
+  ) {
+    return this.submissionsService.submitAssignment(dto, studentId);
+  }
+
+  // GET /api/student/:id/assignments/:assignmentId/submission - Get submission details
+  @Get(':id/assignments/:assignmentId/submission')
+  @Public()
+  getSubmission(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Param('assignmentId', ParseIntPipe) assignmentId: number,
+  ) {
+    return this.submissionsService.getSubmission(assignmentId, studentId);
   }
 }

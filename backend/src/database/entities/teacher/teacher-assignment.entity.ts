@@ -42,6 +42,18 @@ export class TeacherAssignment {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  priority: string | null;
+
+  @Column({ name: 'file_url', type: 'varchar', length: 1024, nullable: true })
+  fileUrl: string | null;
+
+  @Column({ name: 'created_by', type: 'bigint', unsigned: true, nullable: true })
+  createdBy: number | null;
+
+  @Column({ type: 'varchar', length: 20, default: 'ACTIVE' })
+  status: string;
+
   @ManyToOne(() => TeacherCourseOffering)
   @JoinColumn({ name: 'course_offering_id' })
   courseOffering: TeacherCourseOffering;

@@ -9,3 +9,4 @@ export * from './student-study-session.entity';
 export * from './student-assessment.entity';
 export * from './student-activity-log.entity';
 export * from './calendar-event.entity';
+export * from './student-assignment-submission.entity';

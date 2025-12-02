@@ -13,6 +13,7 @@ import {
   StudentStudySession,
   StudentAssessment,
   StudentActivityLog,
+  StudentAssignmentSubmission,
 } from '../../database/entities/student';
 import {
   TeacherCourse,
@@ -21,6 +22,7 @@ import {
   TeacherClassSession,
 } from '../../database/entities/teacher';
 import { Campus } from '../../database/entities/management';
+import { SubmissionsService } from './services/submissions.service';
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { Campus } from '../../database/entities/management';
       StudentStudySession,
       StudentAssessment,
       StudentActivityLog,
+      StudentAssignmentSubmission,
       // Teacher entities (for dashboard queries)
       TeacherCourse,
       TeacherCourseOffering,
@@ -46,7 +49,7 @@ import { Campus } from '../../database/entities/management';
     ]),
   ],
   controllers: [StudentController],
-  providers: [StudentService],
+  providers: [StudentService, SubmissionsService],
   exports: [StudentService],
 })
 export class StudentModule {}
