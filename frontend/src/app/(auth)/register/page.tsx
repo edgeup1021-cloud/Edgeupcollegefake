@@ -20,7 +20,9 @@ import {
   PasswordField,
   AuthButton,
   RoleSelector,
+  SelectField,
 } from "@/components/ui/auth";
+import { PROGRAMS, BATCHES, SECTIONS } from "@/config/dropdowns.config";
 
 // Combined schema for both roles
 const registerSchema = z
@@ -301,28 +303,31 @@ export default function RegisterPage() {
                 error={errors.admissionNo?.message}
                 {...register("admissionNo")}
               />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <InputField
-                    label="Program"
-                    placeholder="Computer Science"
-                    icon={GraduationCap}
-                    error={errors.program?.message}
-                    {...register("program")}
-                  />
-                  <InputField
-                    label="Batch"
-                    placeholder="2024"
-                    icon={GraduationCap}
-                    error={errors.batch?.message}
-                    {...register("batch")}
-                  />
-                  <InputField
-                    label="Section"
-                    placeholder="A"
-                    icon={GraduationCap}
-                    error={errors.section?.message}
-                    {...register("section")}
-                  />
+              <SelectField
+                label="Program"
+                placeholder="Select Program"
+                icon={GraduationCap}
+                options={PROGRAMS}
+                error={errors.program?.message}
+                {...register("program")}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <SelectField
+                  label="Batch"
+                  placeholder="Select Batch"
+                  icon={GraduationCap}
+                  options={BATCHES}
+                  error={errors.batch?.message}
+                  {...register("batch")}
+                />
+                <SelectField
+                  label="Section"
+                  placeholder="Select Section"
+                  icon={GraduationCap}
+                  options={SECTIONS}
+                  error={errors.section?.message}
+                  {...register("section")}
+                />
               </div>
             </>
           )}

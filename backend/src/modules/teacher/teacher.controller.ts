@@ -40,16 +40,12 @@ export class TeacherController {
     return this.teacherService.getOverview();
   }
 
-  @Get(':id')
+  @Get('dashboard')
   @Public()
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.teacherService.findOne(id);
-  }
-
-  @Get(':id/courses')
-  @Public()
-  getCourses(@Param('id', ParseIntPipe) id: number) {
-    return this.teacherService.getTeacherCourses(id);
+  getDashboard(@Query('teacherId') teacherId?: string) {
+    // TODO: Get teacherId from @CurrentUser when auth is fully implemented
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherService.getTeacherDashboard(id);
   }
 
   @Post()
@@ -58,27 +54,16 @@ export class TeacherController {
     return this.teacherService.create(createTeacherDto);
   }
 
-  @Patch(':id')
-  @Public()
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateTeacherDto: UpdateTeacherDto,
-  ) {
-    return this.teacherService.update(id, updateTeacherDto);
-  }
-
-  @Delete(':id')
-  @Public()
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.teacherService.remove(id);
-  }
-
   // Assignment CRUD
   @Post('assignments')
   @Public()
-  createAssignment(@Body() dto: CreateAssignmentDto) {
+  createAssignment(
+    @Body() dto: CreateAssignmentDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
     // TODO: Get teacherId from @CurrentUser when auth is fully implemented
-    return this.assignmentsService.create(dto, 1);
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.assignmentsService.create(dto, id);
   }
 
   @Get('assignments')
@@ -123,5 +108,33 @@ export class TeacherController {
   ) {
     // TODO: Get teacherId from @CurrentUser when auth is fully implemented
     return this.assignmentsService.gradeSubmission(submissionId, dto, 1);
+  }
+
+  // Teacher CRUD - placed after specific routes to avoid route conflicts
+  @Get(':id/courses')
+  @Public()
+  getCourses(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.getTeacherCourses(id);
+  }
+
+  @Get(':id')
+  @Public()
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.findOne(id);
+  }
+
+  @Patch(':id')
+  @Public()
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateTeacherDto: UpdateTeacherDto,
+  ) {
+    return this.teacherService.update(id, updateTeacherDto);
+  }
+
+  @Delete(':id')
+  @Public()
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.remove(id);
   }
 }

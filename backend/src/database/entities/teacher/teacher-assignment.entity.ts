@@ -30,6 +30,18 @@ export class TeacherAssignment {
   @Column({ type: 'enum', enum: AssignmentType, default: AssignmentType.ASSIGNMENT })
   type: AssignmentType;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  subject: string | null;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  program: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  batch: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  section: string | null;
+
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
   weight: number;
 

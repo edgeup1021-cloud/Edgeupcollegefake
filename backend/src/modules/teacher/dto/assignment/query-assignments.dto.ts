@@ -1,16 +1,14 @@
-import { IsOptional, IsNumber, IsEnum, IsString } from 'class-validator';
+import { IsOptional, IsEnum, IsString } from 'class-validator';
 import { AssignmentType } from '../../../../common/enums/status.enum';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class QueryAssignmentsDto {
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
   courseOfferingId?: number;
 
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
   teacherId?: number;
 
   @IsOptional()
@@ -20,4 +18,20 @@ export class QueryAssignmentsDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  subject?: string;
+
+  @IsOptional()
+  @IsString()
+  program?: string;
+
+  @IsOptional()
+  @IsString()
+  batch?: string;
+
+  @IsOptional()
+  @IsString()
+  section?: string;
 }

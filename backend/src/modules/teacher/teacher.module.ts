@@ -12,7 +12,9 @@ import {
 import {
   StudentEnrollment,
   StudentAssignmentSubmission,
+  StudentUser,
 } from '../../database/entities/student';
+import { Department } from '../../database/entities/management';
 import { CalendarModule } from '../student/calendar/calendar.module';
 import { AssignmentsService } from './services/assignments.service';
 
@@ -26,6 +28,8 @@ import { AssignmentsService } from './services/assignments.service';
       TeacherClassSession,
       StudentEnrollment,
       StudentAssignmentSubmission,
+      StudentUser,
+      Department,
     ]),
     CalendarModule,
   ],

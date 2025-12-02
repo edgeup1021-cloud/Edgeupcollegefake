@@ -4,11 +4,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getTeacherOverview,
-  getTeacherProfile,
-  getTeacherSchedule,
+  getTeacherDashboard,
   TeacherApiError,
 } from '@/services/teacher.service';
+import { useAuth } from '@/contexts/AuthContext';
 import type {
   Teacher,
   TeacherOverview,
@@ -24,112 +23,72 @@ export function useTeacherDashboard() {
   const [dashboard, setDashboard] = useState<TeacherDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchDashboard = useCallback(async () => {
+    if (!user?.id) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // For now, only fetch overview data since profile and schedule endpoints don't exist yet
-      const overview = await getTeacherOverview();
-      
-      // Mock data for profile and schedule until backend endpoints are implemented
-      const profile = {
-        id: 1,
-        firstName: 'Dr. Sarah',
-        lastName: 'Johnson',
-        email: 'sarah.johnson@college.edu',
-        phone: '+1-234-567-8900',
-        designation: 'Professor',
-        departmentId: 1,
-        profileImage: null,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      const schedule = [
-        {
-          id: 1,
-          courseTitle: 'Data Structures & Algorithms',
-          sessionDate: new Date().toISOString().split('T')[0],
-          startTime: '09:00',
-          durationMinutes: 60,
-          room: 'Room 301',
-          sessionType: 'lecture' as const,
-        },
-        {
-          id: 2,
-          courseTitle: 'Database Management Systems',
-          sessionDate: new Date().toISOString().split('T')[0],
-          startTime: '14:00',
-          durationMinutes: 120,
-          room: 'Computer Lab 2',
-          sessionType: 'lab' as const,
-        },
-      ];
+      // Call new dashboard API with actual user ID
+      const dashboardResponse = await getTeacherDashboard(user.id);
 
-      // Transform the data into dashboard format
+      // Transform to frontend format
       const dashboardData: TeacherDashboardData = {
-        profile: {
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          designation: profile.designation || 'Faculty',
-          department: 'Computer Science', // TODO: Get from department API
-          college: 'MIT College of Engineering', // TODO: Get from config
-        },
+        profile: dashboardResponse.profile,
+
         stats: {
           classesToday: {
-            value: schedule.filter(s => {
-              const today = new Date().toISOString().split('T')[0];
-              return s.sessionDate.startsWith(today);
-            }).length,
-            total: schedule.length,
+            value: dashboardResponse.stats.classesToday,
+            total: dashboardResponse.stats.classesToday,
             label: 'Classes Today',
           },
           totalStudents: {
-            value: overview.totalStudents,
-            total: overview.totalStudents + 50, // Show as progress towards target
+            value: dashboardResponse.stats.totalStudents,
+            total: dashboardResponse.stats.totalStudents + 50,
             label: 'Total Students',
           },
           assignmentsToGrade: {
-            value: overview.pendingAssignments,
-            total: overview.pendingAssignments + 10, // Show as progress
+            value: dashboardResponse.stats.assignmentsToGrade,
+            total: dashboardResponse.stats.assignmentsToGrade + 10,
             label: 'Assignments to Grade',
           },
           attendanceRate: {
-            value: 85, // TODO: Calculate from actual attendance data
+            value: dashboardResponse.stats.attendanceRate,
             total: 100,
             unit: '%',
             label: 'Class Attendance Rate',
           },
         },
-        schedule: schedule.map(item => ({
+
+        schedule: dashboardResponse.schedule.map(item => ({
           time: new Date(`${item.sessionDate}T${item.startTime}`).getHours().toString(),
           period: new Date(`${item.sessionDate}T${item.startTime}`).getHours() >= 12 ? 'PM' : 'AM',
           title: item.courseTitle,
           type: mapSessionType(item.sessionType),
           duration: `${Math.floor(item.durationMinutes / 60)}h ${item.durationMinutes % 60}m`,
-          room: item.room || 'TBD',
+          room: item.room,
         })),
-        deadlines: [
-          // TODO: Fetch actual deadlines from backend
-          {
-            title: 'Grade Midterm Exams - Data Structures',
-            type: 'grading',
-            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-            description: 'Grade 45 midterm exam papers',
-            daysLeft: 2,
-          },
-          {
-            title: 'Submit Final Grades - DBMS',
-            type: 'administrative',
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            description: 'Submit final grades to academic office',
-            daysLeft: 7,
-          },
-        ],
+
+        deadlines: dashboardResponse.deadlines.map(item => {
+          const dueDate = new Date(item.dueDate);
+          const now = new Date();
+          const daysLeft = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+          return {
+            title: `${item.title} - ${item.courseTitle}`,
+            type: mapDeadlineType(item.type),
+            dueDate: item.dueDate as string,
+            description: `Assignment due for grading`,
+            daysLeft: Math.max(0, daysLeft),
+          };
+        }),
       };
 
       setDashboard(dashboardData);
@@ -143,7 +102,7 @@ export function useTeacherDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchDashboard();
@@ -171,8 +130,23 @@ function mapSessionType(sessionType: string): 'Lecture' | 'Lab' | 'Tutorial' {
     tutorial: 'Tutorial',
     exam: 'Lecture', // Map exam to lecture as fallback
   };
-  
+
   return typeMap[sessionType.toLowerCase()] || 'Lecture';
+}
+
+/**
+ * Helper function to map deadline types
+ */
+function mapDeadlineType(type: string): 'grading' | 'administrative' | 'exam' | 'meeting' {
+  const typeMap: Record<string, 'grading' | 'administrative' | 'exam' | 'meeting'> = {
+    'assignment': 'grading',
+    'project': 'grading',
+    'homework': 'grading',
+    'lab': 'grading',
+    'exam': 'exam',
+    'quiz': 'exam',
+  };
+  return typeMap[type.toLowerCase()] || 'grading';
 }
 
 /**

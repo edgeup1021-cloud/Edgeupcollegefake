@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +10,7 @@ import { TeacherAssignment } from '../../../database/entities/teacher/teacher-as
 import { StudentEnrollment } from '../../../database/entities/student/student-enrollment.entity';
 import { StudentAssignmentSubmission } from '../../../database/entities/student/student-assignment-submission.entity';
 import { TeacherCourseOffering } from '../../../database/entities/teacher/teacher-course-offering.entity';
+import { StudentUser } from '../../../database/entities/student/student-user.entity';
 import { CalendarService } from '../../student/calendar/calendar.service';
 import {
   CreateAssignmentDto,
@@ -30,6 +32,8 @@ export class AssignmentsService {
     private submissionRepo: Repository<StudentAssignmentSubmission>,
     @InjectRepository(TeacherCourseOffering)
     private courseOfferingRepo: Repository<TeacherCourseOffering>,
+    @InjectRepository(StudentUser)
+    private studentUserRepo: Repository<StudentUser>,
     private calendarService: CalendarService,
   ) {}
 
@@ -37,6 +41,12 @@ export class AssignmentsService {
     dto: CreateAssignmentDto,
     teacherId: number,
   ): Promise<TeacherAssignment> {
+    console.log('[create] Creating assignment with teacherId:', teacherId);
+    console.log('[create] Assignment data:', { title: dto.title, type: dto.type });
+
+    // Validate filter hierarchy
+    this.validateFilters(dto.program, dto.batch, dto.section);
+
     // Create the assignment
     const assignment = this.assignmentRepo.create({
       ...dto,
@@ -44,40 +54,34 @@ export class AssignmentsService {
       status: 'ACTIVE',
     });
     const savedAssignment = await this.assignmentRepo.save(assignment);
+    console.log('[create] Assignment saved with ID:', savedAssignment.id, 'createdBy:', savedAssignment.createdBy);
 
-    // Get enrolled students
-    const enrollments = await this.enrollmentRepo.find({
-      where: {
-        courseOfferingId: dto.courseOfferingId,
-        status: EnrollmentStatus.ACTIVE,
-      },
+    // Find students by program/batch/section
+    const students = await this.findStudentsByFilters({
+      program: dto.program,
+      batch: dto.batch,
+      section: dto.section,
     });
 
-    // Get course offering details for calendar event
-    const courseOffering = await this.courseOfferingRepo.findOne({
-      where: { id: dto.courseOfferingId },
-      relations: ['course'],
-    });
-
-    // Bulk create pending submissions for all enrolled students
-    if (enrollments.length > 0) {
-      const submissions = enrollments.map((enrollment) =>
+    // Bulk create pending submissions for matched students
+    if (students.length > 0) {
+      const submissions = students.map((student) =>
         this.submissionRepo.create({
           assignmentId: savedAssignment.id,
-          studentId: enrollment.studentId,
+          studentId: student.id,
           status: 'pending',
         }),
       );
       await this.submissionRepo.save(submissions);
 
       // Create calendar events for all students
-      const calendarPromises = enrollments.map((enrollment) =>
+      const calendarPromises = students.map((student) =>
         this.calendarService.create({
-          studentId: enrollment.studentId,
+          studentId: student.id,
           title: dto.title,
           eventType: EventType.ASSIGNMENT,
           eventDate: dto.dueDate.split('T')[0],
-          subject: courseOffering?.course?.title || 'Assignment',
+          subject: dto.subject || 'Assignment',
           description: dto.description || '',
           color: '#FF6B6B',
         }),
@@ -94,6 +98,7 @@ export class AssignmentsService {
   }
 
   async findAll(filters: QueryAssignmentsDto): Promise<TeacherAssignment[]> {
+    console.log('[findAll] Query filters received:', filters);
     const query = this.assignmentRepo.createQueryBuilder('a');
 
     if (filters.courseOfferingId) {
@@ -103,6 +108,7 @@ export class AssignmentsService {
     }
 
     if (filters.teacherId) {
+      console.log('[findAll] Filtering by teacherId:', filters.teacherId);
       query.andWhere('a.createdBy = :tid', { tid: filters.teacherId });
     }
 
@@ -114,7 +120,25 @@ export class AssignmentsService {
       query.andWhere('a.status = :status', { status: filters.status });
     }
 
-    return query.orderBy('a.dueDate', 'ASC').getMany();
+    if (filters.subject) {
+      query.andWhere('a.subject = :subject', { subject: filters.subject });
+    }
+
+    if (filters.program) {
+      query.andWhere('a.program = :program', { program: filters.program });
+    }
+
+    if (filters.batch) {
+      query.andWhere('a.batch = :batch', { batch: filters.batch });
+    }
+
+    if (filters.section) {
+      query.andWhere('a.section = :section', { section: filters.section });
+    }
+
+    const results = await query.orderBy('a.dueDate', 'ASC').getMany();
+    console.log('[findAll] Found', results.length, 'assignments');
+    return results;
   }
 
   async findOne(id: number): Promise<TeacherAssignment> {
@@ -201,5 +225,40 @@ export class AssignmentsService {
     submission.status = 'graded';
 
     return this.submissionRepo.save(submission);
+  }
+
+  private async findStudentsByFilters(filters: {
+    program?: string;
+    batch?: string;
+    section?: string;
+  }): Promise<StudentUser[]> {
+    const query = this.studentUserRepo
+      .createQueryBuilder('s')
+      .where('s.status = :status', { status: 'active' });
+
+    if (filters.program) {
+      query.andWhere('s.program = :program', { program: filters.program });
+    }
+    if (filters.batch) {
+      query.andWhere('s.batch = :batch', { batch: filters.batch });
+    }
+    if (filters.section) {
+      query.andWhere('s.section = :section', { section: filters.section });
+    }
+
+    return query.getMany();
+  }
+
+  private validateFilters(
+    program?: string,
+    batch?: string,
+    section?: string,
+  ): void {
+    if (section && !batch) {
+      throw new BadRequestException('Cannot specify section without batch');
+    }
+    if (batch && !program) {
+      throw new BadRequestException('Cannot specify batch without program');
+    }
   }
 }

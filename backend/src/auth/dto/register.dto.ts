@@ -5,6 +5,7 @@ import {
   MinLength,
   IsOptional,
   IsEnum,
+  IsNumber,
 } from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -52,6 +53,7 @@ export class RegisterDto {
   @IsOptional()
   designation?: string;
 
+  @IsNumber()
   @IsOptional()
   departmentId?: number;
 }

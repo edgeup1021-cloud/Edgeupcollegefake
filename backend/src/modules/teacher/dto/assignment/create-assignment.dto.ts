@@ -33,6 +33,26 @@ export class CreateAssignmentDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(100)
+  subject?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  program?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  batch?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  section?: string;
+
+  @IsString()
+  @IsOptional()
   priority?: string;
 
   @IsNumber()

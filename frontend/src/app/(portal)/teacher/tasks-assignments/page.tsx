@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Filter, Edit3, Trash2, Eye, Calendar, Book, ClipboardList, Folder, AlertTriangle, X, Save, Upload, Clock, AlertCircle, Download, FileText, CheckCircle, XCircle, Clock3, User } from "lucide-react";
+import { createAssignment, getAssignments, updateAssignment, deleteAssignment } from '@/services/assignment.service';
+import type { AssignmentType } from '@/types/teacher.types';
+import { PROGRAMS, BATCHES, SECTIONS, SUBJECTS } from '@/config/dropdowns.config';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Types based on screenshot analysis
-type TaskType = "HOMEWORK" | "ASSIGNMENT" | "PROJECT";
+type TaskType = "Assignment" | "Project" | "Homework" | "Lab";
 type Priority = "HIGH" | "MEDIUM" | "LOW";
 type TaskStatus = "DRAFT" | "PUBLISHED" | "COMPLETED";
 
@@ -37,164 +41,50 @@ interface StudentSubmission {
   feedback?: string;
 }
 
-// Mock data based on screenshot
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    type: "HOMEWORK",
-    subject: "Mathematics",
-    title: "Calculus Problem Set - Chapter 5",
-    description: "Complete exercises 1-20 from chapter 5. Show all work and explanations.",
-    dueDate: "2024-12-25",
-    priority: "HIGH",
-    program: "CSE - Computer Science and Engineering",
-    batch: "2023",
-    section: "A",
-    status: "PUBLISHED",
-    createdAt: "2024-12-01"
-  },
-  {
-    id: "2", 
-    type: "ASSIGNMENT",
-    subject: "Physics",
-    title: "Physics Lab Report - Pendulum Experiment",
-    description: "Write a comprehensive lab report including hypothesis, methodology, results, and conclusion.",
-    dueDate: "2024-12-28",
-    priority: "HIGH", 
-    program: "ECE - Electronics and Communication Engineering",
-    batch: "2024",
-    section: "B",
-    status: "PUBLISHED",
-    createdAt: "2024-12-02"
-  },
-  {
-    id: "3",
-    type: "PROJECT",
-    subject: "Chemistry", 
-    title: "Chemistry Research Project",
-    description: "Research and present on organic chemistry applications in daily life.",
-    dueDate: "2025-01-05",
-    priority: "MEDIUM",
-    program: "CHEM - Chemical Engineering",
-    batch: "2022",
-    section: "A", 
-    status: "PUBLISHED",
-    createdAt: "2024-12-01"
-  }
-];
+// Task data comes from API
 
-const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English", "History", "Computer Science"];
+// Type mapping functions
+const mapBackendTypeToFrontend = (type: string): TaskType => {
+  const mapping: Record<string, TaskType> = {
+    'Homework': 'Homework',
+    'Assignment': 'Assignment',
+    'Project': 'Project',
+    'Lab': 'Lab'
+  };
+  return mapping[type] || 'Assignment';
+};
 
-const programs = [
-  "CSE - Computer Science and Engineering",
-  "ECE - Electronics and Communication Engineering", 
-  "EEE - Electrical and Electronics Engineering",
-  "MECH - Mechanical Engineering",
-  "CIVIL - Civil Engineering",
-  "IT - Information Technology",
-  "AI&DS - Artificial Intelligence and Data Science",
-  "CYBER - Cyber Security",
-  "AERO - Aeronautical Engineering",
-  "AUTO - Automobile Engineering",
-  "CHEM - Chemical Engineering",
-  "BIOTECH - Biotechnology",
-  "BME - Biomedical Engineering",
-  "TEXTILE - Textile Engineering",
-  "FOOD - Food Technology",
-  "AGRI - Agricultural Engineering"
-];
+const mapFrontendTypeToBackend = (type: TaskType): AssignmentType => {
+  const mapping: Record<string, AssignmentType> = {
+    'Homework': 'Homework' as AssignmentType,
+    'Assignment': 'Assignment' as AssignmentType,
+    'Project': 'Project' as AssignmentType,
+    'Lab': 'Lab' as AssignmentType
+  };
+  return mapping[type] || ('Assignment' as AssignmentType);
+};
 
-const batches = ["2024", "2023", "2022", "2021", "2020"];
-const sections = ["A", "B", "C", "D", "E"];
+const transformBackendToFrontend = (assignment: any): Task => ({
+  id: assignment.id.toString(),
+  type: mapBackendTypeToFrontend(assignment.type),
+  subject: assignment.subject || '',
+  title: assignment.title,
+  description: assignment.description || '',
+  dueDate: assignment.dueDate.split('T')[0],
+  priority: (assignment.priority || 'MEDIUM') as Priority,
+  program: assignment.program || '',
+  batch: assignment.batch || '',
+  section: assignment.section || '',
+  status: (assignment.status === 'ACTIVE' ? 'PUBLISHED' : 'DRAFT') as TaskStatus,
+  createdAt: assignment.createdAt.split('T')[0],
+});
 
-// Mock student submission data
-const mockSubmissions: StudentSubmission[] = [
-  {
-    id: "sub1",
-    studentId: "s1",
-    studentName: "Alex Johnson",
-    studentEmail: "alex.johnson@student.edu",
-    taskId: "1",
-    status: "SUBMITTED",
-    submittedAt: "2024-12-20T14:30:00Z",
-    fileName: "calculus_homework.pdf",
-    fileSize: "2.5 MB",
-    grade: 85,
-    feedback: "Good work! Small calculation error in problem 15."
-  },
-  {
-    id: "sub2",
-    studentId: "s2",
-    studentName: "Sarah Chen",
-    studentEmail: "sarah.chen@student.edu",
-    taskId: "1",
-    status: "SUBMITTED",
-    submittedAt: "2024-12-19T16:45:00Z",
-    fileName: "math_solutions.pdf",
-    fileSize: "1.8 MB",
-    grade: 92,
-    feedback: "Excellent work! All solutions are correct."
-  },
-  {
-    id: "sub3",
-    studentId: "s3",
-    studentName: "Michael Rodriguez",
-    studentEmail: "michael.r@student.edu",
-    taskId: "1",
-    status: "LATE",
-    submittedAt: "2024-12-26T10:20:00Z",
-    fileName: "homework_chapter5.docx",
-    fileSize: "890 KB"
-  },
-  {
-    id: "sub4",
-    studentId: "s4",
-    studentName: "Emma Wilson",
-    studentEmail: "emma.wilson@student.edu",
-    taskId: "1",
-    status: "NOT_SUBMITTED"
-  },
-  {
-    id: "sub5",
-    studentId: "s5",
-    studentName: "David Park",
-    studentEmail: "david.park@student.edu",
-    taskId: "2",
-    status: "SUBMITTED",
-    submittedAt: "2024-12-27T09:15:00Z",
-    fileName: "pendulum_lab_report.pdf",
-    fileSize: "4.2 MB",
-    grade: 88,
-    feedback: "Great methodology section. Improve conclusion."
-  },
-  {
-    id: "sub6",
-    studentId: "s6",
-    studentName: "Lisa Thompson",
-    studentEmail: "lisa.t@student.edu",
-    taskId: "2",
-    status: "SUBMITTED",
-    submittedAt: "2024-12-26T20:30:00Z",
-    fileName: "physics_experiment.pdf",
-    fileSize: "3.1 MB"
-  },
-  {
-    id: "sub7",
-    studentId: "s7",
-    studentName: "James Brown",
-    studentEmail: "james.brown@student.edu",
-    taskId: "3",
-    status: "SUBMITTED",
-    submittedAt: "2024-12-01T12:45:00Z",
-    fileName: "chemistry_research.pdf",
-    fileSize: "6.8 MB",
-    grade: 95,
-    feedback: "Outstanding research! Very thorough analysis."
-  }
-];
+// Student submission data comes from API
 
 export default function TasksAssignmentsPage() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
@@ -207,7 +97,7 @@ export default function TasksAssignmentsPage() {
 
   // Form state
   const [formData, setFormData] = useState({
-    type: "HOMEWORK" as TaskType,
+    type: "Assignment" as TaskType,
     subject: "",
     title: "",
     description: "",
@@ -218,11 +108,40 @@ export default function TasksAssignmentsPage() {
     section: ""
   });
 
+  // Load assignments on mount
+  useEffect(() => {
+    if (user?.id) {
+      loadAssignments();
+    }
+  }, [user?.id]);
+
+  const loadAssignments = async () => {
+    if (!user?.id) {
+      console.error('No user ID available');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('[loadAssignments] Fetching assignments for user:', user);
+      console.log('[loadAssignments] Query params:', { teacherId: user.id });
+      const data = await getAssignments({ teacherId: user.id });
+      console.log('[loadAssignments] Received', data.length, 'assignments:', data);
+      setTasks(data.map(transformBackendToFrontend));
+    } catch (error) {
+      console.error('Failed to load assignments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getTaskIcon = (type: TaskType) => {
     switch (type) {
-      case "HOMEWORK": return <Book className="w-4 h-4" />;
-      case "ASSIGNMENT": return <ClipboardList className="w-4 h-4" />;
-      case "PROJECT": return <Folder className="w-4 h-4" />;
+      case "Homework": return <Book className="w-4 h-4" />;
+      case "Assignment": return <ClipboardList className="w-4 h-4" />;
+      case "Project": return <Folder className="w-4 h-4" />;
+      case "Lab": return <Folder className="w-4 h-4" />;
+      default: return <ClipboardList className="w-4 h-4" />;
     }
   };
 
@@ -245,7 +164,7 @@ export default function TasksAssignmentsPage() {
   // Reset form
   const resetForm = () => {
     setFormData({
-      type: "HOMEWORK",
+      type: "Assignment",
       subject: "",
       title: "",
       description: "",
@@ -258,30 +177,43 @@ export default function TasksAssignmentsPage() {
   };
 
   // Handle create/edit submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingTask) {
-      // Update existing task
-      const updatedTask: Task = {
-        ...editingTask,
-        ...formData,
-      };
-      setTasks(tasks.map(task => task.id === editingTask.id ? updatedTask : task));
-      setEditingTask(null);
-    } else {
-      // Create new task
-      const newTask: Task = {
-        id: Date.now().toString(),
-        ...formData,
-        status: "PUBLISHED",
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setTasks([...tasks, newTask]);
+
+    if (!user?.id) {
+      alert('User ID not available. Please refresh and try again.');
+      return;
     }
-    
-    resetForm();
-    setShowCreateForm(false);
+
+    try {
+      const payload = {
+        courseOfferingId: 1, // TODO: Get from course dropdown
+        title: formData.title,
+        description: formData.description,
+        dueDate: new Date(formData.dueDate).toISOString(),
+        type: mapFrontendTypeToBackend(formData.type),
+        subject: formData.subject,
+        program: formData.program,
+        batch: formData.batch,
+        section: formData.section,
+        priority: formData.priority,
+        maxMarks: 100,
+      };
+
+      if (editingTask) {
+        await updateAssignment(Number(editingTask.id), payload);
+      } else {
+        await createAssignment(payload, user.id);
+      }
+
+      await loadAssignments();
+      resetForm();
+      setShowCreateForm(false);
+      setEditingTask(null);
+    } catch (error) {
+      console.error('Failed to save assignment:', error);
+      alert('Failed to save assignment. Please try again.');
+    }
   };
 
   // Handle edit
@@ -307,10 +239,16 @@ export default function TasksAssignmentsPage() {
   };
 
   // Confirm delete
-  const confirmDelete = () => {
-    if (deletingTask) {
-      setTasks(tasks.filter(task => task.id !== deletingTask.id));
+  const confirmDelete = async () => {
+    if (!deletingTask) return;
+
+    try {
+      await deleteAssignment(Number(deletingTask.id));
+      await loadAssignments();
       setDeletingTask(null);
+    } catch (error) {
+      console.error('Failed to delete assignment:', error);
+      alert('Failed to delete assignment. Please try again.');
     }
   };
 
@@ -359,8 +297,9 @@ export default function TasksAssignmentsPage() {
   };
 
   // Submissions functions
-  const getSubmissionsForTask = (taskId: string) => {
-    return mockSubmissions.filter(sub => sub.taskId === taskId);
+  const getSubmissionsForTask = (taskId: string): StudentSubmission[] => {
+    // TODO: Fetch submissions from API
+    return [];
   };
 
   const getSubmissionStats = (taskId: string) => {
@@ -412,6 +351,18 @@ export default function TasksAssignmentsPage() {
     return matchesSearch && matchesFilter;
   }) : [];
 
+  // Show loading state while user data is being fetched
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -456,9 +407,9 @@ export default function TasksAssignmentsPage() {
               className="px-2 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
             >
               <option value="ALL">All Types</option>
-              <option value="HOMEWORK">Homework</option>
-              <option value="ASSIGNMENT">Assignment</option>
-              <option value="PROJECT">Project</option>
+              <option value="Homework">Homework</option>
+              <option value="Assignment">Assignment</option>
+              <option value="Project">Project</option>
             </select>
 
             <select
@@ -509,9 +460,9 @@ export default function TasksAssignmentsPage() {
                 className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               >
-                <option value="HOMEWORK">Homework</option>
-                <option value="ASSIGNMENT">Assignment</option>
-                <option value="PROJECT">Project</option>
+                <option value="Homework">Homework</option>
+                <option value="Assignment">Assignment</option>
+                <option value="Project">Project</option>
               </select>
             </div>
 
@@ -527,7 +478,7 @@ export default function TasksAssignmentsPage() {
                 required
               >
                 <option value="">Select Subject</option>
-                {subjects.map(subject => (
+                {SUBJECTS.map(subject => (
                   <option key={subject} value={subject}>{subject}</option>
                 ))}
               </select>
@@ -606,7 +557,7 @@ export default function TasksAssignmentsPage() {
                 required
               >
                 <option value="">Select Program</option>
-                {programs.map(program => (
+                {PROGRAMS.map(program => (
                   <option key={program} value={program}>{program}</option>
                 ))}
               </select>
@@ -624,7 +575,7 @@ export default function TasksAssignmentsPage() {
                 required
               >
                 <option value="">Select Batch</option>
-                {batches.map(batch => (
+                {BATCHES.map(batch => (
                   <option key={batch} value={batch}>{batch}</option>
                 ))}
               </select>
@@ -642,7 +593,7 @@ export default function TasksAssignmentsPage() {
                 required
               >
                 <option value="">Select Section</option>
-                {sections.map(section => (
+                {SECTIONS.map(section => (
                   <option key={section} value={section}>{section}</option>
                 ))}
               </select>
@@ -705,8 +656,8 @@ export default function TasksAssignmentsPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className={`p-1.5 rounded-lg ${
-                    task.type === 'HOMEWORK' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                    : task.type === 'ASSIGNMENT' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                    task.type === 'Homework' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                    : task.type === 'Assignment' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
                     : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
                   }`}>
                     {getTaskIcon(task.type)}
@@ -924,7 +875,7 @@ export default function TasksAssignmentsPage() {
                     Submissions for "{viewingSubmissions.title}"
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {viewingSubmissions.class} • Due: {formatDueDate(viewingSubmissions.dueDate)}
+                    {viewingSubmissions.program} - {viewingSubmissions.batch} - Section {viewingSubmissions.section} • Due: {formatDueDate(viewingSubmissions.dueDate)}
                   </p>
                 </div>
               </div>

@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Search, Filter, Calendar, Clock, AlertTriangle, CheckCircle, FileText, Download, Upload, Eye, Star, BookOpen, Target, AlertCircle, XCircle, Clock3, User } from "lucide-react";
+import { getStudentAssignments, submitAssignment } from '@/services/assignment.service';
+import { SUBJECTS } from '@/config/dropdowns.config';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Types for student assignments
-type TaskType = "HOMEWORK" | "ASSIGNMENT" | "PROJECT";
+type TaskType = "Homework" | "Assignment" | "Project" | "Lab";
 type Priority = "HIGH" | "MEDIUM" | "LOW";
 type SubmissionStatus = "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "LATE" | "GRADED";
 
@@ -37,122 +40,66 @@ interface StudentAssignment {
   };
 }
 
-// Mock student data - would come from auth context
-const currentStudent = {
-  program: "CSE - Computer Science and Engineering",
-  batch: "2023",
-  section: "A"
+// Student data comes from auth context
+
+// Filter options - subjects from centralized config with "All Subjects" option
+const subjects = ["All Subjects", ...SUBJECTS];
+
+// Type mapping functions
+const mapBackendTypeToFrontend = (type: string): TaskType => {
+  const mapping: Record<string, TaskType> = {
+    'Homework': 'Homework',
+    'Assignment': 'Assignment',
+    'Project': 'Project',
+    'Lab': 'Lab'
+  };
+  return mapping[type] || 'Assignment';
 };
 
-// Mock assignments data filtered for current student
-const mockAssignments: StudentAssignment[] = [
-  {
-    id: "1",
-    type: "HOMEWORK",
-    subject: "Mathematics",
-    title: "Calculus Problem Set - Chapter 5",
-    description: "Complete exercises 1-20 from chapter 5. Show all work and explanations for each problem. Focus on integration techniques and applications.",
-    dueDate: "2024-12-25",
-    priority: "HIGH",
-    program: "CSE - Computer Science and Engineering",
-    batch: "2023",
-    section: "A",
-    status: "NOT_STARTED",
-    createdAt: "2024-12-01",
-    maxMarks: 25,
-    attachmentUrl: "/assignments/math-ch5.pdf",
-    attachmentName: "Chapter 5 Problem Set.pdf"
-  },
-  {
-    id: "2",
-    type: "ASSIGNMENT",
-    subject: "Computer Science",
-    title: "Data Structures Implementation",
-    description: "Implement binary search tree with insert, delete, and search operations. Include proper error handling and test cases.",
-    dueDate: "2024-12-20",
-    priority: "HIGH",
-    program: "CSE - Computer Science and Engineering",
-    batch: "2023",
-    section: "A",
-    status: "IN_PROGRESS",
-    createdAt: "2024-12-02",
-    maxMarks: 50,
-    submission: {
-      id: "sub1",
-      submittedAt: "",
-      content: "Working on the implementation...",
-      isLate: false
-    }
-  },
-  {
-    id: "3",
-    type: "PROJECT",
-    subject: "Software Engineering",
-    title: "Web Application Development Project",
-    description: "Develop a full-stack web application using React and Node.js. Include user authentication, database integration, and responsive design.",
-    dueDate: "2025-01-15",
-    priority: "MEDIUM",
-    program: "CSE - Computer Science and Engineering",
-    batch: "2023",
-    section: "A",
-    status: "NOT_STARTED",
-    createdAt: "2024-11-20",
-    maxMarks: 100
-  },
-  {
-    id: "4",
-    type: "ASSIGNMENT",
-    subject: "Physics",
-    title: "Quantum Mechanics Problem Set",
-    description: "Solve problems related to wave-particle duality and uncertainty principle. Submit detailed solutions with explanations.",
-    dueDate: "2024-12-18",
-    priority: "MEDIUM",
-    program: "CSE - Computer Science and Engineering",
-    batch: "2023",
-    section: "A",
-    status: "SUBMITTED",
-    createdAt: "2024-12-05",
-    maxMarks: 30,
-    submission: {
-      id: "sub2",
-      submittedAt: "2024-12-17T10:30:00Z",
-      fileUrl: "/submissions/physics-quantum.pdf",
-      fileName: "quantum_solutions.pdf",
-      fileSize: "2.5 MB",
-      isLate: false
-    }
-  },
-  {
-    id: "5",
-    type: "HOMEWORK",
-    subject: "English",
-    title: "Literature Analysis Essay",
-    description: "Write a 1500-word analysis of Shakespeare's Hamlet. Focus on themes of revenge and madness.",
-    dueDate: "2024-12-15",
-    priority: "LOW",
-    program: "CSE - Computer Science and Engineering",
-    batch: "2023",
-    section: "A",
-    status: "GRADED",
-    createdAt: "2024-11-25",
-    maxMarks: 20,
-    submission: {
-      id: "sub3",
-      submittedAt: "2024-12-14T16:45:00Z",
-      fileUrl: "/submissions/hamlet-analysis.pdf",
-      fileName: "hamlet_analysis.pdf",
-      fileSize: "1.8 MB",
-      grade: 18,
-      feedback: "Excellent analysis of the themes. Well-structured arguments and good use of textual evidence. Minor formatting issues.",
-      isLate: false
-    }
-  }
-];
+const mapStatusToFrontend = (status: string): SubmissionStatus => {
+  const mapping: Record<string, SubmissionStatus> = {
+    'pending': 'NOT_STARTED',
+    'submitted': 'SUBMITTED',
+    'graded': 'GRADED'
+  };
+  return mapping[status] || 'NOT_STARTED';
+};
 
-const subjects = ["All Subjects", "Mathematics", "Physics", "Chemistry", "Computer Science", "English", "Software Engineering"];
+const transformBackendToFrontend = (sub: any): StudentAssignment => {
+  const assignment = sub.assignment;
+  return {
+    id: assignment?.id?.toString() || sub.assignmentId.toString(),
+    type: mapBackendTypeToFrontend(assignment?.type || 'Assignment'),
+    subject: assignment?.subject || 'Unknown',
+    title: assignment?.title || '',
+    description: assignment?.description || '',
+    dueDate: assignment?.dueDate?.split('T')[0] || '',
+    priority: (assignment?.priority || 'MEDIUM') as Priority,
+    program: assignment?.program || '',
+    batch: assignment?.batch || '',
+    section: assignment?.section || '',
+    status: mapStatusToFrontend(sub.status),
+    createdAt: sub.createdAt.split('T')[0],
+    maxMarks: assignment?.maxMarks || 100,
+    attachmentUrl: assignment?.fileUrl,
+    attachmentName: assignment?.fileUrl?.split('/').pop(),
+    submission: sub.status !== 'pending' ? {
+      id: sub.id.toString(),
+      submittedAt: sub.submittedAt?.toString() || '',
+      content: sub.notes || undefined,
+      fileUrl: sub.fileUrl || undefined,
+      fileName: sub.fileUrl?.split('/').pop(),
+      grade: sub.grade || undefined,
+      feedback: sub.feedback || undefined,
+      isLate: false,
+    } : undefined,
+  };
+};
 
 export default function StudentAssignmentsPage() {
-  const [assignments, setAssignments] = useState<StudentAssignment[]>(mockAssignments);
+  const { user } = useAuth();
+  const [assignments, setAssignments] = useState<StudentAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<SubmissionStatus | "ALL">("ALL");
   const [filterSubject, setFilterSubject] = useState("All Subjects");
@@ -160,6 +107,30 @@ export default function StudentAssignmentsPage() {
   const [sortBy, setSortBy] = useState<"dueDate" | "status" | "subject">("dueDate");
   const [viewingAssignment, setViewingAssignment] = useState<StudentAssignment | null>(null);
   const [submissionText, setSubmissionText] = useState("");
+
+  // Load assignments on mount
+  useEffect(() => {
+    if (user?.id) {
+      loadAssignments();
+    }
+  }, [user?.id]);
+
+  const loadAssignments = async () => {
+    if (!user?.id) {
+      console.error('No user ID available');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const data = await getStudentAssignments(user.id);
+      setAssignments(data.map(transformBackendToFrontend));
+    } catch (error) {
+      console.error('Failed to load assignments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter and sort assignments
   const filteredAssignments = assignments
@@ -244,34 +215,55 @@ export default function StudentAssignmentsPage() {
 
   const getTypeIcon = (type: TaskType) => {
     switch (type) {
-      case "HOMEWORK":
+      case "Homework":
         return <BookOpen className="w-4 h-4" />;
-      case "ASSIGNMENT":
+      case "Assignment":
         return <FileText className="w-4 h-4" />;
-      case "PROJECT":
+      case "Project":
         return <Target className="w-4 h-4" />;
+      case "Lab":
+        return <Target className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
     }
   };
 
-  const handleSubmit = (assignmentId: string) => {
-    // Mock submission logic
-    setAssignments(prev => prev.map(assignment => 
-      assignment.id === assignmentId 
-        ? { 
-            ...assignment, 
-            status: "SUBMITTED" as SubmissionStatus,
-            submission: {
-              id: `sub_${Date.now()}`,
-              submittedAt: new Date().toISOString(),
-              content: submissionText,
-              isLate: isOverdue(assignment.dueDate)
-            }
-          }
-        : assignment
-    ));
-    setSubmissionText("");
-    setViewingAssignment(null);
+  const handleSubmit = async (assignmentId: string) => {
+    if (!user?.id) {
+      console.error('No user ID available');
+      alert('You must be logged in to submit assignments.');
+      return;
+    }
+
+    try {
+      const payload = {
+        assignmentId: Number(assignmentId),
+        notes: submissionText,
+        // fileUrl will be added when S3 integration is done
+      };
+
+      await submitAssignment(user.id, payload);
+      await loadAssignments(); // Reload to get updated data
+
+      setSubmissionText("");
+      setViewingAssignment(null);
+    } catch (error) {
+      console.error('Failed to submit assignment:', error);
+      alert('Failed to submit assignment. Please try again.');
+    }
   };
+
+  // Show loading state while user data is being fetched
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -282,7 +274,7 @@ export default function StudentAssignmentsPage() {
             Assignments & Tasks
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            View and submit your assignments - {currentStudent.program}, Batch {currentStudent.batch}, Section {currentStudent.section}
+            View and submit your assignments
           </p>
         </div>
         <div className="text-right text-sm text-gray-500 dark:text-gray-400">
@@ -375,7 +367,7 @@ export default function StudentAssignmentsPage() {
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-md ${assignment.type === "PROJECT" ? "bg-purple-100 text-purple-600" : assignment.type === "ASSIGNMENT" ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600"}`}>
+                  <div className={`p-1.5 rounded-md ${assignment.type === "Project" ? "bg-purple-100 text-purple-600" : assignment.type === "Assignment" ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600"}`}>
                     {getTypeIcon(assignment.type)}
                   </div>
                   <div>
