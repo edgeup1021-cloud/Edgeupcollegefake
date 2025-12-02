@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 02, 2025 at 04:40 AM
+-- Generation Time: Dec 02, 2025 at 12:24 PM
 -- Server version: 8.0.44-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -296,13 +296,31 @@ CREATE TABLE `student_assignment_submissions` (
   `id` bigint UNSIGNED NOT NULL,
   `assignment_id` bigint UNSIGNED NOT NULL,
   `student_id` bigint UNSIGNED NOT NULL,
+  `status` enum('pending','submitted','graded') DEFAULT 'pending',
   `submitted_at` datetime DEFAULT NULL,
   `file_url` varchar(1024) DEFAULT NULL,
+  `notes` text,
   `grade` decimal(6,2) DEFAULT NULL,
   `feedback` text,
   `graded_by_teacher_id` bigint UNSIGNED DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `student_assignment_submissions`
+--
+
+INSERT INTO `student_assignment_submissions` (`id`, `assignment_id`, `student_id`, `status`, `submitted_at`, `file_url`, `notes`, `grade`, `feedback`, `graded_by_teacher_id`, `created_at`, `updated_at`) VALUES
+(1, 4, 3, 'graded', '2025-12-02 12:12:41', 'https://s3.example.com/submissions/student3-calculus-chapter5.pdf', 'I have completed all 20 exercises. Please review my work.', 48.00, 'Updated grade after review. Excellent problem-solving approach!', 1, '2025-12-02 06:37:58', '2025-12-02 06:53:39'),
+(2, 4, 4, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 06:37:58', '2025-12-02 06:37:58'),
+(3, 5, 6, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 11:14:36', '2025-12-02 11:14:36'),
+(4, 6, 6, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 11:35:11', '2025-12-02 11:35:11'),
+(5, 5, 1, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 11:43:06', '2025-12-02 11:43:06'),
+(6, 6, 1, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 11:43:06', '2025-12-02 11:43:06'),
+(8, 8, 8, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 11:59:05', '2025-12-02 11:59:05'),
+(9, 9, 8, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 12:03:41', '2025-12-02 12:03:41'),
+(10, 10, 8, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-02 12:09:34', '2025-12-02 12:09:34');
 
 -- --------------------------------------------------------
 
@@ -348,6 +366,15 @@ CREATE TABLE `student_calendar_events` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `student_calendar_events`
+--
+
+INSERT INTO `student_calendar_events` (`id`, `student_id`, `title`, `event_type`, `event_date`, `event_time`, `subject`, `description`, `color`, `created_at`, `updated_at`) VALUES
+(5, 8, 'Test', 'assignment', '2025-05-12', NULL, 'Mathematics', 'test', '#FF6B6B', '2025-12-02 11:59:05', '2025-12-02 11:59:05'),
+(6, 8, 'gsdgb', 'assignment', '2025-01-01', NULL, 'Mathematics', 'dasg', '#FF6B6B', '2025-12-02 12:03:41', '2025-12-02 12:03:41'),
+(7, 8, 'aaaa', 'assignment', '2026-02-05', NULL, 'Mathematics', 'aaa', '#FF6B6B', '2025-12-02 12:09:34', '2025-12-02 12:09:34');
 
 -- --------------------------------------------------------
 
@@ -395,6 +422,14 @@ CREATE TABLE `student_enrollments` (
   `enrolled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `status` enum('active','dropped','completed') DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `student_enrollments`
+--
+
+INSERT INTO `student_enrollments` (`id`, `student_id`, `course_offering_id`, `enrolled_at`, `status`) VALUES
+(1, 3, 1, '2025-12-02 06:33:04', 'active'),
+(2, 4, 1, '2025-12-02 06:33:04', 'active');
 
 -- --------------------------------------------------------
 
@@ -537,10 +572,7 @@ CREATE TABLE `student_users` (
 --
 
 INSERT INTO `student_users` (`id`, `admission_no`, `first_name`, `last_name`, `email`, `phone`, `password_hash`, `program`, `batch`, `campus_id`, `status`, `profile_image`, `created_at`, `updated_at`, `section`) VALUES
-(1, 'STU001', 'John', 'Doe', 'john@edgeup.edu', NULL, NULL, 'Computer Science', '2024', NULL, 'active', NULL, '2025-11-28 10:39:40', '2025-11-28 10:39:40', NULL),
-(2, 'STU2025001', 'John', 'Doe', 'student@example.com', NULL, '$2b$12$FTC6.sDPTcC9gauooaQR0uWQw8WWhBUZFVZnCxLKV8IGtSPFlLIqu', 'Computer Science', '2025', NULL, 'active', NULL, '2025-11-28 13:03:39', '2025-11-28 13:03:39', NULL),
-(3, 'ADM18122', 'John', 'Doe', 'student_test_20055@test.com', NULL, '$2b$12$wzSyW9RgzMlGF/A/mmIsKu.ag1zf17Oc5JB9KTh7y.dpQfbcai7Pe', NULL, NULL, NULL, 'active', NULL, '2025-11-29 05:32:24', '2025-11-29 05:32:24', NULL),
-(4, 'ADM-2025-003', 'Mohamed', 'Sameer', 'sameer@gmail.com', NULL, '$2b$12$0ftEljMixL.AFoUP/LwEpeBOqM7CjHwyeWwLvU4NRxZaEzBd9a0Z6', NULL, '2025', NULL, 'active', NULL, '2025-11-29 07:05:34', '2025-11-29 07:05:34', NULL);
+(8, 'ADM-2-24-001', 'Muhammed', 'Aakif', 'aakif@gmail.com', NULL, '$2b$12$fr968kdoQR1EfAhjCIHRG.n6mBSAuiP9xxX15sosm6dXtZqHee7JO', 'CSE - Computer Science and Engineering', '2024', NULL, 'active', NULL, '2025-12-02 11:57:49', '2025-12-02 11:57:49', 'A');
 
 -- --------------------------------------------------------
 
@@ -590,11 +622,35 @@ CREATE TABLE `teacher_assignments` (
   `description` text,
   `due_date` datetime NOT NULL,
   `type` enum('Assignment','Project','Homework','Lab') DEFAULT 'Assignment',
+  `subject` varchar(100) DEFAULT NULL,
+  `program` varchar(128) DEFAULT NULL,
+  `batch` varchar(32) DEFAULT NULL,
+  `section` varchar(32) DEFAULT NULL,
   `weight` decimal(5,2) DEFAULT '0.00',
   `max_marks` int DEFAULT '100',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `priority` varchar(20) DEFAULT NULL,
+  `file_url` varchar(1024) DEFAULT NULL,
+  `created_by` bigint UNSIGNED DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'ACTIVE'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `teacher_assignments`
+--
+
+INSERT INTO `teacher_assignments` (`id`, `course_offering_id`, `title`, `description`, `due_date`, `type`, `subject`, `program`, `batch`, `section`, `weight`, `max_marks`, `created_at`, `updated_at`, `priority`, `file_url`, `created_by`, `status`) VALUES
+(1, 1, 'Calculus Problem Set - Chapter 5', 'Complete exercises 1-20 from chapter 5. Show all work and explanations.', '2024-12-25 23:59:59', 'Assignment', NULL, NULL, NULL, NULL, 15.00, 50, '2025-12-02 06:34:00', '2025-12-02 11:34:37', 'HIGH', NULL, 1, 'ARCHIVED'),
+(2, 1, 'Calculus Problem Set - Chapter 5', 'Complete exercises 1-20 from chapter 5. Show all work and explanations.', '2024-12-25 23:59:59', 'Assignment', NULL, NULL, NULL, NULL, 15.00, 50, '2025-12-02 06:36:17', '2025-12-02 06:36:17', 'HIGH', NULL, 1, 'ACTIVE'),
+(3, 1, 'Calculus Problem Set - Chapter 5', 'Complete exercises 1-20 from chapter 5. Show all work and explanations.', '2024-12-25 23:59:59', 'Assignment', NULL, NULL, NULL, NULL, 15.00, 50, '2025-12-02 06:37:19', '2025-12-02 06:37:19', 'HIGH', NULL, 1, 'ACTIVE'),
+(4, 1, 'Calculus Problem Set - Chapter 5', 'Complete exercises 1-20 from chapter 5. Show all work and explanations.', '2024-12-25 23:59:59', 'Assignment', NULL, NULL, NULL, NULL, 15.00, 50, '2025-12-02 06:37:58', '2025-12-02 06:37:58', 'HIGH', NULL, 1, 'ACTIVE'),
+(5, 1, 'Test', 'test', '2025-05-12 05:30:00', 'Assignment', 'Mathematics', 'CSE - Computer Science and Engineering', '2024', 'A', 0.00, 100, '2025-12-02 11:14:36', '2025-12-02 11:14:36', 'MEDIUM', NULL, 1, 'ACTIVE'),
+(6, 1, 'test', 'test', '2025-05-12 05:30:00', 'Assignment', 'Mathematics', 'CSE - Computer Science and Engineering', '2024', 'A', 0.00, 100, '2025-12-02 11:35:11', '2025-12-02 11:35:11', 'MEDIUM', NULL, 1, 'ACTIVE'),
+(7, 1, 'SDAD', 'SDA', '2025-05-12 05:30:00', 'Assignment', 'Mathematics', 'CSE - Computer Science and Engineering', '2023', 'A', 0.00, 100, '2025-12-02 11:38:45', '2025-12-02 11:38:45', 'MEDIUM', NULL, 1, 'ACTIVE'),
+(8, 1, 'Test', 'test', '2025-05-12 05:30:00', 'Assignment', 'Mathematics', 'CSE - Computer Science and Engineering', '2024', 'A', 0.00, 100, '2025-12-02 11:59:05', '2025-12-02 11:59:05', 'MEDIUM', NULL, 1, 'ACTIVE'),
+(9, 1, 'gsdgb', 'dasg', '2025-01-01 05:30:00', 'Assignment', 'Mathematics', 'CSE - Computer Science and Engineering', '2024', 'A', 0.00, 100, '2025-12-02 12:03:41', '2025-12-02 12:03:41', 'MEDIUM', NULL, 1, 'ACTIVE'),
+(10, 1, 'aaaa', 'aaa', '2026-02-05 05:30:00', 'Assignment', 'Mathematics', 'CSE - Computer Science and Engineering', '2024', 'A', 0.00, 100, '2025-12-02 12:09:34', '2025-12-02 12:09:34', 'MEDIUM', NULL, 3, 'ACTIVE');
 
 -- --------------------------------------------------------
 
@@ -631,6 +687,13 @@ CREATE TABLE `teacher_courses` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `teacher_courses`
+--
+
+INSERT INTO `teacher_courses` (`id`, `department_id`, `code`, `title`, `syllabus_link`, `credits`, `created_by_teacher_id`, `created_at`, `updated_at`) VALUES
+(1, NULL, 'CS101', 'Introduction to Computer Science', NULL, 3, NULL, '2025-12-02 06:33:04', '2025-12-02 06:33:04');
+
 -- --------------------------------------------------------
 
 --
@@ -649,6 +712,13 @@ CREATE TABLE `teacher_course_offerings` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `teacher_course_offerings`
+--
+
+INSERT INTO `teacher_course_offerings` (`id`, `course_id`, `teacher_id`, `semester`, `year`, `section`, `campus_id`, `max_students`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 'Fall', 2024, 'A', NULL, 30, '2025-12-02 06:33:04', '2025-12-02 06:33:04');
 
 -- --------------------------------------------------------
 
@@ -787,6 +857,13 @@ CREATE TABLE `teacher_users` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `teacher_users`
+--
+
+INSERT INTO `teacher_users` (`id`, `first_name`, `last_name`, `email`, `phone`, `designation`, `department_id`, `profile_image`, `password_hash`, `is_active`, `created_at`, `updated_at`) VALUES
+(3, 'Mohamed', 'Sameer', 'sameer@gmail.com', NULL, 'Professor', NULL, NULL, '$2b$12$B6h9wHj9s10NdJHNHmWflO/xhX/kAjqtnPkh/ODOEofk6cRNovobW', 1, '2025-12-02 11:58:28', '2025-12-02 11:58:28');
 
 --
 -- Indexes for dumped tables
@@ -1028,7 +1105,8 @@ ALTER TABLE `student_study_sessions`
 ALTER TABLE `student_users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `admission_no` (`admission_no`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `idx_student_lookup` (`program`,`batch`,`section`,`status`);
 
 --
 -- Indexes for table `student_wellness_logs`
@@ -1052,7 +1130,9 @@ ALTER TABLE `teacher_assessments`
 ALTER TABLE `teacher_assignments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_course_offering` (`course_offering_id`),
-  ADD KEY `idx_due` (`due_date`);
+  ADD KEY `idx_due` (`due_date`),
+  ADD KEY `idx_assignment_filters` (`program`,`batch`,`section`,`status`),
+  ADD KEY `idx_assignment_subject` (`subject`);
 
 --
 -- Indexes for table `teacher_class_sessions`
@@ -1250,7 +1330,7 @@ ALTER TABLE `student_assessments`
 -- AUTO_INCREMENT for table `student_assignment_submissions`
 --
 ALTER TABLE `student_assignment_submissions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `student_attendance`
@@ -1262,7 +1342,7 @@ ALTER TABLE `student_attendance`
 -- AUTO_INCREMENT for table `student_calendar_events`
 --
 ALTER TABLE `student_calendar_events`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `student_career_applications`
@@ -1280,7 +1360,7 @@ ALTER TABLE `student_documents`
 -- AUTO_INCREMENT for table `student_enrollments`
 --
 ALTER TABLE `student_enrollments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `student_grades`
@@ -1328,7 +1408,7 @@ ALTER TABLE `student_study_sessions`
 -- AUTO_INCREMENT for table `student_users`
 --
 ALTER TABLE `student_users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_wellness_logs`
@@ -1346,7 +1426,7 @@ ALTER TABLE `teacher_assessments`
 -- AUTO_INCREMENT for table `teacher_assignments`
 --
 ALTER TABLE `teacher_assignments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `teacher_class_sessions`
@@ -1358,13 +1438,13 @@ ALTER TABLE `teacher_class_sessions`
 -- AUTO_INCREMENT for table `teacher_courses`
 --
 ALTER TABLE `teacher_courses`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `teacher_course_offerings`
 --
 ALTER TABLE `teacher_course_offerings`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `teacher_grades`
@@ -1418,7 +1498,7 @@ ALTER TABLE `teacher_submissions`
 -- AUTO_INCREMENT for table `teacher_users`
 --
 ALTER TABLE `teacher_users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables
