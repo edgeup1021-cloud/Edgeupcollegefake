@@ -17,16 +17,10 @@ import {
   Moon,
   Menu,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+import CompactDropdown from "@/components/ui/compact-dropdown";
 import UserMenu from "./UserMenu";
 
 const classroomItems = [
@@ -41,6 +35,12 @@ const classroomItems = [
     href: "/teacher/smart-assessment-suite",
     icon: ClipboardCheck,
     description: "Create and grade assessments with AI",
+  },
+  {
+    label: "Tasks & Assignments",
+    href: "/teacher/tasks-assignments",
+    icon: ClipboardList,
+    description: "Create and manage student assignments",
   },
 ];
 
@@ -76,113 +76,68 @@ export default function TopNavbar() {
             </Link>
 
             {/* Center: Navigation (Desktop) */}
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                {/* Overview Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/teacher/overview"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isOverviewActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                      Overview
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+            <div className="hidden md:flex items-center space-x-1">
+              {/* Overview Link */}
+              <Link
+                href="/teacher/overview"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isOverviewActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Overview
+              </Link>
 
-                {/* Classroom Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-800">
-                    Classroom
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-1 p-2">
-                      {classroomItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={item.href}
-                                className="flex items-start gap-3 rounded-lg p-3 hover:bg-brand-light/50 dark:hover:bg-brand-primary/10 transition-colors"
-                              >
-                                <div className="p-2 rounded-lg bg-brand-primary/10 text-brand-primary">
-                                  <Icon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {item.label}
-                                  </div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {item.description}
-                                  </p>
-                                </div>
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              {/* Classroom Dropdown */}
+              <CompactDropdown
+                items={classroomItems}
+                trigger="Classroom"
+                themeColor="blue"
+                columns={1}
+                width="280px"
+              />
 
-                {/* Curriculum Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/teacher/content-curriculum"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isCurriculumActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      Curriculum
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+              {/* Curriculum Link */}
+              <Link
+                href="/teacher/content-curriculum"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isCurriculumActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                Curriculum
+              </Link>
 
-                {/* Students Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/teacher/student-development"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isStudentsActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      Students
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+              {/* Students Link */}
+              <Link
+                href="/teacher/student-development"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isStudentsActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <GraduationCap className="w-4 h-4" />
+                Students
+              </Link>
 
-                {/* Growth Link */}
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/teacher/professional-learning"
-                      className={`inline-flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        isGrowthActive
-                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      Growth
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+              {/* Growth Link */}
+              <Link
+                href="/teacher/professional-learning"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  isGrowthActive
+                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Growth
+              </Link>
+            </div>
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">

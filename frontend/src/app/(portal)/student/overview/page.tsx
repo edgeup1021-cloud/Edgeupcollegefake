@@ -6,7 +6,8 @@ import StatCard from "@/components/common/cards/StatCard";
 import QuickAccessCard from "@/components/common/cards/QuickAccessCard";
 import ScheduleCard from "@/components/common/cards/ScheduleCard";
 import DeadlinesCard from "@/components/common/cards/DeadlinesCard";
-import { useStudents } from "@/hooks/student";
+import { useAuth } from "@/hooks/useAuth";
+import { useStudentDashboard } from "@/hooks/student";
 import type { StudentDashboardScheduleItem, StudentDashboardDeadline } from "@/types/student.types";
 
 // Mock data - replace with real data from API
