@@ -17,6 +17,7 @@ import {
   Moon,
   Menu,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import {
@@ -41,6 +42,12 @@ const classroomItems = [
     href: "/teacher/smart-assessment-suite",
     icon: ClipboardCheck,
     description: "Create and grade assessments with AI",
+  },
+  {
+    label: "Tasks & Assignments",
+    href: "/teacher/tasks-assignments",
+    icon: ClipboardList,
+    description: "Create and manage student assignments",
   },
 ];
 
