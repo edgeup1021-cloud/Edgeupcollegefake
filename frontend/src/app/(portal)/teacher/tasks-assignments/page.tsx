@@ -16,7 +16,9 @@ interface Task {
   description: string;
   dueDate: string;
   priority: Priority;
-  class: string;
+  program: string;
+  batch: string;
+  section: string;
   status: TaskStatus;
   createdAt: string;
 }
@@ -45,7 +47,9 @@ const mockTasks: Task[] = [
     description: "Complete exercises 1-20 from chapter 5. Show all work and explanations.",
     dueDate: "2024-12-25",
     priority: "HIGH",
-    class: "Math 101 - Section A",
+    program: "CSE - Computer Science and Engineering",
+    batch: "2023",
+    section: "A",
     status: "PUBLISHED",
     createdAt: "2024-12-01"
   },
@@ -57,7 +61,9 @@ const mockTasks: Task[] = [
     description: "Write a comprehensive lab report including hypothesis, methodology, results, and conclusion.",
     dueDate: "2024-12-28",
     priority: "HIGH", 
-    class: "Physics 201 - Section B",
+    program: "ECE - Electronics and Communication Engineering",
+    batch: "2024",
+    section: "B",
     status: "PUBLISHED",
     createdAt: "2024-12-02"
   },
@@ -69,14 +75,37 @@ const mockTasks: Task[] = [
     description: "Research and present on organic chemistry applications in daily life.",
     dueDate: "2025-01-05",
     priority: "MEDIUM",
-    class: "Chemistry 301 - Section A", 
+    program: "CHEM - Chemical Engineering",
+    batch: "2022",
+    section: "A", 
     status: "PUBLISHED",
     createdAt: "2024-12-01"
   }
 ];
 
 const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English", "History", "Computer Science"];
-const classes = ["Math 101 - Section A", "Physics 201 - Section B", "Chemistry 301 - Section A", "Biology 101 - Section C"];
+
+const programs = [
+  "CSE - Computer Science and Engineering",
+  "ECE - Electronics and Communication Engineering", 
+  "EEE - Electrical and Electronics Engineering",
+  "MECH - Mechanical Engineering",
+  "CIVIL - Civil Engineering",
+  "IT - Information Technology",
+  "AI&DS - Artificial Intelligence and Data Science",
+  "CYBER - Cyber Security",
+  "AERO - Aeronautical Engineering",
+  "AUTO - Automobile Engineering",
+  "CHEM - Chemical Engineering",
+  "BIOTECH - Biotechnology",
+  "BME - Biomedical Engineering",
+  "TEXTILE - Textile Engineering",
+  "FOOD - Food Technology",
+  "AGRI - Agricultural Engineering"
+];
+
+const batches = ["2024", "2023", "2022", "2021", "2020"];
+const sections = ["A", "B", "C", "D", "E"];
 
 // Mock student submission data
 const mockSubmissions: StudentSubmission[] = [
@@ -184,7 +213,9 @@ export default function TasksAssignmentsPage() {
     description: "",
     dueDate: "",
     priority: "MEDIUM" as Priority,
-    class: ""
+    program: "",
+    batch: "",
+    section: ""
   });
 
   const getTaskIcon = (type: TaskType) => {
@@ -220,7 +251,9 @@ export default function TasksAssignmentsPage() {
       description: "",
       dueDate: "",
       priority: "MEDIUM",
-      class: ""
+      program: "",
+      batch: "",
+      section: ""
     });
   };
 
@@ -261,7 +294,9 @@ export default function TasksAssignmentsPage() {
       description: task.description,
       dueDate: task.dueDate,
       priority: task.priority,
-      class: task.class
+      program: task.program || "",
+      batch: task.batch || "",
+      section: task.section || ""
     });
     setShowCreateForm(true);
   };
@@ -559,20 +594,56 @@ export default function TasksAssignmentsPage() {
               </select>
             </div>
 
-            {/* Class */}
-            <div className="lg:col-span-2">
+            {/* Program */}
+            <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Assign to Class
+                Program
               </label>
               <select
-                value={formData.class}
-                onChange={(e) => setFormData({...formData, class: e.target.value})}
+                value={formData.program}
+                onChange={(e) => setFormData({...formData, program: e.target.value})}
                 className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
                 required
               >
-                <option value="">Select Class</option>
-                {classes.map(cls => (
-                  <option key={cls} value={cls}>{cls}</option>
+                <option value="">Select Program</option>
+                {programs.map(program => (
+                  <option key={program} value={program}>{program}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Batch */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Batch
+              </label>
+              <select
+                value={formData.batch}
+                onChange={(e) => setFormData({...formData, batch: e.target.value})}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                required
+              >
+                <option value="">Select Batch</option>
+                {batches.map(batch => (
+                  <option key={batch} value={batch}>{batch}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Section */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Section
+              </label>
+              <select
+                value={formData.section}
+                onChange={(e) => setFormData({...formData, section: e.target.value})}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
+                required
+              >
+                <option value="">Select Section</option>
+                {sections.map(section => (
+                  <option key={section} value={section}>{section}</option>
                 ))}
               </select>
             </div>
@@ -719,12 +790,12 @@ export default function TasksAssignmentsPage() {
                 </div>
               </div>
 
-              {/* Class & Status */}
+              {/* Program, Batch, Section & Status */}
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-600">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 bg-brand-primary rounded-full"></div>
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                    {task.class}
+                    {task.program.split(' - ')[0]} • {task.batch} • Sec {task.section}
                   </span>
                 </div>
                 <span className={`px-2 py-1 text-xs font-bold rounded-full ${getStatusColor(task.status)} border border-current`}>
@@ -812,7 +883,7 @@ export default function TasksAssignmentsPage() {
                 <strong>Type:</strong> {deletingTask.type} • <strong>Subject:</strong> {deletingTask.subject}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                <strong>Class:</strong> {deletingTask.class}
+                <strong>Program:</strong> {deletingTask.program.split(' - ')[0]} • <strong>Batch:</strong> {deletingTask.batch} • <strong>Section:</strong> {deletingTask.section}
               </p>
             </div>
 
