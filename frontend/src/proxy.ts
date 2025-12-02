@@ -22,7 +22,7 @@ function getRoleFromPath(path: string): string | null {
   return null;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check for access token in cookies (for SSR) or we'll rely on client-side check
