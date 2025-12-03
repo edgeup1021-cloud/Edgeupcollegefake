@@ -21,9 +21,9 @@ export default function AttendancePage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="apply-leave">Apply Leave</TabsTrigger>
+          {/* <TabsTrigger value="apply-leave">Apply Leave</TabsTrigger> */}
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
