@@ -62,8 +62,12 @@ export function AddResourceDialog({ open, onOpenChange, onSuccess }: AddResource
     setError(null);
 
     try {
+      // Extract filename from URL
+      const fileName = data.fileUrl.split('/').pop() || 'resource';
+
       await addTeacherResource(user.id, {
         ...data,
+        fileName,
         category: data.category as ResourceCategory,
         thumbnailUrl: data.thumbnailUrl || undefined,
         pages: data.pages || undefined,
@@ -95,14 +99,13 @@ export function AddResourceDialog({ open, onOpenChange, onSuccess }: AddResource
   ];
 
   const categories: ResourceCategory[] = [
-    "Computer Science",
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "Engineering",
-    "Business",
-    "Arts",
+    "Lecture Notes",
+    "Textbooks",
+    "Research Papers",
+    "Lab Manuals",
+    "Past Papers",
+    "Reference Materials",
+    "Study Guides",
     "Other",
   ];
 

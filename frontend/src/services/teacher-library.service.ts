@@ -2,7 +2,7 @@ import { api } from './api.client';
 import type { Resource, ResourceType, ResourceCategory } from '@/types/digital-library.types';
 
 // Feature flag for mock data
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // Mock teacher resources
 let mockTeacherResources: Resource[] = [];
@@ -30,7 +30,7 @@ export async function getTeacherResources(teacherId: number): Promise<Resource[]
     return [...mockTeacherResources].reverse(); // Most recent first
   }
 
-  return api.get(`/teacher/${teacherId}/library/resources`);
+  return api.get(`/library/teacher/resources?uploadedBy=${teacherId}`);
 }
 
 /**
@@ -56,14 +56,7 @@ export async function addTeacherResource(
     return newResource;
   }
 
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined) {
-      formData.append(key, value.toString());
-    }
-  });
-
-  return api.post(`/teacher/${teacherId}/library/resources`, formData);
+  return api.post(`/library/teacher/upload?teacherId=${teacherId}`, data);
 }
 
 /**
@@ -79,7 +72,7 @@ export async function deleteTeacherResource(
     return;
   }
 
-  return api.delete(`/teacher/${teacherId}/library/resources/${resourceId}`);
+  return api.delete(`/library/teacher/resources/${resourceId}?teacherId=${teacherId}`);
 }
 
 /**
@@ -104,5 +97,5 @@ export async function updateTeacherResource(
     throw new Error('Resource not found');
   }
 
-  return api.put(`/teacher/${teacherId}/library/resources/${resourceId}`, data);
+  return api.patch(`/library/teacher/resources/${resourceId}?teacherId=${teacherId}`, data);
 }

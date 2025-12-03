@@ -1,5 +1,5 @@
 export type ResourceType = "book" | "paper" | "video" | "article" | "presentation" | "document";
-export type ResourceCategory = "Computer Science" | "Mathematics" | "Physics" | "Chemistry" | "Biology" | "Engineering" | "Business" | "Arts" | "Other";
+export type ResourceCategory = "Lecture Notes" | "Textbooks" | "Research Papers" | "Lab Manuals" | "Past Papers" | "Reference Materials" | "Study Guides" | "Other";
 
 export interface Resource {
   id: number;

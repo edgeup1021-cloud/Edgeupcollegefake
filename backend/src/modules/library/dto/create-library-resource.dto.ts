@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsUrl,
   IsNumber,
+  IsDateString,
   MinLength,
   MaxLength,
 } from 'class-validator';
@@ -21,6 +22,16 @@ export class CreateLibraryResourceDto {
   @IsOptional()
   description?: string;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  author?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  type?: string;
+
   @IsEnum(LibraryResourceCategory)
   category: LibraryResourceCategory;
 
@@ -32,14 +43,34 @@ export class CreateLibraryResourceDto {
   @MaxLength(255)
   fileName: string;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  fileSize?: number;
+  @MaxLength(50)
+  fileSize?: string;
 
   @IsString()
   @IsOptional()
   @MaxLength(100)
   fileType?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsUrl()
+  @MaxLength(1024)
+  thumbnailUrl?: string;
+
+  @IsNumber()
+  @IsOptional()
+  pages?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  duration?: string;
+
+  @IsDateString()
+  @IsOptional()
+  publishedDate?: string;
 
   @IsString()
   @IsOptional()

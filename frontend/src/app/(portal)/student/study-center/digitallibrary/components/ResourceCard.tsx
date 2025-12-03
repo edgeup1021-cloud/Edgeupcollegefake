@@ -19,7 +19,9 @@ export function ResourceCard({ resource, onRefresh, showAccessDate, accessDate }
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type?: string) => {
+    if (!type) return <FileImage className="w-5 h-5" />;
+
     switch (type) {
       case "book":
         return <BookOpen className="w-5 h-5" />;
@@ -37,7 +39,9 @@ export function ResourceCard({ resource, onRefresh, showAccessDate, accessDate }
     }
   };
 
-  const getTypeBadge = (type: string) => {
+  const getTypeBadge = (type?: string) => {
+    if (!type) return null;
+
     const colors: Record<string, string> = {
       book: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
       paper: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",

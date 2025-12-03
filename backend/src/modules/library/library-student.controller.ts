@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Delete,
   Param,
   ParseIntPipe,
   Query,
@@ -29,5 +31,65 @@ export class LibraryStudentController {
   @Public()
   getCategories() {
     return this.libraryStudentService.getCategories();
+  }
+
+  @Get(':studentId/statistics')
+  @Public()
+  getStatistics(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.libraryStudentService.getStatistics(studentId);
+  }
+
+  @Get(':studentId/bookmarks')
+  @Public()
+  getBookmarks(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.libraryStudentService.getBookmarks(studentId);
+  }
+
+  @Post(':studentId/bookmarks/:resourceId')
+  @Public()
+  addBookmark(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+  ) {
+    return this.libraryStudentService.addBookmark(studentId, resourceId);
+  }
+
+  @Delete(':studentId/bookmarks/:resourceId')
+  @Public()
+  removeBookmark(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+  ) {
+    return this.libraryStudentService.removeBookmark(studentId, resourceId);
+  }
+
+  @Get(':studentId/downloads')
+  @Public()
+  getDownloads(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.libraryStudentService.getDownloads(studentId);
+  }
+
+  @Post(':studentId/downloads/:resourceId')
+  @Public()
+  recordDownload(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+  ) {
+    return this.libraryStudentService.recordDownload(studentId, resourceId);
+  }
+
+  @Get(':studentId/recent')
+  @Public()
+  getRecentlyAccessed(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.libraryStudentService.getRecentlyAccessed(studentId);
+  }
+
+  @Post(':studentId/access/:resourceId')
+  @Public()
+  recordAccess(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+  ) {
+    return this.libraryStudentService.recordAccess(studentId, resourceId);
   }
 }

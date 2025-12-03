@@ -21,6 +21,12 @@ export class TeacherLibraryResource {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  author: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  type: string | null;
+
   @Column({
     type: 'enum',
     enum: LibraryResourceCategory,
@@ -33,11 +39,29 @@ export class TeacherLibraryResource {
   @Column({ name: 'file_name', type: 'varchar', length: 255 })
   fileName: string;
 
-  @Column({ name: 'file_size', type: 'bigint', unsigned: true, nullable: true })
-  fileSize: number | null;
+  @Column({ name: 'file_size', type: 'varchar', length: 50, nullable: true })
+  fileSize: string | null;
 
   @Column({ name: 'file_type', type: 'varchar', length: 100, nullable: true })
   fileType: string | null;
+
+  @Column({ name: 'thumbnail_url', type: 'varchar', length: 1024, nullable: true })
+  thumbnailUrl: string | null;
+
+  @Column({ type: 'int', unsigned: true, nullable: true })
+  pages: number | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  duration: string | null;
+
+  @Column({ name: 'published_date', type: 'date', nullable: true })
+  publishedDate: Date | null;
+
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  views: number;
+
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  downloads: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   subject: string | null;
