@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   ClipboardList,
+  Library,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import CompactDropdown from "@/components/ui/compact-dropdown";
@@ -44,6 +45,21 @@ const classroomItems = [
   },
 ];
 
+const curriculumItems = [
+  {
+    label: "Content & Curriculum",
+    href: "/teacher/content-curriculum",
+    icon: BookOpen,
+    description: "Manage course content and curriculum",
+  },
+  {
+    label: "Digital Library",
+    href: "/teacher/digital-library",
+    icon: Library,
+    description: "Add and manage educational resources",
+  },
+];
+
 export default function TopNavbar() {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
@@ -55,7 +71,6 @@ export default function TopNavbar() {
   };
 
   const isOverviewActive = pathname === "/teacher/overview";
-  const isCurriculumActive = pathname === "/teacher/content-curriculum";
   const isStudentsActive = pathname === "/teacher/student-development";
   const isGrowthActive = pathname === "/teacher/professional-learning";
 
@@ -99,18 +114,14 @@ export default function TopNavbar() {
                 width="280px"
               />
 
-              {/* Curriculum Link */}
-              <Link
-                href="/teacher/content-curriculum"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isCurriculumActive
-                    ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                Curriculum
-              </Link>
+              {/* Curriculum Dropdown */}
+              <CompactDropdown
+                items={curriculumItems}
+                trigger="Curriculum"
+                themeColor="green"
+                columns={1}
+                width="280px"
+              />
 
               {/* Students Link */}
               <Link
@@ -237,20 +248,34 @@ export default function TopNavbar() {
                 })}
               </div>
 
+              {/* Curriculum Section */}
+              <div className="pt-2">
+                <div className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Curriculum
+                </div>
+                {curriculumItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
               {/* Other Links */}
               <div className="pt-2">
-                <Link
-                  href="/teacher/content-curriculum"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    isCurriculumActive
-                      ? "bg-brand-light text-brand-primary dark:bg-brand-primary/20 dark:text-brand-primary"
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Content & Curriculum
-                </Link>
 
                 <Link
                   href="/teacher/student-development"
