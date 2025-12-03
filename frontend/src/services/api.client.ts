@@ -63,7 +63,29 @@ export async function apiFetch<T>(
     headers,
   });
 
-  const data = await response.json();
+  // Check if response has content before parsing JSON
+  // DELETE operations often return 204 No Content with empty body
+  const contentType = response.headers.get('content-type');
+  const hasJsonContent = contentType?.includes('application/json');
+  const isNoContent = response.status === 204;
+
+  let data: any = null;
+
+  // Only parse JSON if response has content and is JSON type
+  if (!isNoContent && hasJsonContent) {
+    const text = await response.text();
+    data = text ? JSON.parse(text) : null;
+  } else if (!isNoContent) {
+    // Try to parse as JSON for non-204 responses
+    const text = await response.text();
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // Response wasn't JSON, ignore
+      }
+    }
+  }
 
   if (!response.ok) {
     throw new ApiClientError(response.status, data as ApiError);
