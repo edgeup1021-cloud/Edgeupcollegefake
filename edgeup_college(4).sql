@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 03, 2025 at 09:57 AM
+-- Generation Time: Dec 03, 2025 at 10:48 AM
 -- Server version: 8.0.44-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -347,7 +347,8 @@ CREATE TABLE `student_attendance` (
 
 INSERT INTO `student_attendance` (`id`, `student_id`, `class_session_id`, `name`, `attendance_date`, `check_in_time`, `status`, `marked_by`, `remarks`, `created_at`) VALUES
 (1, 1, NULL, 'Sameer', '12/05/2004', NULL, 'present', NULL, NULL, '2025-11-29 13:22:31'),
-(2, 8, 64, NULL, '2025-01-06', NULL, 'present', 1, 'On time', '2025-12-03 14:14:35');
+(2, 8, 64, NULL, '2025-01-06', NULL, 'present', 1, 'On time', '2025-12-03 14:14:35'),
+(3, 8, 443, NULL, '2025-12-03', NULL, 'present', 3, NULL, '2025-12-03 15:40:36');
 
 -- --------------------------------------------------------
 
@@ -477,6 +478,45 @@ CREATE TABLE `student_leave_requests` (
   `review_remarks` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_library_access_logs`
+--
+
+CREATE TABLE `student_library_access_logs` (
+  `id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `resource_id` bigint UNSIGNED NOT NULL,
+  `accessed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_library_bookmarks`
+--
+
+CREATE TABLE `student_library_bookmarks` (
+  `id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `resource_id` bigint UNSIGNED NOT NULL,
+  `bookmarked_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_library_downloads`
+--
+
+CREATE TABLE `student_library_downloads` (
+  `id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `resource_id` bigint UNSIGNED NOT NULL,
+  `downloaded_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -1683,11 +1723,19 @@ CREATE TABLE `teacher_library_resources` (
   `uploaded_by` bigint UNSIGNED NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text,
+  `author` varchar(100) DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL,
   `category` enum('Lecture Notes','Textbooks','Research Papers','Lab Manuals','Past Papers','Reference Materials','Study Guides','Other') NOT NULL,
   `file_url` varchar(1024) NOT NULL,
   `file_name` varchar(255) NOT NULL,
-  `file_size` bigint UNSIGNED DEFAULT NULL,
+  `file_size` varchar(50) DEFAULT NULL,
   `file_type` varchar(100) DEFAULT NULL,
+  `thumbnail_url` varchar(1024) DEFAULT NULL,
+  `pages` int UNSIGNED DEFAULT NULL,
+  `duration` varchar(50) DEFAULT NULL,
+  `published_date` date DEFAULT NULL,
+  `views` int UNSIGNED DEFAULT '0',
+  `downloads` int UNSIGNED DEFAULT '0',
   `subject` varchar(100) DEFAULT NULL,
   `tags` varchar(255) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'ACTIVE',
@@ -1699,10 +1747,11 @@ CREATE TABLE `teacher_library_resources` (
 -- Dumping data for table `teacher_library_resources`
 --
 
-INSERT INTO `teacher_library_resources` (`id`, `uploaded_by`, `title`, `description`, `category`, `file_url`, `file_name`, `file_size`, `file_type`, `subject`, `tags`, `status`, `created_at`, `updated_at`) VALUES
-(2, 3, 'Data Structures Complete Guide', 'UPDATED: Comprehensive guide with examples and exercises', 'Textbooks', 'https://s3.amazonaws.com/example-bucket/textbooks/data-structures-guide.pdf', 'data-structures-guide.pdf', 2500000, 'application/pdf', 'Computer Science', 'data structures, algorithms, computer science, programming', 'ACTIVE', '2025-12-03 07:23:03', '2025-12-03 07:24:27'),
-(3, 3, 'Operating Systems Lab Manual', 'Lab manual for OS course', 'Lab Manuals', 'https://s3.example.com/os-lab-manual.pdf', 'os-lab-manual.pdf', 1500000, 'application/pdf', 'Computer Science', 'operating systems, linux, labs', 'ARCHIVED', '2025-12-03 07:23:16', '2025-12-03 07:26:13'),
-(4, 3, 'Operating Systems Lab Manual', 'Lab manual for OS course', 'Lab Manuals', 'https://s3.example.com/os-lab-manual.pdf', 'os-lab-manual.pdf', 1500000, 'application/pdf', 'Computer Science', 'operating systems, linux, labs', 'ACTIVE', '2025-12-03 07:23:29', '2025-12-03 07:23:29');
+INSERT INTO `teacher_library_resources` (`id`, `uploaded_by`, `title`, `description`, `author`, `type`, `category`, `file_url`, `file_name`, `file_size`, `file_type`, `thumbnail_url`, `pages`, `duration`, `published_date`, `views`, `downloads`, `subject`, `tags`, `status`, `created_at`, `updated_at`) VALUES
+(2, 3, 'Data Structures Complete Guide', 'UPDATED: Comprehensive guide with examples and exercises', NULL, NULL, 'Textbooks', 'https://s3.amazonaws.com/example-bucket/textbooks/data-structures-guide.pdf', 'data-structures-guide.pdf', '2500000', 'application/pdf', NULL, NULL, NULL, NULL, 0, 0, 'Computer Science', 'data structures, algorithms, computer science, programming', 'ACTIVE', '2025-12-03 07:23:03', '2025-12-03 07:24:27'),
+(3, 3, 'Operating Systems Lab Manual', 'Lab manual for OS course', NULL, NULL, 'Lab Manuals', 'https://s3.example.com/os-lab-manual.pdf', 'os-lab-manual.pdf', '1500000', 'application/pdf', NULL, NULL, NULL, NULL, 0, 0, 'Computer Science', 'operating systems, linux, labs', 'ARCHIVED', '2025-12-03 07:23:16', '2025-12-03 07:26:13'),
+(4, 3, 'Operating Systems Lab Manual', 'Lab manual for OS course', NULL, NULL, 'Lab Manuals', 'https://s3.example.com/os-lab-manual.pdf', 'os-lab-manual.pdf', '1500000', 'application/pdf', NULL, NULL, NULL, NULL, 0, 0, 'Computer Science', 'operating systems, linux, labs', 'ACTIVE', '2025-12-03 07:23:29', '2025-12-03 07:23:29'),
+(5, 3, 'test', 'testtesttest', 'test', 'book', 'Lecture Notes', 'https://example.com/thumbnail.jpg', 'thumbnail.jpg', 'test', NULL, NULL, 12, NULL, NULL, 0, 0, NULL, NULL, 'ACTIVE', '2025-12-03 10:41:14', '2025-12-03 10:41:14');
 
 -- --------------------------------------------------------
 
@@ -2019,6 +2068,34 @@ ALTER TABLE `student_leave_requests`
   ADD KEY `fk_leave_reviewer` (`reviewed_by`);
 
 --
+-- Indexes for table `student_library_access_logs`
+--
+ALTER TABLE `student_library_access_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_student_id` (`student_id`),
+  ADD KEY `idx_resource_id` (`resource_id`),
+  ADD KEY `idx_accessed_at` (`accessed_at`);
+
+--
+-- Indexes for table `student_library_bookmarks`
+--
+ALTER TABLE `student_library_bookmarks`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_student_resource_bookmark` (`student_id`,`resource_id`),
+  ADD KEY `idx_student_id` (`student_id`),
+  ADD KEY `idx_resource_id` (`resource_id`),
+  ADD KEY `idx_bookmarked_at` (`bookmarked_at`);
+
+--
+-- Indexes for table `student_library_downloads`
+--
+ALTER TABLE `student_library_downloads`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_student_id` (`student_id`),
+  ADD KEY `idx_resource_id` (`resource_id`),
+  ADD KEY `idx_downloaded_at` (`downloaded_at`);
+
+--
 -- Indexes for table `student_notifications`
 --
 ALTER TABLE `student_notifications`
@@ -2152,7 +2229,9 @@ ALTER TABLE `teacher_library_resources`
   ADD KEY `idx_category` (`category`),
   ADD KEY `idx_subject` (`subject`),
   ADD KEY `idx_status` (`status`),
-  ADD KEY `idx_created_at` (`created_at`);
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_author` (`author`);
 ALTER TABLE `teacher_library_resources` ADD FULLTEXT KEY `idx_fulltext_search` (`title`,`description`,`tags`);
 
 --
@@ -2316,7 +2395,7 @@ ALTER TABLE `student_assignment_submissions`
 -- AUTO_INCREMENT for table `student_attendance`
 --
 ALTER TABLE `student_attendance`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `student_calendar_events`
@@ -2352,6 +2431,24 @@ ALTER TABLE `student_grades`
 -- AUTO_INCREMENT for table `student_leave_requests`
 --
 ALTER TABLE `student_leave_requests`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_library_access_logs`
+--
+ALTER TABLE `student_library_access_logs`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_library_bookmarks`
+--
+ALTER TABLE `student_library_bookmarks`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_library_downloads`
+--
+ALTER TABLE `student_library_downloads`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -2448,7 +2545,7 @@ ALTER TABLE `teacher_grading_components`
 -- AUTO_INCREMENT for table `teacher_library_resources`
 --
 ALTER TABLE `teacher_library_resources`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `teacher_notifications`
@@ -2509,6 +2606,27 @@ ALTER TABLE `student_leave_requests`
   ADD CONSTRAINT `fk_leave_course_offering` FOREIGN KEY (`course_offering_id`) REFERENCES `teacher_course_offerings` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_leave_reviewer` FOREIGN KEY (`reviewed_by`) REFERENCES `teacher_users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_leave_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_library_access_logs`
+--
+ALTER TABLE `student_library_access_logs`
+  ADD CONSTRAINT `fk_access_resource` FOREIGN KEY (`resource_id`) REFERENCES `teacher_library_resources` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_access_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_library_bookmarks`
+--
+ALTER TABLE `student_library_bookmarks`
+  ADD CONSTRAINT `fk_bookmark_resource` FOREIGN KEY (`resource_id`) REFERENCES `teacher_library_resources` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_bookmark_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_library_downloads`
+--
+ALTER TABLE `student_library_downloads`
+  ADD CONSTRAINT `fk_download_resource` FOREIGN KEY (`resource_id`) REFERENCES `teacher_library_resources` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_download_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `teacher_library_resources`
