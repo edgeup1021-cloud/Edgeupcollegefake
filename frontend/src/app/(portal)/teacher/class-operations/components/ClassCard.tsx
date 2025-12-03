@@ -33,16 +33,18 @@ export function ClassCard({ offering, onMarkAttendance }: ClassCardProps) {
 
       <CardContent className="space-y-4">
         {/* Session Days */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
-          <div className="flex gap-1 flex-wrap">
-            {offering.sessionDays.map((day) => (
-              <Badge key={day} variant="outline" className="text-xs">
-                {day}
-              </Badge>
-            ))}
+        {offering.sessionDays && offering.sessionDays.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <div className="flex gap-1 flex-wrap">
+              {offering.sessionDays.map((day) => (
+                <Badge key={day} variant="outline" className="text-xs">
+                  {day}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Next Session */}
         {offering.nextSession && (

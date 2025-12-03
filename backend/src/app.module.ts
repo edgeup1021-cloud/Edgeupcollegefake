@@ -7,6 +7,9 @@ import { StudentModule } from './modules/student/student.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
 import { ManagementModule } from './modules/management/management.module';
 import { CalendarModule } from './modules/student/calendar/calendar.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
+import { LeaveModule } from './modules/leave/leave.module';
+import { LibraryModule } from './modules/library/library.module';
 
 @Module({
   imports: [
@@ -21,6 +24,9 @@ import { CalendarModule } from './modules/student/calendar/calendar.module';
     TeacherModule,
     ManagementModule,
     CalendarModule,
+    AttendanceModule,
+    LeaveModule,
+    LibraryModule,
   ],
 })
 export class AppModule { }

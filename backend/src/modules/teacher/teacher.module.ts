@@ -13,10 +13,14 @@ import {
   StudentEnrollment,
   StudentAssignmentSubmission,
   StudentUser,
+  StudentSchedule,
+  StudentAttendance,
 } from '../../database/entities/student';
 import { Department } from '../../database/entities/management';
 import { CalendarModule } from '../student/calendar/calendar.module';
 import { AssignmentsService } from './services/assignments.service';
+import { TeacherAttendanceService } from './services/teacher-attendance.service';
+import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
   imports: [
@@ -29,12 +33,15 @@ import { AssignmentsService } from './services/assignments.service';
       StudentEnrollment,
       StudentAssignmentSubmission,
       StudentUser,
+      StudentSchedule,
+      StudentAttendance,
       Department,
     ]),
     CalendarModule,
+    AttendanceModule,
   ],
   controllers: [TeacherController],
-  providers: [TeacherService, AssignmentsService],
+  providers: [TeacherService, AssignmentsService, TeacherAttendanceService],
   exports: [TeacherService],
 })
 export class TeacherModule {}

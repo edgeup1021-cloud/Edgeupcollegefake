@@ -9,6 +9,7 @@ import { Alert } from '@/components/ui/alert';
 import { AttendanceStatistics } from '../../components/AttendanceStatistics';
 import { getAttendanceRoster, markAttendance } from '@/services/class-operations.service';
 import type { AttendanceRosterResponse, AttendanceStatus } from '@/types/class-operations.types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AttendanceRecord {
   status: AttendanceStatus;
@@ -18,6 +19,7 @@ interface AttendanceRecord {
 export default function MarkAttendancePage() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
   const sessionId = parseInt(params.sessionId as string);
 
   const [roster, setRoster] = useState<AttendanceRosterResponse | null>(null);
@@ -30,17 +32,19 @@ export default function MarkAttendancePage() {
 
   // Load attendance roster
   useEffect(() => {
-    if (sessionId) {
+    if (sessionId && user?.id) {
       loadRoster();
     }
-  }, [sessionId]);
+  }, [sessionId, user]);
 
   const loadRoster = async () => {
+    if (!user) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const data = await getAttendanceRoster(sessionId);
+      const data = await getAttendanceRoster(sessionId, user.id);
       setRoster(data);
 
       // Initialize attendance map with existing data
@@ -131,7 +135,7 @@ export default function MarkAttendancePage() {
   };
 
   const handleSubmit = async () => {
-    if (!roster) return;
+    if (!roster || !user) return;
 
     setSubmitting(true);
     setError(null);
@@ -143,7 +147,7 @@ export default function MarkAttendancePage() {
         remarks: record.remarks || undefined
       }));
 
-      await markAttendance(sessionId, records);
+      await markAttendance(sessionId, user.id, records);
       setSuccess(true);
       setTimeout(() => {
         router.push('/teacher/class-operations');

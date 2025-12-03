@@ -11,7 +11,7 @@ import type {
 } from '@/types/student-attendance.types';
 
 // Feature flag for mock data
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // Generate mock attendance data for the current month
 function generateMockAttendanceCalendar(): AttendanceCalendar {
@@ -167,7 +167,7 @@ export async function getAttendanceOverview(studentId: number): Promise<Attendan
     };
   }
 
-  return api.get(`/student/${studentId}/attendance/overview`);
+  return api.get(`/attendance/student/${studentId}/overview`);
 }
 
 /**
@@ -224,7 +224,7 @@ export async function getAttendanceHistory(
     return history.reverse(); // Most recent first
   }
 
-  return api.get(`/student/${studentId}/attendance/history?month=${month}&year=${year}`);
+  return api.get(`/attendance/student/${studentId}/history?month=${month}&year=${year}`);
 }
 
 /**
@@ -236,7 +236,7 @@ export async function getLeaveApplications(studentId: number): Promise<LeaveAppl
     return [...mockLeaveApplications].reverse(); // Most recent first
   }
 
-  return api.get(`/student/${studentId}/leave-applications`);
+  return api.get(`/leave/student/${studentId}/applications`);
 }
 
 /**
@@ -264,17 +264,24 @@ export async function createLeaveApplication(
     return newApplication;
   }
 
-  const formData = new FormData();
-  formData.append('leaveType', data.leaveType);
-  formData.append('startDate', data.startDate);
-  formData.append('endDate', data.endDate);
-  formData.append('reason', data.reason);
+  // Map frontend leave types to backend enum values
+  const leaveTypeMap: Record<string, string> = {
+    'sick': 'Sick Leave',
+    'casual': 'Personal Leave',
+    'emergency': 'Family Emergency',
+    'other': 'Other'
+  };
 
-  if (data.supportingDocuments) {
-    data.supportingDocuments.forEach((file, index) => {
-      formData.append(`documents[${index}]`, file);
-    });
-  }
+  const payload = {
+    studentId: Number(studentId),
+    leaveType: leaveTypeMap[data.leaveType] || 'Other',
+    startDate: data.startDate,
+    endDate: data.endDate,
+    reason: data.reason,
+    supportingDocument: data.supportingDocuments && data.supportingDocuments.length > 0
+      ? data.supportingDocuments[0].name
+      : undefined
+  };
 
-  return api.post(`/student/${studentId}/leave-applications`, formData);
+  return api.post(`/leave/student/${studentId}/applications`, payload);
 }

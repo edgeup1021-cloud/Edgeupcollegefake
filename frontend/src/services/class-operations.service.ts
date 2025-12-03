@@ -8,7 +8,7 @@ import type {
 } from '@/types/class-operations.types';
 
 // Feature flag for mock data
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // Mock data store (in-memory)
 let mockOfferings: CourseOffering[] = [];
@@ -75,7 +75,7 @@ export async function getCourseOfferings(teacherId: number): Promise<CourseOffer
   return api.get<CourseOffering[]>(`/teacher/course-offerings?teacherId=${teacherId}`);
 }
 
-export async function getAttendanceRoster(sessionId: number): Promise<AttendanceRosterResponse> {
+export async function getAttendanceRoster(sessionId: number, teacherId: number): Promise<AttendanceRosterResponse> {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -107,17 +107,17 @@ export async function getAttendanceRoster(sessionId: number): Promise<Attendance
     };
   }
 
-  return api.get<AttendanceRosterResponse>(`/teacher/class-sessions/${sessionId}/attendance-roster`);
+  return api.get<AttendanceRosterResponse>(`/teacher/class-sessions/${sessionId}/attendance-roster?teacherId=${teacherId}`);
 }
 
-export async function markAttendance(sessionId: number, records: Array<{studentId: number; status: AttendanceStatus; remarks?: string}>): Promise<void> {
+export async function markAttendance(sessionId: number, teacherId: number, records: Array<{studentId: number; status: AttendanceStatus; remarks?: string}>): Promise<void> {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 500));
     console.log('Mock: Attendance marked for session', sessionId, records);
     return;
   }
 
-  return api.post<void>(`/teacher/class-sessions/${sessionId}/attendance`, {
+  return api.post<void>(`/teacher/class-sessions/${sessionId}/attendance?teacherId=${teacherId}`, {
     attendanceRecords: records,
     sessionDate: new Date().toISOString().split('T')[0]
   });
