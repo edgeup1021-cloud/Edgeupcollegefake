@@ -68,7 +68,7 @@ export class TeacherAttendanceService {
       classSessionId: sessionId,
       attendanceRecords: dto.attendanceRecords.map((r) => ({
         studentId: r.studentId,
-        status: r.status.toUpperCase() as AttendanceStatus,
+        status: r.status.toLowerCase() as AttendanceStatus,
         remarks: r.remarks,
       })),
     };

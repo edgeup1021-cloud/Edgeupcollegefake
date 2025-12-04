@@ -10,6 +10,7 @@ import type { AttendanceRosterResponse, AttendanceStatus } from '@/types/class-o
 interface AttendanceMarkingDialogProps {
   open: boolean;
   sessionId: number | null;
+  teacherId: number;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
@@ -22,6 +23,7 @@ interface AttendanceRecord {
 export function AttendanceMarkingDialog({
   open,
   sessionId,
+  teacherId,
   onOpenChange,
   onSuccess
 }: AttendanceMarkingDialogProps) {
@@ -47,7 +49,7 @@ export function AttendanceMarkingDialog({
     setError(null);
 
     try {
-      const data = await getAttendanceRoster(sessionId);
+      const data = await getAttendanceRoster(sessionId, teacherId);
       setRoster(data);
 
       // Initialize attendance map with existing data
@@ -150,7 +152,7 @@ export function AttendanceMarkingDialog({
         remarks: record.remarks || undefined
       }));
 
-      await markAttendance(sessionId, records);
+      await markAttendance(sessionId, teacherId, records);
       setSuccess(true);
       setTimeout(() => {
         onSuccess();

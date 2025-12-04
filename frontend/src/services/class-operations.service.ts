@@ -117,10 +117,40 @@ export async function markAttendance(sessionId: number, teacherId: number, recor
     return;
   }
 
-  return api.post<void>(`/teacher/class-sessions/${sessionId}/attendance?teacherId=${teacherId}`, {
-    attendanceRecords: records,
-    sessionDate: new Date().toISOString().split('T')[0]
+  console.log('[markAttendance] Sending request:', {
+    sessionId,
+    teacherId,
+    recordCount: records.length,
+    url: `/teacher/class-sessions/${sessionId}/attendance?teacherId=${teacherId}`,
+    payload: {
+      attendanceRecords: records,
+      sessionDate: new Date().toISOString().split('T')[0]
+    }
   });
+
+  try {
+    const result = await api.post<any>(`/teacher/class-sessions/${sessionId}/attendance?teacherId=${teacherId}`, {
+      attendanceRecords: records,
+      sessionDate: new Date().toISOString().split('T')[0]
+    });
+    console.log('[markAttendance] Response:', result);
+
+    // Check if there were any errors in the response
+    if (result && result.errors && result.errors.length > 0) {
+      console.error('[markAttendance] Backend returned errors:', result.errors);
+      throw new Error(`Failed to mark attendance: ${JSON.stringify(result.errors)}`);
+    }
+
+    if (result && result.success === 0) {
+      console.error('[markAttendance] No records were saved successfully');
+      throw new Error('No attendance records were saved. Please check the data and try again.');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('[markAttendance] Error:', error);
+    throw error;
+  }
 }
 
 export async function searchStudents(term: string): Promise<Student[]> {
