@@ -28,6 +28,10 @@ export class StudentAttendance {
   @Column({ name: 'attendance_date', type: 'date', nullable: true })
   attendanceDate: Date | null;
 
+  // Check-in time for attendance
+  @Column({ name: 'check_in_time', type: 'time', nullable: true })
+  checkInTime: string | null;
+
   // New: attendance status
   @Column({
     type: 'enum',

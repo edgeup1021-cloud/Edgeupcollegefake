@@ -347,6 +347,7 @@ export default function RegisterPage() {
             label="Password"
             placeholder="Create a strong password"
             error={errors.password?.message}
+            showStrength={true}
             {...register("password")}
           />
 

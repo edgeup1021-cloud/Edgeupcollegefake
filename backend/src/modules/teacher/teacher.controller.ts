@@ -20,12 +20,15 @@ import {
   QueryAssignmentsDto,
   GradeSubmissionDto,
 } from './dto/assignment';
+import { TeacherAttendanceService } from './services/teacher-attendance.service';
+import { MarkAttendanceDto } from './dto/attendance-roster-response.dto';
 
 @Controller('teacher')
 export class TeacherController {
   constructor(
     private readonly teacherService: TeacherService,
     private readonly assignmentsService: AssignmentsService,
+    private readonly teacherAttendanceService: TeacherAttendanceService,
   ) {}
 
   @Get()
@@ -52,6 +55,24 @@ export class TeacherController {
   @Public()
   create(@Body() createTeacherDto: CreateTeacherDto) {
     return this.teacherService.create(createTeacherDto);
+  }
+
+  // Course Offering endpoints
+  @Post('course-offerings')
+  @Public()
+  createCourseOffering(
+    @Body() dto: any,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherService.createCourseOffering(dto, id);
+  }
+
+  @Get('course-offerings')
+  @Public()
+  getCourseOfferings(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherService.getTeacherCourses(id);
   }
 
   // Assignment CRUD
@@ -108,6 +129,28 @@ export class TeacherController {
   ) {
     // TODO: Get teacherId from @CurrentUser when auth is fully implemented
     return this.assignmentsService.gradeSubmission(submissionId, dto, 1);
+  }
+
+  // Attendance endpoints - must be before :id routes
+  @Get('class-sessions/:sessionId/attendance-roster')
+  @Public()
+  async getAttendanceRoster(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherAttendanceService.getAttendanceRoster(sessionId, id);
+  }
+
+  @Post('class-sessions/:sessionId/attendance')
+  @Public()
+  async markAttendance(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Body() dto: MarkAttendanceDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherAttendanceService.markSessionAttendance(sessionId, dto, id);
   }
 
   // Teacher CRUD - placed after specific routes to avoid route conflicts

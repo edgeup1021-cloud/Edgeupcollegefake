@@ -14,7 +14,7 @@ const teacherQuickAccessItems = [
   {
     icon: Users,
     title: "Class Operations",
-    href: "/teacher/class-operations",
+    href: "/teacher/classroom",
     description: "Manage your classes and schedules",
   },
   {
