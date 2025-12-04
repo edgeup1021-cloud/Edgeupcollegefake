@@ -44,7 +44,7 @@ export default function TeacherMeetPage() {
     try {
       setEndingClass(true);
       await endLiveClass(liveClass.id);
-      router.push('/teacher/class-operations/live-classes');
+      router.push('/teacher/classroom/live-classes');
     } catch (error) {
       console.error('Failed to end class:', error);
       alert('Failed to end class. Please try again.');
@@ -54,7 +54,7 @@ export default function TeacherMeetPage() {
 
   const handleExit = () => {
     if (confirm('Are you sure you want to exit? The class will continue running.')) {
-      router.push('/teacher/class-operations/live-classes');
+      router.push('/teacher/classroom/live-classes');
     }
   };
 
@@ -74,7 +74,7 @@ export default function TeacherMeetPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">Class not found</p>
-          <Button onClick={() => router.push('/teacher/class-operations/live-classes')}>
+          <Button onClick={() => router.push('/teacher/classroom/live-classes')}>
             Go Back
           </Button>
         </div>

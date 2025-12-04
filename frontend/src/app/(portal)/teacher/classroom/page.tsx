@@ -53,7 +53,7 @@ export default function ClassOperationsPage() {
             Manage your classes and mark attendance
           </p>
         </div>
-        <Button onClick={() => router.push('/teacher/class-operations/create')} size="lg">
+        <Button onClick={() => router.push('/teacher/classroom/create')} size="lg">
           <Plus className="w-5 h-5 mr-2" />
           Create Class
         </Button>
@@ -77,7 +77,7 @@ export default function ClassOperationsPage() {
                 Create your first class to get started with managing attendance and tracking student progress.
               </p>
             </div>
-            <Button onClick={() => router.push('/teacher/class-operations/create')}>
+            <Button onClick={() => router.push('/teacher/classroom/create')}>
               <Plus className="w-4 h-4 mr-2" />
               Create Your First Class
             </Button>

@@ -78,7 +78,7 @@ export default function CreateClassPage() {
 
     try {
       await createCourseOffering(data, user.id);
-      router.push('/teacher/class-operations');
+      router.push('/teacher/classroom');
     } catch (err: any) {
       setError(err.message || 'Failed to create class. Please try again.');
     } finally {

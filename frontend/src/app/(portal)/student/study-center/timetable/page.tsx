@@ -4,6 +4,9 @@ import * as React from "react"
 import { ChevronLeft, ChevronRight, Plus, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { calendarService, type CalendarEvent as BackendCalendarEvent } from "@/services/calendar.service"
+import { getStudentLiveClasses } from "@/services/live-classes.service"
+import { getStudentAssignments } from "@/services/assignment.service"
+import type { LiveClass } from "@/types/live-classes.types"
 import { useAuth } from "@/hooks/useAuth"
 
 interface FrontendCalendarEvent {
@@ -23,8 +26,9 @@ const colorMap: Record<string, string> = {
   class: "bg-blue-500",
   test: "bg-red-500",
   assignment: "bg-purple-500",
+  liveclass: "bg-green-500",
   holiday: "bg-yellow-500",
-  meeting: "bg-green-500",
+  meeting: "bg-teal-500",
   fair: "bg-indigo-500",
 }
 
@@ -39,7 +43,7 @@ const eventTypeMap: Record<string, "class" | "test" | "assignment" | "holiday" |
 
 export default function TimeTablePage() {
   const { user } = useAuth()
-  const [currentDate, setCurrentDate] = React.useState(new Date(2025, 11, 1))
+  const [currentDate, setCurrentDate] = React.useState(new Date())
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null)
   const [showAddEventModal, setShowAddEventModal] = React.useState(false)
   const [events, setEvents] = React.useState<FrontendCalendarEvent[]>([])
@@ -89,20 +93,104 @@ export default function TimeTablePage() {
   const fetchEventsForMonth = React.useCallback(async () => {
     if (!user?.id) return
 
+    setLoading(true)
+    setError(null)
+    const month = currentDate.getMonth() + 1
+    const year = currentDate.getFullYear()
+
+    const allEvents: FrontendCalendarEvent[] = []
+
+    // Fetch calendar events (with error handling)
     try {
-      setLoading(true)
-      setError(null)
-      const month = currentDate.getMonth() + 1
-      const year = currentDate.getFullYear()
+      console.log('Fetching calendar events...')
       const backendEvents = await calendarService.getEventsByMonth(year, month, user.id)
-      const frontendEvents = backendEvents.map(convertBackendEvent)
-      setEvents(frontendEvents)
+      const calendarEvents = backendEvents.map(convertBackendEvent)
+      allEvents.push(...calendarEvents)
+      console.log('Calendar events fetched:', calendarEvents.length)
     } catch (err) {
-      console.error("Failed to fetch events:", err)
-      setError("Failed to load calendar events")
-    } finally {
-      setLoading(false)
+      console.error("Failed to fetch calendar events:", err)
     }
+
+    // Fetch live classes (with error handling)
+    try {
+      console.log('Fetching live classes...')
+      const liveClasses = await getStudentLiveClasses(user.id)
+      console.log('Live classes fetched:', liveClasses.length)
+      const liveClassEvents: FrontendCalendarEvent[] = liveClasses
+        .filter(lc => {
+          const liveClassDate = new Date(lc.scheduledDate)
+          return liveClassDate.getMonth() === currentDate.getMonth() &&
+                 liveClassDate.getFullYear() === currentDate.getFullYear()
+        })
+        .map(lc => {
+          const liveClassDate = new Date(lc.scheduledDate)
+          const endTime = lc.scheduledTime.split(':')
+          const endHour = parseInt(endTime[0]) + Math.floor(lc.duration / 60)
+          const endMinute = parseInt(endTime[1]) + (lc.duration % 60)
+
+          return {
+            id: `liveclass-${lc.id}`,
+            backendId: lc.id,
+            title: lc.title,
+            date: liveClassDate,
+            startTime: lc.scheduledTime,
+            endTime: `${endHour}:${endMinute.toString().padStart(2, '0')}`,
+            color: colorMap.liveclass,
+            description: lc.description,
+            type: 'liveclass',
+            subject: lc.subject,
+          }
+        })
+      allEvents.push(...liveClassEvents)
+      console.log('Live class events for this month:', liveClassEvents.length)
+    } catch (err) {
+      console.error("Failed to fetch live classes:", err)
+    }
+
+    // Fetch assignments (with error handling)
+    try {
+      console.log('Fetching assignments...')
+      const assignments = await getStudentAssignments(user.id)
+      console.log('Assignments fetched:', assignments.length)
+      const assignmentEvents: FrontendCalendarEvent[] = assignments
+        .filter((assignment: any) => assignment.dueDate)
+        .filter((assignment: any) => {
+          const dueDate = new Date(assignment.dueDate)
+          return dueDate.getMonth() === currentDate.getMonth() &&
+                 dueDate.getFullYear() === currentDate.getFullYear()
+        })
+        .map((assignment: any) => {
+          const dueDate = new Date(assignment.dueDate)
+          return {
+            id: `assignment-${assignment.id}`,
+            backendId: assignment.id,
+            title: assignment.title,
+            date: dueDate,
+            startTime: '23:59',
+            endTime: '23:59',
+            color: colorMap.assignment,
+            description: assignment.description || 'Due Date',
+            type: 'assignment',
+            subject: assignment.subject,
+          }
+        })
+      allEvents.push(...assignmentEvents)
+      console.log('Assignment events for this month:', assignmentEvents.length)
+    } catch (err) {
+      console.error("Failed to fetch assignments:", err)
+    }
+
+    // Set all events
+    console.log('Total events:', allEvents.length)
+    if (allEvents.length > 0) {
+      console.log('Event dates:', allEvents.map(e => ({
+        title: e.title,
+        date: e.date,
+        dateString: e.date.toDateString()
+      })))
+    }
+    setEvents(allEvents)
+    setLoading(false)
   }, [currentDate, user?.id])
 
   // Fetch events when month changes or user changes
@@ -121,9 +209,18 @@ export default function TimeTablePage() {
 
   const getEventsForDate = (day: number) => {
     const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-    return events.filter(event =>
-      event.date.toDateString() === dateObj.toDateString()
-    )
+    const matchingEvents = events.filter(event => {
+      const match = event.date.toDateString() === dateObj.toDateString()
+      if (events.length > 0 && day === 4) {
+        console.log(`Checking day ${day}:`, {
+          dateObj: dateObj.toDateString(),
+          eventDate: event.date.toDateString(),
+          match
+        })
+      }
+      return match
+    })
+    return matchingEvents
   }
 
   const handlePrevMonth = () => {
@@ -264,15 +361,15 @@ export default function TimeTablePage() {
                         setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))
                       }
                     }}
-                    className={`aspect-square bg-white dark:bg-gray-800 p-2 cursor-pointer transition-colors \${
+                    className={`aspect-square bg-white dark:bg-gray-800 p-2 cursor-pointer transition-colors ${
                       day === null ? "cursor-default" : "hover:bg-blue-50 dark:hover:bg-gray-700"
-                    } \${isToday(day!) ? "border-2 border-blue-500" : ""} \${
+                    } ${isToday(day!) ? "border-2 border-blue-500" : ""} ${
                       isSelected(day!) ? "bg-blue-100 dark:bg-blue-900/30" : ""
                     }`}
                   >
                     {day && (
                       <div className="flex flex-col h-full">
-                        <span className={`text-sm font-medium \${
+                        <span className={`text-sm font-medium ${
                           isToday(day) ? "text-blue-600 dark:text-blue-400 font-bold" : "text-gray-700 dark:text-gray-300"
                         }`}>
                           {day}
@@ -281,7 +378,7 @@ export default function TimeTablePage() {
                           {getEventsForDate(day).slice(0, 2).map(event => (
                             <div
                               key={event.id}
-                              className={`\${event.color} text-white text-xs px-1.5 py-0.5 rounded truncate`}
+                              className={`${event.color} text-white text-xs px-1.5 py-0.5 rounded truncate`}
                             >
                               {event.title}
                             </div>
@@ -354,6 +451,41 @@ export default function TimeTablePage() {
                     <p className="text-gray-500 dark:text-gray-400">Select a date to view details</p>
                   </div>
                 )}
+              </div>
+
+              {/* Color Legend */}
+              <div className="px-6 pb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Event Colors</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Regular Class</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Live Class</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-purple-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Assignment</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Test</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Holiday</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-teal-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Meeting</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-indigo-500 rounded"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Fair</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

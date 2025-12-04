@@ -169,7 +169,7 @@ export default function MarkAttendancePage() {
       console.log('[handleSubmit] Attendance marked successfully!');
       setSuccess(true);
       setTimeout(() => {
-        router.push('/teacher/class-operations');
+        router.push('/teacher/classroom');
       }, 1500);
     } catch (err: any) {
       console.error('[handleSubmit] Error submitting attendance:', err);
