@@ -44,7 +44,9 @@ export default function MarkAttendancePage() {
     setError(null);
 
     try {
-      const data = await getAttendanceRoster(sessionId, user.id);
+      // Ensure user.id is a number
+      const teacherId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+      const data = await getAttendanceRoster(sessionId, teacherId);
       setRoster(data);
 
       // Initialize attendance map with existing data
@@ -135,24 +137,42 @@ export default function MarkAttendancePage() {
   };
 
   const handleSubmit = async () => {
-    if (!roster || !user) return;
+    if (!roster || !user) {
+      console.error('[handleSubmit] Missing roster or user:', { roster: !!roster, user: !!user });
+      return;
+    }
+
+    console.log('[handleSubmit] Starting submission:', {
+      sessionId,
+      userId: user.id,
+      markedCount: attendanceMap.size,
+      totalStudents: roster.students.length
+    });
 
     setSubmitting(true);
     setError(null);
 
     try {
       const records = Array.from(attendanceMap.entries()).map(([studentId, record]) => ({
-        studentId,
+        studentId: Number(studentId), // Ensure studentId is a number
         status: record.status,
         remarks: record.remarks || undefined
       }));
 
-      await markAttendance(sessionId, user.id, records);
+      console.log('[handleSubmit] Records to submit:', records);
+
+      // Ensure user.id is a number
+      const teacherId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+      console.log('[handleSubmit] TeacherId (converted):', teacherId, 'type:', typeof teacherId);
+
+      await markAttendance(sessionId, teacherId, records);
+      console.log('[handleSubmit] Attendance marked successfully!');
       setSuccess(true);
       setTimeout(() => {
         router.push('/teacher/class-operations');
       }, 1500);
     } catch (err: any) {
+      console.error('[handleSubmit] Error submitting attendance:', err);
       setError(err.message || 'Failed to submit attendance');
     } finally {
       setSubmitting(false);

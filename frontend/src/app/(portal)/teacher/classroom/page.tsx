@@ -28,7 +28,9 @@ export default function ClassOperationsPage() {
 
     setLoading(true);
     try {
-      const data = await getCourseOfferings(user.id);
+      // Ensure user.id is a number
+      const teacherId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+      const data = await getCourseOfferings(teacherId);
       setOfferings(data);
     } catch (error) {
       console.error('Failed to load course offerings:', error);
