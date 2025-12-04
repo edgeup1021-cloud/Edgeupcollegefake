@@ -36,7 +36,7 @@ import UserMenu from "./UserMenu";
 const studyCenterItems = [
   { label: "Timetable", href: "/student/study-center/timetable", icon: Calendar },
   { label: "Attendance", href: "/student/study-center/attendance", icon: ClipboardCheck },
-  { label: "Live Classes", href: "/student/study-center/liveclasses", icon: BookOpen },
+  { label: "Live Classes", href: "/student/live-classes", icon: Users },
   { label: "Task and Assignment", href: "/student/study-center/assignments", icon: FileText },
   { label: "Digital Library", href: "/student/study-center/digitallibrary", icon: BookOpen },
   { label: "Research and Assistant", href: "/student/study-center/research", icon: Brain },
@@ -121,6 +121,7 @@ export default function PillNavbar() {
 
   const getActiveNavId = () => {
     if (pathname === "/student/overview") return "overview";
+    if (pathname.startsWith("/student/live-classes")) return "study";
     if (pathname.startsWith("/student/study-center")) return "study";
     if (pathname.startsWith("/student/smart-assistant")) return "assistant";
     if (pathname.startsWith("/student/career")) return "career";

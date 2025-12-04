@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, FileText, Video, File, Presentation, FileImage, Trash2, Eye, Calendar, User, Loader2 } from "lucide-react";
+import { BookOpen, FileText, Video, File, Presentation, FileImage, Trash2, Calendar, User, Loader2 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { deleteTeacherResource } from "@/services/teacher-library.service";
@@ -115,11 +115,7 @@ export function TeacherResourceCard({ resource, onRefresh }: TeacherResourceCard
 
         {/* Stats */}
         <div className="flex items-center gap-4 mt-4 pt-4 border-t dark:border-gray-700">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Eye className="w-3 h-3" />
-            <span>{resource.views} views</span>
-          </div>
-          <div className="text-xs text-muted-foreground ml-auto">
+          <div className="text-xs text-muted-foreground">
             {resource.fileSize}
           </div>
         </div>

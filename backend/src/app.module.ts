@@ -10,6 +10,7 @@ import { CalendarModule } from './modules/student/calendar/calendar.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { LeaveModule } from './modules/leave/leave.module';
 import { LibraryModule } from './modules/library/library.module';
+import { LiveClassesModule } from './modules/live-classes/live-classes.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { LibraryModule } from './modules/library/library.module';
     // Feature modules
     AuthModule,
     StudentModule,
+    LiveClassesModule, // Must come before TeacherModule to avoid route conflicts
     TeacherModule,
     ManagementModule,
     CalendarModule,

@@ -426,211 +426,255 @@ export default function TasksAssignmentsPage() {
         </div>
       </div>
 
-      {/* Create/Edit Task Form */}
+      {/* Create/Edit Task Form Modal */}
       {showCreateForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className={`p-1.5 rounded-md ${editingTask ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                {editingTask ? <Edit3 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {editingTask ? 'Edit Task' : 'Create New Task'}
-                </h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="relative bg-gradient-to-r from-brand-primary to-brand-secondary p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
+                    {editingTask ? <Edit3 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      {editingTask ? 'Edit Task' : 'Create New Task'}
+                    </h2>
+                    <p className="text-white/80 text-sm mt-0.5">
+                      {editingTask ? 'Update task details below' : 'Fill in the details to create a new assignment'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={editingTask ? cancelEdit : () => setShowCreateForm(false)}
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
-            <button
-              onClick={editingTask ? cancelEdit : () => setShowCreateForm(false)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div className="p-6 space-y-6">
+                {/* Section 1: Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="w-1 h-5 bg-brand-primary rounded-full"></div>
+                    Basic Information
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Task Type
+                      </label>
+                      <select
+                        value={formData.type}
+                        onChange={(e) => setFormData({...formData, type: e.target.value as TaskType})}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      >
+                        <option value="Homework">📖 Homework</option>
+                        <option value="Assignment">✍️ Assignment</option>
+                        <option value="Project">📁 Project</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Subject
+                      </label>
+                      <select
+                        value={formData.subject}
+                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      >
+                        <option value="">Select Subject</option>
+                        {SUBJECTS.map(subject => (
+                          <option key={subject} value={subject}>{subject}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Task Title
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                      placeholder="e.g., Calculus Problem Set - Chapter 5"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all resize-none"
+                      placeholder="Detailed instructions for students..."
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Section 2: Schedule & Priority */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="w-1 h-5 bg-brand-primary rounded-full"></div>
+                    Schedule & Priority
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Due Date
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <input
+                          type="date"
+                          value={formData.dueDate}
+                          onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                          className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Priority Level
+                      </label>
+                      <select
+                        value={formData.priority}
+                        onChange={(e) => setFormData({...formData, priority: e.target.value as Priority})}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      >
+                        <option value="LOW">🟢 Low Priority</option>
+                        <option value="MEDIUM">🟡 Medium Priority</option>
+                        <option value="HIGH">🔴 High Priority</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Student Assignment */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="w-1 h-5 bg-brand-primary rounded-full"></div>
+                    Assign To
+                  </h3>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Program
+                      </label>
+                      <select
+                        value={formData.program}
+                        onChange={(e) => setFormData({...formData, program: e.target.value})}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      >
+                        <option value="">Select Program</option>
+                        {PROGRAMS.map(program => (
+                          <option key={program} value={program}>{program}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Batch
+                      </label>
+                      <select
+                        value={formData.batch}
+                        onChange={(e) => setFormData({...formData, batch: e.target.value})}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      >
+                        <option value="">Select Batch</option>
+                        {BATCHES.map(batch => (
+                          <option key={batch} value={batch}>{batch}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Section
+                      </label>
+                      <select
+                        value={formData.section}
+                        onChange={(e) => setFormData({...formData, section: e.target.value})}
+                        className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      >
+                        <option value="">Select Section</option>
+                        {SECTIONS.map(section => (
+                          <option key={section} value={section}>{section}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Attachments */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="w-1 h-5 bg-brand-primary rounded-full"></div>
+                    Attachments <span className="text-xs font-normal text-gray-500">(Optional)</span>
+                  </h3>
+
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-brand-primary hover:bg-brand-primary/5 transition-all cursor-pointer group">
+                    <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center group-hover:bg-brand-primary/10 transition-all">
+                      <Upload className="w-6 h-6 text-gray-400 group-hover:text-brand-primary transition-colors" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Drop files here or click to upload
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      PDF, DOC, PPT, or images up to 10MB
+                    </p>
+                    <input type="file" multiple className="hidden" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-900/50 backdrop-blur-sm p-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-brand-primary to-brand-secondary text-white py-3 px-6 rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all duration-200 font-semibold"
+                  >
+                    <Save className="w-4 h-4" />
+                    {editingTask ? 'Update Task' : 'Create Task'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={editingTask ? cancelEdit : () => setShowCreateForm(false)}
+                    className="px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {/* Task Type */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Task Type
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value as TaskType})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="Homework">Homework</option>
-                <option value="Assignment">Assignment</option>
-                <option value="Project">Project</option>
-              </select>
-            </div>
-
-            {/* Subject */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Subject
-              </label>
-              <select
-                value={formData.subject}
-                onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="">Select Subject</option>
-                {SUBJECTS.map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Title */}
-            <div className="lg:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Task Title
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                placeholder="e.g., Calculus Problem Set - Chapter 5"
-                required
-              />
-            </div>
-
-            {/* Description */}
-            <div className="lg:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                rows={2}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                placeholder="Detailed instructions for students..."
-                required
-              />
-            </div>
-
-            {/* Due Date */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Due Date
-              </label>
-              <input
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              />
-            </div>
-
-            {/* Priority */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Priority Level
-              </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({...formData, priority: e.target.value as Priority})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="LOW">Low Priority</option>
-                <option value="MEDIUM">Medium Priority</option>
-                <option value="HIGH">High Priority</option>
-              </select>
-            </div>
-
-            {/* Program */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Program
-              </label>
-              <select
-                value={formData.program}
-                onChange={(e) => setFormData({...formData, program: e.target.value})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="">Select Program</option>
-                {PROGRAMS.map(program => (
-                  <option key={program} value={program}>{program}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Batch */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Batch
-              </label>
-              <select
-                value={formData.batch}
-                onChange={(e) => setFormData({...formData, batch: e.target.value})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="">Select Batch</option>
-                {BATCHES.map(batch => (
-                  <option key={batch} value={batch}>{batch}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Section */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Section
-              </label>
-              <select
-                value={formData.section}
-                onChange={(e) => setFormData({...formData, section: e.target.value})}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-brand-primary dark:bg-gray-700 dark:text-white"
-                required
-              >
-                <option value="">Select Section</option>
-                {SECTIONS.map(section => (
-                  <option key={section} value={section}>{section}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* File Upload Section */}
-            <div className="lg:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Attachments (Optional)
-              </label>
-              <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-md p-2 text-center hover:border-brand-primary transition-colors">
-                <Upload className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Drop files here or click to upload
-                </p>
-                <input type="file" multiple className="hidden" />
-              </div>
-            </div>
-
-            {/* Submit Buttons */}
-            <div className="lg:col-span-2 flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <button
-                type="submit"
-                className="flex items-center gap-2 flex-1 bg-brand-primary text-white py-2 px-3 rounded-md hover:bg-brand-primary/90 transition-colors text-sm font-medium"
-              >
-                <Save className="w-3 h-3" />
-                {editingTask ? 'Update Task' : 'Create Task'}
-              </button>
-              <button
-                type="button"
-                onClick={editingTask ? cancelEdit : () => setShowCreateForm(false)}
-                className="px-4 py-2 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
         </div>
       )}
 

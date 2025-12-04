@@ -38,7 +38,7 @@ export default function ClassOperationsPage() {
   };
 
   const handleMarkAttendance = (sessionId: number) => {
-    router.push(`/teacher/class-operations/attendance/${sessionId}`);
+    router.push(`/teacher/classroom/attendance/${sessionId}`);
   };
 
   return (

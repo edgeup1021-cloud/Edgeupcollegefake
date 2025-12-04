@@ -1,6 +1,6 @@
 "use client";
 
-import { GraduationCap, Fire, TrendUp } from "@phosphor-icons/react";
+import { GraduationCap } from "@phosphor-icons/react";
 
 interface WelcomeCardProps {
   name: string;
@@ -37,31 +37,9 @@ export default function WelcomeCard({ name, course, college }: WelcomeCardProps)
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-3 tracking-tight">
           Welcome back, {firstName}!
         </h1>
-        <p className="text-white/80 text-base mb-6 max-w-md">
+        <p className="text-white/80 text-base mb-8 max-w-md">
           Continue your learning journey with personalized resources and AI-powered assistance.
         </p>
-
-        {/* Stats row */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex items-center gap-2 bg-white/15 backdrop-blur-md rounded-xl px-4 py-2.5 border border-white/10">
-            <div className="p-1.5 bg-amber-400/20 rounded-lg">
-              <Fire className="w-5 h-5 text-amber-300" weight="fill" />
-            </div>
-            <div>
-              <div className="text-lg font-bold leading-tight">12</div>
-              <div className="text-xs text-white/60">Day Streak</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-white/15 backdrop-blur-md rounded-xl px-4 py-2.5 border border-white/10">
-            <div className="p-1.5 bg-emerald-400/20 rounded-lg">
-              <TrendUp className="w-5 h-5 text-emerald-300" weight="bold" />
-            </div>
-            <div>
-              <div className="text-lg font-bold leading-tight">+15%</div>
-              <div className="text-xs text-white/60">This Week</div>
-            </div>
-          </div>
-        </div>
 
         {/* Course info */}
         <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl px-5 py-3 border border-white/10">

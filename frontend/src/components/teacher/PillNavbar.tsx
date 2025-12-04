@@ -28,24 +28,19 @@ import UserMenu from "./UserMenu";
 
 // Classroom Items
 const classroomItems = [
-  { label: "Class Operations", href: "/teacher/class-operations", icon: Users },
-  { label: "Smart Assessment Suite", href: "/teacher/smart-assessment-suite", icon: ClipboardCheck },
-  { label: "Tasks & Assignments", href: "/teacher/tasks-assignments", icon: ClipboardList },
-];
-
-// Curriculum Items
-const curriculumItems = [
-  { label: "Content & Curriculum", href: "/teacher/content-curriculum", icon: BookOpen },
-  { label: "Digital Library", href: "/teacher/digital-library", icon: Library },
+  { label: "Attendance", href: "/teacher/classroom", icon: ClipboardCheck },
+  { label: "Live Classes", href: "/teacher/classroom/live-classes", icon: Users },
+  { label: "Tasks & Assignments", href: "/teacher/classroom/tasks-assignments", icon: ClipboardList },
+  { label: "Digital Library", href: "/teacher/classroom/digital-library", icon: Library },
 ];
 
 // Main navigation items
 const navItems = [
   { id: "overview", label: "Overview", href: "/teacher/overview", icon: LayoutGrid },
   { id: "classroom", label: "Classroom", icon: Users, items: classroomItems },
-  { id: "curriculum", label: "Curriculum", icon: BookOpen, items: curriculumItems },
-  { id: "students", label: "Students", href: "/teacher/student-development", icon: GraduationCap },
-  { id: "growth", label: "Growth", href: "/teacher/professional-learning", icon: TrendingUp },
+  { id: "curriculum", label: "Curriculum", href: "/teacher/curriculum", icon: BookOpen },
+  { id: "students", label: "Students", href: "/teacher/students", icon: GraduationCap },
+  { id: "growth", label: "Growth", href: "/teacher/growth", icon: TrendingUp },
 ];
 
 export default function PillNavbar() {
@@ -74,13 +69,10 @@ export default function PillNavbar() {
 
   const getActiveNavId = () => {
     if (pathname === "/teacher/overview") return "overview";
-    if (pathname.startsWith("/teacher/class-operations") ||
-        pathname.startsWith("/teacher/smart-assessment-suite") ||
-        pathname.startsWith("/teacher/tasks-assignments")) return "classroom";
-    if (pathname.startsWith("/teacher/content-curriculum") ||
-        pathname.startsWith("/teacher/digital-library")) return "curriculum";
-    if (pathname.startsWith("/teacher/student-development")) return "students";
-    if (pathname.startsWith("/teacher/professional-learning")) return "growth";
+    if (pathname.startsWith("/teacher/classroom")) return "classroom";
+    if (pathname.startsWith("/teacher/curriculum")) return "curriculum";
+    if (pathname.startsWith("/teacher/students")) return "students";
+    if (pathname.startsWith("/teacher/growth")) return "growth";
     return null;
   };
 
