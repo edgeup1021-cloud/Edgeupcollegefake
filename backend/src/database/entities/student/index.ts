@@ -9,3 +9,8 @@ export * from './student-study-session.entity';
 export * from './student-assessment.entity';
 export * from './student-activity-log.entity';
 export * from './calendar-event.entity';
+export * from './student-assignment-submission.entity';
+export * from './student-leave-request.entity';
+export * from './student-library-bookmark.entity';
+export * from './student-library-download.entity';
+export * from './student-library-access-log.entity';

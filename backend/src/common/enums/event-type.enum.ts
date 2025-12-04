@@ -5,4 +5,5 @@ export enum EventType {
     HOLIDAY = 'holiday',
     MEETING = 'meeting',
     FAIR = 'fair',
+    LEAVE = 'leave',
 }

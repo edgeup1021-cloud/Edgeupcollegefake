@@ -37,6 +37,16 @@ export class TeacherClassSession {
   })
   sessionType: SessionType;
 
+  // Filters for auto-enrollment
+  @Column({ name: 'department_id', type: 'bigint', unsigned: true, nullable: true })
+  departmentId: number | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  batch: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  section: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

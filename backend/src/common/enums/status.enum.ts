@@ -85,3 +85,32 @@ export enum ActivityType {
   SUBMISSION = 'submission',
   ATTENDANCE = 'attendance',
 }
+
+// Leave types for student_leave_requests table
+export enum LeaveType {
+  SICK = 'Sick Leave',
+  PERSONAL = 'Personal Leave',
+  FAMILY = 'Family Emergency',
+  MEDICAL = 'Medical Leave',
+  OTHER = 'Other',
+}
+
+// Leave status for student_leave_requests table
+export enum LeaveStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
+}
+
+// Library resource categories for teacher_library_resources table
+export enum LibraryResourceCategory {
+  LECTURE_NOTES = 'Lecture Notes',
+  TEXTBOOKS = 'Textbooks',
+  RESEARCH_PAPERS = 'Research Papers',
+  LAB_MANUALS = 'Lab Manuals',
+  PAST_PAPERS = 'Past Papers',
+  REFERENCE_MATERIALS = 'Reference Materials',
+  STUDY_GUIDES = 'Study Guides',
+  OTHER = 'Other',
+}

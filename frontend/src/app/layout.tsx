@@ -36,7 +36,9 @@ export default function RootLayout({
         className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

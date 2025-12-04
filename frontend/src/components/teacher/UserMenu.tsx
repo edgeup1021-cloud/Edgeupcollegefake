@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { User, Settings, LogOut, GraduationCap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTeacherDashboard } from "@/hooks/teacher";
 
 export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { logout } = useAuth();
+  const { dashboard } = useTeacherDashboard();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -42,13 +44,19 @@ export default function UserMenu() {
               </div>
               <div>
                 <div className="font-semibold text-gray-900 dark:text-white">
-                  Dr. Sarah Johnson
+                  {dashboard
+                    ? `${dashboard.profile.firstName} ${dashboard.profile.lastName}`
+                    : "Loading..."}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Computer Science Department
+                  {dashboard
+                    ? dashboard.profile.department
+                    : "Department"}
                 </div>
                 <div className="text-xs text-brand-secondary dark:text-brand-secondary">
-                  MIT College of Engineering
+                  {dashboard
+                    ? dashboard.profile.college
+                    : "College"}
                 </div>
               </div>
             </div>
@@ -57,7 +65,7 @@ export default function UserMenu() {
             <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-light dark:bg-brand-secondary/20 rounded-full">
               <GraduationCap className="w-3.5 h-3.5 text-brand-secondary dark:text-brand-secondary" />
               <span className="text-xs font-medium text-brand-secondary dark:text-brand-secondary">
-                Teacher
+                {dashboard?.profile.designation || "Teacher"}
               </span>
             </div>
           </div>

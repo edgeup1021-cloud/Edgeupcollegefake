@@ -20,7 +20,9 @@ import {
   PasswordField,
   AuthButton,
   RoleSelector,
+  SelectField,
 } from "@/components/ui/auth";
+import { PROGRAMS, BATCHES, SECTIONS } from "@/config/dropdowns.config";
 
 // Combined schema for both roles
 const registerSchema = z
@@ -44,12 +46,13 @@ const registerSchema = z
       ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     role: z.enum(["student", "teacher"]),
-    // Student fields
-    admissionNo: z.string().optional(),
-    program: z.string().optional(),
-    batch: z.string().optional(),
-    // Teacher fields
-    designation: z.string().optional(),
+    // Student fields (optional initially, validated by refinement)
+     admissionNo: z.string().optional(),
+     program: z.string().optional(),
+     batch: z.string().optional(),
+     section: z.string().optional(),
+    // Teacher fields (optional initially, validated by refinement)
+     designation: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -65,6 +68,54 @@ const registerSchema = z
     {
       message: "Admission number is required for students",
       path: ["admissionNo"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "student") {
+        return data.program && data.program.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Program is required for students",
+      path: ["program"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "student") {
+        return data.batch && data.batch.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Batch is required for students",
+      path: ["batch"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "student") {
+        return data.section && data.section.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Section is required for students",
+      path: ["section"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === "teacher") {
+        return data.designation && data.designation.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Designation is required for teachers",
+      path: ["designation"],
     }
   );
 
@@ -96,6 +147,7 @@ export default function RegisterPage() {
       program: "",
       batch: "",
       designation: "",
+      section: "",
     },
   });
 
@@ -135,16 +187,19 @@ export default function RegisterPage() {
           admissionNo: submitData.admissionNo,
           ...(submitData.program && { program: submitData.program }),
           ...(submitData.batch && { batch: submitData.batch }),
+          ...(submitData.section && { section: submitData.section }),
         }),
         ...(submitData.role === "teacher" && {
           ...(submitData.designation && { designation: submitData.designation }),
         }),
       };
 
+      console.log("Submitting registration with payload:", registerPayload);
       await registerUser(registerPayload);
       // Redirect is handled by AuthContext
-    } catch {
+    } catch (err) {
       // Error is handled by AuthContext
+      console.error("Registration error:", err);
     }
   };
 
@@ -248,18 +303,30 @@ export default function RegisterPage() {
                 error={errors.admissionNo?.message}
                 {...register("admissionNo")}
               />
+              <SelectField
+                label="Program"
+                placeholder="Select Program"
+                icon={GraduationCap}
+                options={PROGRAMS}
+                error={errors.program?.message}
+                {...register("program")}
+              />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InputField
-                  label="Program (Optional)"
-                  placeholder="Computer Science"
+                <SelectField
+                  label="Batch"
+                  placeholder="Select Batch"
                   icon={GraduationCap}
-                  {...register("program")}
-                />
-                <InputField
-                  label="Batch (Optional)"
-                  placeholder="2024"
-                  icon={GraduationCap}
+                  options={BATCHES}
+                  error={errors.batch?.message}
                   {...register("batch")}
+                />
+                <SelectField
+                  label="Section"
+                  placeholder="Select Section"
+                  icon={GraduationCap}
+                  options={SECTIONS}
+                  error={errors.section?.message}
+                  {...register("section")}
                 />
               </div>
             </>
@@ -267,11 +334,12 @@ export default function RegisterPage() {
 
           {role === "teacher" && (
             <InputField
-              label="Designation (Optional)"
+                label="Designation"
               placeholder="Assistant Professor"
               icon={Briefcase}
               {...register("designation")}
-            />
+                error={errors.designation?.message}
+              />
           )}
 
           {/* Password fields */}

@@ -6,9 +6,80 @@ import StatCard from "@/components/common/cards/StatCard";
 import QuickAccessCard from "@/components/common/cards/QuickAccessCard";
 import ScheduleCard from "@/components/common/cards/ScheduleCard";
 import DeadlinesCard from "@/components/common/cards/DeadlinesCard";
-import { useStudentDashboard } from "@/hooks/student/useStudents";
 import { useAuth } from "@/hooks/useAuth";
+import { useStudentDashboard } from "@/hooks/student";
 import type { StudentDashboardScheduleItem, StudentDashboardDeadline } from "@/types/student.types";
+
+// Mock data - replace with real data from API
+const userData = {
+  name: "Aravind Kumar",
+  course: "B.Tech Computer Science - Year 3",
+  college: "MIT College of Engineering",
+};
+
+const stats = {
+  dailyGoal: { value: 3, total: 4, unit: "hours" },
+  testsToday: { value: 2, total: 3, unit: "tests" },
+  attendance: { value: 92, total: 100, unit: "%" },
+};
+
+const scheduleItems = [
+  {
+    time: "9",
+    period: "AM" as const,
+    title: "Data Structures & Algorithms",
+    type: "Lecture" as const,
+    duration: "1 hour",
+    room: "Room 301",
+  },
+  {
+    time: "11",
+    period: "AM" as const,
+    title: "Database Management Systems Lab",
+    type: "Lab" as const,
+    duration: "2 hours",
+    room: "Computer Lab 2",
+  },
+  {
+    time: "3",
+    period: "PM" as const,
+    title: "Software Engineering",
+    type: "Lecture" as const,
+    duration: "1 hour",
+    room: "Room 205",
+  },
+];
+
+const deadlineItems = [
+  {
+    title: "DSA Assignment - Graph Algorithms",
+    type: "Assignment" as const,
+    date: "December 18, 2024",
+    description: "Implement BFS and DFS algorithms",
+    daysLeft: 3,
+  },
+  {
+    title: "DBMS Project Submission",
+    type: "Project" as const,
+    date: "December 22, 2024",
+    description: "Library management system with SQL",
+    daysLeft: 7,
+  },
+  {
+    title: "Internal Assessment - Operating Systems",
+    type: "Exam" as const,
+    date: "January 5, 2025",
+    description: "Covers Process Management & Scheduling",
+    daysLeft: 21,
+  },
+  {
+    title: "Internship Application - TechCorp",
+    type: "Career" as const,
+    date: "January 15, 2025",
+    description: "Summer internship opportunity",
+    daysLeft: 31,
+  },
+];
 
 const quickAccessItems = [
   {

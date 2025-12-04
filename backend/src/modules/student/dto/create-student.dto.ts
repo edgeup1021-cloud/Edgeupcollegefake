@@ -32,6 +32,11 @@ export class CreateStudentDto {
   @MaxLength(32)
   phone?: string;
 
+    @IsOptional()
+    @IsString()
+    @MaxLength(32)
+    section?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(128)
@@ -41,10 +46,6 @@ export class CreateStudentDto {
   @IsString()
   @MaxLength(32)
   batch?: string;
-
-  @IsOptional()
-  @IsNumber()
-  campusId?: number;
 
   @IsOptional()
   @IsString()

@@ -4,5 +4,4 @@
  * Add teacher-specific hooks here as they are created.
  */
 
-// Placeholder export to make this a valid module
-export {};
+export { useTeacherDashboard, useTeacherProfile } from './useTeachers';

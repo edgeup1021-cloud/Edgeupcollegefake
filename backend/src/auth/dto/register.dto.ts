@@ -5,6 +5,7 @@ import {
   MinLength,
   IsOptional,
   IsEnum,
+  IsNumber,
 } from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
 
@@ -39,15 +40,20 @@ export class RegisterDto {
   @IsOptional()
   program?: string;
 
-  @IsString()
-  @IsOptional()
-  batch?: string;
+    @IsString()
+    @IsOptional()
+    section?: string;
+  
+    @IsString()
+    @IsOptional()
+    batch?: string;
 
   // For teacher registration
   @IsString()
   @IsOptional()
   designation?: string;
 
+  @IsNumber()
   @IsOptional()
   departmentId?: number;
 }

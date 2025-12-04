@@ -1,4 +1,4 @@
-import TopNavbar from "@/components/student/TopNavbar";
+import PillNavbar from "@/components/student/PillNavbar";
 import { ProtectedRoute } from "@/components/auth";
 
 export default function StudentLayout({
@@ -10,7 +10,7 @@ export default function StudentLayout({
     <ProtectedRoute allowedRoles={["student"]}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         {/* Top Navigation */}
-        <TopNavbar />
+        <PillNavbar />
 
         {/* Main Content */}
         <main className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">{children}</main>
