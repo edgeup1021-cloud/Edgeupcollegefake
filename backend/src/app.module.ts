@@ -10,6 +10,7 @@ import { CalendarModule } from './modules/student/calendar/calendar.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { LeaveModule } from './modules/leave/leave.module';
 import { LibraryModule } from './modules/library/library.module';
+import { CareerModule } from './modules/career/career.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { LibraryModule } from './modules/library/library.module';
     AttendanceModule,
     LeaveModule,
     LibraryModule,
+    CareerModule,
   ],
 })
 export class AppModule { }
