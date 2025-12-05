@@ -88,7 +88,7 @@ export default function StudyCenterResearchPage() {
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">Citation Styles</p>
-                <p className="text-xl font-bold text-slate-900 dark:text-white">5 Formats</p>
+                <p className="text-xl font-bold text-slate-900 dark:text-white">3 Formats</p>
               </div>
             </div>
           </div>

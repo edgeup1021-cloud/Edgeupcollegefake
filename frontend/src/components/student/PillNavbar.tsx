@@ -65,7 +65,7 @@ const careerItems = [
 // Job Matcher Items
 const jobMatcherItems = [
   { label: "Career Assessments", href: "/student/job-matcher/assessments", icon: BarChart3 },
-  { label: "Job Analyser", href: "/student/job-matcher/analyzer", icon: Target },
+  { label: "Job Analyser", href: "/student/job-matcher/opportunities", icon: Target },
   { label: "Career Paths", href: "/student/job-matcher/paths", icon: Briefcase },
 ];
 
