@@ -17,6 +17,14 @@ export interface CourseOffering {
     id: number;
     date: string;
     time: string;
+    attendanceMarked?: boolean;
+    attendanceStats?: {
+      present: number;
+      absent: number;
+      late: number;
+      excused: number;
+      total: number;
+    } | null;
   };
 }
 

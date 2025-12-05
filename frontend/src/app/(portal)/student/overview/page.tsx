@@ -9,6 +9,7 @@ import DeadlinesCard from "@/components/common/cards/DeadlinesCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useStudentDashboard } from "@/hooks/student";
 import type { StudentDashboardScheduleItem, StudentDashboardDeadline } from "@/types/student.types";
+import { Book, Calendar } from "lucide-react";
 
 // Mock data - replace with real data from API
 const userData = {
@@ -83,27 +84,27 @@ const deadlineItems = [
 
 const quickAccessItems = [
   {
-    icon: BookOpen,
-    title: "Study Center",
-    href: "/student/study-center",
-    description: "Access courses",
+    icon: Calendar,
+    title: "Timetable",
+    href: "/student/study-center/timetable",
+    description: "Access your timetable",
   },
   {
     icon: Robot,
     title: "Smart Assistant",
-    href: "/student/smart-assistant",
+    href: "/student/smart-assistant/eustad",
     description: "AI-powered help",
   },
   {
-    icon: Briefcase,
-    title: "Career Guide",
-    href: "/student/career-placement-guide",
-    description: "Plan your career",
+    icon: Book,
+    title: "Resume Builder",
+    href: "/student/career/resume-builder",
+    description: "Build your resume",
   },
   {
     icon: Heart,
     title: "Wellness",
-    href: "/student/mental-health-wellness",
+    href: "/student/wellness/dashboard",
     description: "Mental health",
   },
 ];
@@ -251,9 +252,9 @@ export default function StudentOverviewPage() {
       unit: "tests",
     },
     attendance: {
-      value: dashboard.stats.attendance.percentage,
+      value: 0,
       total: 100,
-      unit: "%",
+      unit: "",
     },
   };
 

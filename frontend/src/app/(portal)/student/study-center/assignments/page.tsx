@@ -588,7 +588,7 @@ export default function StudentAssignmentsPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        File Upload (Optional)
+                        File Upload
                       </label>
                       <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-md p-4 text-center hover:border-brand-primary transition-colors">
                         <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />

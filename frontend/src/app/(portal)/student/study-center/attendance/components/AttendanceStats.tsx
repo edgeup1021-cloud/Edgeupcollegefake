@@ -30,7 +30,7 @@ export function AttendanceStats({ statistics }: AttendanceStatsProps) {
       bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
     },
     {
-      label: "Attendance %",
+      label: "Attendance (This month) %",
       value: `${statistics.attendancePercentage}%`,
       icon: Coffee,
       color: "text-blue-600 dark:text-blue-400",

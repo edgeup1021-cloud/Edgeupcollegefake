@@ -24,6 +24,10 @@ pnpm-debug.log*
 **/.env
 **/.env.local
 
+# Google credentials
+**/google-credentials.json
+google-credentials.json
+
 # Typescript build cache
 *.tsbuildinfo
 next-env.d.ts

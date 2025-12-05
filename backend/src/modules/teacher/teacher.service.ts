@@ -17,9 +17,10 @@ import {
   StudentAssignmentSubmission,
   StudentSchedule,
   StudentUser,
+  StudentAttendance,
 } from '../../database/entities/student';
 import { Department } from '../../database/entities/management';
-import { EnrollmentStatus } from '../../common/enums/status.enum';
+import { EnrollmentStatus, AttendanceStatus } from '../../common/enums/status.enum';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 
@@ -46,6 +47,8 @@ export class TeacherService {
     private readonly studentRepository: Repository<StudentUser>,
     @InjectRepository(Department)
     private readonly departmentRepository: Repository<Department>,
+    @InjectRepository(StudentAttendance)
+    private readonly attendanceRepository: Repository<StudentAttendance>,
   ) {}
 
   async findAll(): Promise<TeacherUser[]> {
@@ -141,6 +144,31 @@ export class TeacherService {
           return sessionDate >= now;
         }) || null;
 
+        // Check if attendance has been marked for the next session
+        let attendanceMarked = false;
+        let attendanceStats = null;
+        if (nextSession) {
+          const attendanceCount = await this.attendanceRepository.count({
+            where: { classSessionId: nextSession.id },
+          });
+          attendanceMarked = attendanceCount > 0;
+
+          if (attendanceMarked) {
+            // Get attendance statistics for this session
+            const attendanceRecords = await this.attendanceRepository.find({
+              where: { classSessionId: nextSession.id },
+            });
+
+            attendanceStats = {
+              present: attendanceRecords.filter(a => a.status === AttendanceStatus.PRESENT).length,
+              absent: attendanceRecords.filter(a => a.status === AttendanceStatus.ABSENT).length,
+              late: attendanceRecords.filter(a => a.status === AttendanceStatus.LATE).length,
+              excused: attendanceRecords.filter(a => a.status === AttendanceStatus.EXCUSED).length,
+              total: attendanceRecords.length,
+            };
+          }
+        }
+
         // Extract unique session days from sessions
         const sessionDays = Array.from(
           new Set(
@@ -180,6 +208,8 @@ export class TeacherService {
                   return new Date(dateValue as Date).toISOString().split('T')[0];
                 })(),
                 time: nextSession.startTime,
+                attendanceMarked,
+                attendanceStats,
               }
             : null,
         };
@@ -325,6 +355,8 @@ export class TeacherService {
               return new Date(dateValue as Date).toISOString().split('T')[0];
             })(),
             time: nextSession.startTime,
+            attendanceMarked: false,
+            attendanceStats: null,
           }
         : null,
     };
@@ -379,7 +411,7 @@ export class TeacherService {
     const courseOfferingIds = courseOfferings.map((co) => co.id);
 
     // Execute second batch of queries in parallel
-    const [totalStudents, pendingSubmissions, upcomingAssignments] =
+    const [totalStudents, pendingSubmissions, upcomingAssignments, attendanceStats] =
       await Promise.all([
         // Query 4: Count enrolled students
         courseOfferingIds.length > 0
@@ -417,6 +449,19 @@ export class TeacherService {
               take: 10,
             })
           : [],
+
+        // Query 7: Calculate attendance rate for this teacher's classes
+        courseOfferingIds.length > 0
+          ? this.attendanceRepository
+              .createQueryBuilder('attendance')
+              .innerJoin(TeacherClassSession, 'session', 'attendance.classSessionId = session.id')
+              .where('session.courseOfferingId IN (:...ids)', { ids: courseOfferingIds })
+              .select([
+                'COUNT(*) as totalRecords',
+                `SUM(CASE WHEN attendance.status IN ('${AttendanceStatus.PRESENT}', '${AttendanceStatus.LATE}', '${AttendanceStatus.EXCUSED}') THEN 1 ELSE 0 END) as attendedCount`,
+              ])
+              .getRawOne()
+          : { totalRecords: 0, attendedCount: 0 },
       ]);
 
     // Transform data into dashboard format
@@ -432,7 +477,9 @@ export class TeacherService {
         classesToday: todaySessions.length,
         totalStudents: totalStudents,
         assignmentsToGrade: pendingSubmissions,
-        attendanceRate: 85, // Hardcoded for now per requirements
+        attendanceRate: attendanceStats.totalRecords > 0
+          ? Math.round((parseInt(attendanceStats.attendedCount) / parseInt(attendanceStats.totalRecords)) * 100)
+          : 0,
       },
       schedule: todaySessions.map((session) => ({
         id: session.id,
