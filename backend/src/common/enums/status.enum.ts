@@ -53,3 +53,64 @@ export enum AdminRole {
   ADMIN = 'Admin',
   VIEWER = 'Viewer',
 }
+
+// Attendance status for student_attendance table
+export enum AttendanceStatus {
+  PRESENT = 'present',
+  ABSENT = 'absent',
+  LATE = 'late',
+  EXCUSED = 'excused',
+}
+
+// Assessment status for student_assessments table
+export enum StudentAssessmentStatus {
+  UPCOMING = 'upcoming',
+  COMPLETED = 'completed',
+  MISSED = 'missed',
+}
+
+// Assessment types for student_assessments table
+export enum StudentAssessmentType {
+  QUIZ = 'Quiz',
+  TEST = 'Test',
+  MIDTERM = 'Midterm',
+  FINAL = 'Final',
+  VIVA = 'Viva',
+}
+
+// Activity types for student_activity_logs table
+export enum ActivityType {
+  LOGIN = 'login',
+  STUDY = 'study',
+  SUBMISSION = 'submission',
+  ATTENDANCE = 'attendance',
+}
+
+// Leave types for student_leave_requests table
+export enum LeaveType {
+  SICK = 'Sick Leave',
+  PERSONAL = 'Personal Leave',
+  FAMILY = 'Family Emergency',
+  MEDICAL = 'Medical Leave',
+  OTHER = 'Other',
+}
+
+// Leave status for student_leave_requests table
+export enum LeaveStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
+}
+
+// Library resource categories for teacher_library_resources table
+export enum LibraryResourceCategory {
+  LECTURE_NOTES = 'Lecture Notes',
+  TEXTBOOKS = 'Textbooks',
+  RESEARCH_PAPERS = 'Research Papers',
+  LAB_MANUALS = 'Lab Manuals',
+  PAST_PAPERS = 'Past Papers',
+  REFERENCE_MATERIALS = 'Reference Materials',
+  STUDY_GUIDES = 'Study Guides',
+  OTHER = 'Other',
+}

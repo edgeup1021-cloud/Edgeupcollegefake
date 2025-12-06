@@ -63,21 +63,21 @@ export default function NavDropdown({ label, items }: NavDropdownProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-start gap-3 px-4 py-3 transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                   isItemActive
                     ? "bg-blue-50 dark:bg-blue-900/30"
                     : "hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 mt-0.5 ${
+                  className={`w-5 h-5 shrink-0 ${
                     isItemActive
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-gray-400 dark:text-gray-500"
                   }`}
                 />
-                <div>
-                  <div
+                <div className="flex flex-col justify-center min-w-0">
+                  <span
                     className={`text-sm font-medium ${
                       isItemActive
                         ? "text-blue-600 dark:text-blue-400"
@@ -85,11 +85,11 @@ export default function NavDropdown({ label, items }: NavDropdownProps) {
                     }`}
                   >
                     {item.label}
-                  </div>
+                  </span>
                   {item.description && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       {item.description}
-                    </div>
+                    </span>
                   )}
                 </div>
               </Link>

@@ -10,6 +10,9 @@ export * from './api.client';
 // Auth Service
 export * from './auth.service';
 
+// Calendar Service
+export * from './calendar.service';
+
 // Student Service
 export * from './student.service';
 

@@ -4,5 +4,4 @@
  * Add teacher-specific hooks here as they are created.
  */
 
-// export * from './useTeacherOverview';
-// export * from './useTeacherCourses';
+export { useTeacherDashboard, useTeacherProfile } from './useTeachers';

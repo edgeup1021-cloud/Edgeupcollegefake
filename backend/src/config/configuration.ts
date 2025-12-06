@@ -7,6 +7,7 @@ export default () => ({
     username: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_DATABASE || 'edgeup_college',
+    socketPath: process.env.DB_SOCKET || undefined,
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'default-secret-change-in-production',

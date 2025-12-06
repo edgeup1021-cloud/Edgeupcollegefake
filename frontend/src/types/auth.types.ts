@@ -3,6 +3,7 @@
  */
 
 export type UserRole = 'student' | 'teacher' | 'admin';
+export type PortalType = 'student' | 'teacher' | 'management';
 
 export interface User {
   id: number;
@@ -10,12 +11,15 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRole;
+  userType: string;
+  portalType: PortalType;
   profileImage: string | null;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
+  portalType: PortalType;
 }
 
 export interface RegisterData {
@@ -43,6 +47,8 @@ export interface TokenPayload {
   sub: number;
   email: string;
   role: UserRole;
+  userType: string;
+  portalType: PortalType;
   iat: number;
   exp: number;
 }

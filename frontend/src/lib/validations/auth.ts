@@ -40,7 +40,7 @@ const baseRegisterSchema = z.object({
     ),
   confirmPassword: z.string().min(1, "Please confirm your password"),
   role: z.enum(["student", "teacher"], {
-    required_error: "Please select a role",
+    message: "Please select a role",
   }),
 });
 

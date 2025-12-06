@@ -12,7 +12,19 @@ import {
   StudentAttendance,
   StudentSchedule,
   StudentNotification,
+  StudentStudySession,
+  StudentAssessment,
+  StudentActivityLog,
+  CalendarEvent,
 } from './entities/student';
+
+// Study group entities
+import {
+  StudyGroup,
+  StudyGroupMember,
+  StudyGroupMessage,
+  StudyGroupTeacherModerator,
+} from './entities/study-groups';
 
 // Teacher entities
 import {
@@ -41,6 +53,15 @@ const entities = [
   StudentAttendance,
   StudentSchedule,
   StudentNotification,
+  StudentStudySession,
+  StudentAssessment,
+  StudentActivityLog,
+  CalendarEvent,
+  // Study groups
+  StudyGroup,
+  StudyGroupMember,
+  StudyGroupMessage,
+  StudyGroupTeacherModerator,
   // Teacher
   TeacherUser,
   TeacherCourse,
@@ -66,4 +87,4 @@ const entities = [
   ],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }

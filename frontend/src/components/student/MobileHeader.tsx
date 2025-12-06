@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import { useSidebar } from "@/src/components/providers/SidebarProvider";
+import { useSidebar } from "@/components/providers/SidebarProvider";
 
 export default function MobileHeader() {
   const { isMobile, toggleMobile } = useSidebar();

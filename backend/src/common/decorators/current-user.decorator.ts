@@ -1,10 +1,12 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { PortalType } from '../../auth/interfaces/jwt-payload.interface';
 
 export interface CurrentUserData {
   id: number;
   email: string;
   role: string;
   userType: string;
+  portalType: PortalType;
 }
 
 export const CurrentUser = createParamDecorator(

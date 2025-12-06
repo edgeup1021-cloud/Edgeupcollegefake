@@ -1,4 +1,5 @@
-import { ProtectedRoute } from "@/src/components/auth";
+import { ProtectedRoute } from "@/components/auth";
+import PillNavbar from "@/components/management/PillNavbar";
 
 export default function ManagementLayout({
   children,
@@ -8,7 +9,7 @@ export default function ManagementLayout({
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-        {/* TODO: Add ManagementNavbar component */}
+        <PillNavbar />
         <main className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">{children}</main>
       </div>
     </ProtectedRoute>
