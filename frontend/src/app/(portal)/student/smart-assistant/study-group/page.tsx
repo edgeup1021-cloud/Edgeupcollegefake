@@ -23,10 +23,24 @@ import {
   DotsThree,
   Download,
   CaretDown,
+  Envelope,
+  Check,
+  XCircle,
 } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+// ============ HELPER FUNCTIONS ============
+const getSubjectColor = (subject: string) => {
+  const colors = {
+    Mathematics: { bg: "bg-blue-50 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-300", border: "border-blue-200 dark:border-blue-700", badge: "bg-blue-100 dark:bg-blue-900/40" },
+    "Computer Science": { bg: "bg-purple-50 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", border: "border-purple-200 dark:border-purple-700", badge: "bg-purple-100 dark:bg-purple-900/40" },
+    Physics: { bg: "bg-emerald-50 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-700", badge: "bg-emerald-100 dark:bg-emerald-900/40" },
+    Chemistry: { bg: "bg-amber-50 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", border: "border-amber-200 dark:border-amber-700", badge: "bg-amber-100 dark:bg-amber-900/40" },
+  };
+  return colors[subject as keyof typeof colors] || { bg: "bg-gray-50 dark:bg-gray-800", text: "text-gray-700 dark:text-gray-300", border: "border-gray-200 dark:border-gray-700", badge: "bg-gray-100 dark:bg-gray-700" };
+};
 
 // ============ TYPES ============
 interface StudyGroup {
@@ -86,6 +100,15 @@ interface GroupMember {
   isCurrentUser: boolean;
 }
 
+interface GroupInvitation {
+  id: number;
+  groupName: string;
+  subject: string;
+  invitedBy: string;
+  invitedAt: string;
+  memberCount: number;
+}
+
 // ============ MOCK DATA ============
 const mockGroups: StudyGroup[] = [
   {
@@ -93,7 +116,7 @@ const mockGroups: StudyGroup[] = [
     name: "Calculus Study Squad",
     subject: "Mathematics",
     topic: "Calculus",
-    description: "A group for students to collaborate on calculus problems and concepts.",
+    description: "Collaborative space for mastering calculus concepts and problem-solving.",
     privacy: "private",
     memberCount: 5,
     onlineCount: 3,
@@ -108,32 +131,14 @@ const mockGroups: StudyGroup[] = [
   },
   {
     id: 2,
-    name: "CS Study Group",
+    name: "Data Structures Hub",
     subject: "Computer Science",
     topic: "Data Structures",
-    description: "Learn and practice data structures together.",
+    description: "Master data structures and algorithms through collaborative learning.",
     privacy: "public",
     memberCount: 8,
     onlineCount: 2,
     lastActivity: "2 hours ago",
-    nextSession: {
-      date: "Tomorrow",
-      time: "2:00 PM",
-      topic: "Binary Trees",
-      videoLink: "https://zoom.us/j/123456789",
-    },
-    isAdmin: false,
-  },
-  {
-    id: 3,
-    name: "Physics Problem Solvers",
-    subject: "Physics",
-    topic: "Mechanics",
-    description: "Solve physics problems and discuss concepts.",
-    privacy: "private",
-    memberCount: 4,
-    onlineCount: 1,
-    lastActivity: "1 day ago",
     isAdmin: false,
   },
 ];
@@ -151,33 +156,17 @@ const mockMessages: GroupMessage[] = [
     id: 2,
     userId: 1,
     userName: "You",
-    content: "Sure! The formula is ∫u dv = uv - ∫v du. You need to choose u and dv wisely.",
+    content: "Sure! The formula is ∫u dv = uv - ∫v du. Use LIATE to choose u wisely.",
     timestamp: "10:32 AM",
     isCurrentUser: true,
   },
   {
     id: 3,
-    userId: 3,
-    userName: "Mike Johnson",
-    content: "I always use LIATE to choose u: Logarithmic, Inverse trig, Algebraic, Trig, Exponential",
-    timestamp: "10:35 AM",
-    isCurrentUser: false,
-  },
-  {
-    id: 4,
     userId: 2,
     userName: "Sarah Chen",
-    content: "That makes so much sense! Thanks guys 🙌",
-    timestamp: "10:38 AM",
+    content: "That makes so much sense! Thanks! 🙌",
+    timestamp: "10:35 AM",
     isCurrentUser: false,
-  },
-  {
-    id: 5,
-    userId: 1,
-    userName: "You",
-    content: "No problem! Let me share some practice problems in the resources tab.",
-    timestamp: "10:40 AM",
-    isCurrentUser: true,
   },
 ];
 
@@ -193,28 +182,11 @@ const mockResources: GroupResource[] = [
   },
   {
     id: 2,
-    type: "file",
-    name: "Practice_Problems.pdf",
-    url: "/files/practice.pdf",
-    size: "856 KB",
-    addedBy: "You",
-    addedAt: "1 week ago",
-  },
-  {
-    id: 3,
     type: "link",
     name: "Khan Academy - Integration",
     url: "https://khanacademy.org/math/calculus",
-    addedBy: "Mike Johnson",
+    addedBy: "You",
     addedAt: "3 days ago",
-  },
-  {
-    id: 4,
-    type: "link",
-    name: "MIT OpenCourseWare - Calculus",
-    url: "https://ocw.mit.edu/courses/mathematics",
-    addedBy: "Sarah Chen",
-    addedAt: "5 days ago",
   },
 ];
 
@@ -230,19 +202,10 @@ const mockSessions: GroupSession[] = [
   },
   {
     id: 2,
-    date: "Tomorrow",
-    time: "2:00 PM",
-    topic: "Practice Problems Session",
-    hostName: "You",
-    videoLink: "https://zoom.us/j/123456789",
-    status: "upcoming",
-  },
-  {
-    id: 3,
     date: "Dec 1",
     time: "3:00 PM",
     topic: "Derivatives Deep Dive",
-    hostName: "Mike Johnson",
+    hostName: "You",
     status: "completed",
     attendeeCount: 4,
   },
@@ -251,35 +214,33 @@ const mockSessions: GroupSession[] = [
 const mockMembers: GroupMember[] = [
   { id: 1, name: "You", isOnline: true, isAdmin: true, isCurrentUser: true },
   { id: 2, name: "Sarah Chen", isOnline: true, isAdmin: true, isCurrentUser: false },
-  { id: 3, name: "Mike Johnson", isOnline: true, isAdmin: false, isCurrentUser: false },
-  { id: 4, name: "Emma Wilson", isOnline: false, isAdmin: false, isCurrentUser: false },
-  { id: 5, name: "David Brown", isOnline: false, isAdmin: false, isCurrentUser: false },
+  { id: 3, name: "Mike Johnson", isOnline: false, isAdmin: false, isCurrentUser: false },
 ];
 
-const mockDiscoverGroups: StudyGroup[] = [
+const mockInvitations: GroupInvitation[] = [
   {
-    id: 101,
-    name: "Linear Algebra Masters",
-    subject: "Mathematics",
-    topic: "Linear Algebra",
-    description: "Master linear algebra concepts together.",
-    privacy: "public",
-    memberCount: 12,
-    onlineCount: 4,
-    lastActivity: "30 min ago",
-    isAdmin: false,
+    id: 1,
+    groupName: "Advanced Algorithms Study Group",
+    subject: "Computer Science",
+    invitedBy: "Dr. Emily Watson",
+    invitedAt: "2 hours ago",
+    memberCount: 15,
   },
   {
-    id: 102,
-    name: "Organic Chemistry Help",
-    subject: "Chemistry",
-    topic: "Organic Chemistry",
-    description: "Help each other with organic chemistry.",
-    privacy: "public",
-    memberCount: 15,
-    onlineCount: 6,
-    lastActivity: "1 hour ago",
-    isAdmin: false,
+    id: 2,
+    groupName: "Quantum Physics Discussion",
+    subject: "Physics",
+    invitedBy: "Prof. Michael Chen",
+    invitedAt: "1 day ago",
+    memberCount: 8,
+  },
+  {
+    id: 3,
+    groupName: "Linear Algebra Mastery",
+    subject: "Mathematics",
+    invitedBy: "Sarah Chen",
+    invitedAt: "3 days ago",
+    memberCount: 12,
   },
 ];
 
@@ -295,47 +256,75 @@ function GroupCard({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const subjectColor = getSubjectColor(group.subject);
+  
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full p-3 rounded-lg text-left transition-all",
-        "border border-transparent",
-        "hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600",
+        "w-full p-4 rounded-xl text-left transition-all duration-200 border",
         isSelected
-          ? "bg-brand-primary/10 dark:bg-brand-primary/20 border-l-2 border-l-brand-primary"
-          : "bg-gray-50/80 dark:bg-gray-700/30"
+          ? "bg-white dark:bg-gray-800 border-brand-primary shadow-md ring-2 ring-brand-primary/20"
+          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-primary/50 hover:shadow-sm"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className={cn(
+              "text-sm font-semibold truncate",
+              isSelected ? subjectColor.text : "text-gray-900 dark:text-white"
+            )}>
               {group.name}
             </h4>
             {group.privacy === "private" ? (
-              <Lock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+              <div className="shrink-0 p-1 rounded bg-orange-100 dark:bg-orange-900/30">
+                <Lock className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+              </div>
             ) : (
-              <Globe className="w-3 h-3 text-gray-400 flex-shrink-0" />
+              <div className="shrink-0 p-1 rounded bg-green-100 dark:bg-green-900/30">
+                <Globe className="w-3 h-3 text-green-600 dark:text-green-400" />
+              </div>
             )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {group.memberCount} members • {group.onlineCount} online
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <span className={cn(
+            "inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2",
+            subjectColor.badge,
+            subjectColor.text
+          )}>
+            {group.subject}
+          </span>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+              <UsersThree className="w-3.5 h-3.5" />
+              {group.memberCount}
+            </span>
+            <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              {group.onlineCount} online
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
             {group.lastActivity}
           </p>
         </div>
         {group.nextSession && (
-          <div className="flex-shrink-0">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="shrink-0">
+            <div className="relative w-2.5 h-2.5">
+              <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75" />
+              <div className="relative w-2.5 h-2.5 rounded-full bg-green-500" />
+            </div>
           </div>
         )}
       </div>
       {group.nextSession && (
-        <div className="mt-2 p-2 rounded-md bg-brand-secondary/10 dark:bg-brand-secondary/20">
-          <p className="text-xs text-brand-secondary font-medium">
-            📅 {group.nextSession.date}, {group.nextSession.time}
+        <div className="mt-3 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
+          <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
+            {group.nextSession.date} at {group.nextSession.time}
+          </p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
+            {group.nextSession.topic}
           </p>
         </div>
       )}
@@ -345,45 +334,51 @@ function GroupCard({
 
 // Message Bubble
 function MessageBubble({ message }: { message: GroupMessage }) {
+  const [showReactions, setShowReactions] = useState(false);
+  
   return (
     <div
       className={cn(
-        "flex gap-3 mb-4",
+        "flex gap-3 mb-4 group",
         message.isCurrentUser ? "flex-row-reverse" : "flex-row"
       )}
     >
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold",
+          "shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ring-2 ring-white dark:ring-gray-800",
           message.isCurrentUser
             ? "bg-brand-primary text-white"
-            : "bg-gradient-to-br from-brand-secondary/20 to-brand-primary/10 text-brand-secondary"
+            : "bg-blue-500 dark:bg-blue-600 text-white"
         )}
       >
         {message.userName.charAt(0)}
       </div>
-      <div className={cn("max-w-[75%]", message.isCurrentUser ? "text-right" : "text-left")}>
+      <div className={cn("max-w-[75%] space-y-1", message.isCurrentUser ? "text-right" : "text-left")}>
         {!message.isCurrentUser && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{message.userName}</p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{message.userName}</p>
         )}
-        <div
-          className={cn(
-            "px-4 py-3 rounded-2xl inline-block",
-            message.isCurrentUser
-              ? "bg-brand-primary text-white rounded-br-md"
-              : "bg-gray-100 dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-bl-md"
-          )}
-        >
-          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        <div className="relative group/message">
+          <div
+            className={cn(
+              "px-4 py-3 rounded-2xl inline-block shadow-sm transition-all duration-200 hover:shadow-md",
+              message.isCurrentUser
+                ? "bg-brand-primary text-white rounded-br-md"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600"
+            )}
+          >
+            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+          </div>
         </div>
-        <p
-          className={cn(
-            "text-xs mt-1",
-            message.isCurrentUser ? "text-gray-400" : "text-gray-500 dark:text-gray-400"
-          )}
-        >
-          {message.timestamp}
-        </p>
+        <div className="flex items-center gap-2">
+          <p
+            className={cn(
+              "text-xs",
+              message.isCurrentUser ? "text-gray-400" : "text-gray-500 dark:text-gray-400"
+            )}
+          >
+            {message.timestamp}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -392,39 +387,41 @@ function MessageBubble({ message }: { message: GroupMessage }) {
 // Resource Item
 function ResourceItem({ resource }: { resource: GroupResource }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+    <div className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-brand-primary/50 dark:hover:border-brand-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer">
       <div className="flex items-center gap-3">
         <div
           className={cn(
-            "w-10 h-10 rounded-lg flex items-center justify-center",
+            "w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110",
             resource.type === "file"
-              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-              : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+              ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+              : "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
           )}
         >
           {resource.type === "file" ? (
-            <File className="w-5 h-5" />
+            <File className="w-5 h-5" weight="duotone" />
           ) : (
-            <LinkIcon className="w-5 h-5" />
+            <LinkIcon className="w-5 h-5" weight="duotone" />
           )}
         </div>
-        <div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white">{resource.name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {resource.size && `${resource.size} • `}
-            {resource.addedBy} • {resource.addedAt}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-brand-primary transition-colors">{resource.name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
+            {resource.size && <><span className="font-medium">{resource.size}</span> <span>•</span></>}
+            <span>{resource.addedBy}</span>
+            <span>•</span>
+            <span>{resource.addedAt}</span>
           </p>
         </div>
       </div>
       <Button
         variant="ghost"
         size="icon"
-        className="text-gray-500 hover:text-brand-primary"
+        className="shrink-0 text-gray-400 hover:text-brand-primary hover:bg-brand-primary/10 transition-all"
       >
         {resource.type === "file" ? (
-          <Download className="w-4 h-4" />
+          <Download className="w-5 h-5" weight="bold" />
         ) : (
-          <LinkIcon className="w-4 h-4" />
+          <LinkIcon className="w-5 h-5" weight="bold" />
         )}
       </Button>
     </div>
@@ -438,37 +435,64 @@ function SessionItem({ session }: { session: GroupSession }) {
   return (
     <div
       className={cn(
-        "p-4 rounded-lg border transition-colors",
+        "p-4 rounded-xl border-2 transition-all duration-200",
         isUpcoming
-          ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-          : "bg-gray-50/80 dark:bg-gray-700/30 border-transparent"
+          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-sm hover:shadow-md"
+          : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
       )}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-brand-secondary" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {session.date}, {session.time}
-            </span>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <div className={cn(
+              "p-1.5 rounded-lg",
+              isUpcoming ? "bg-blue-100 dark:bg-blue-900/30" : "bg-gray-200 dark:bg-gray-700"
+            )}>
+              <Calendar className={cn(
+                "w-4 h-4",
+                isUpcoming ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
+              )} weight="duotone" />
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-gray-900 dark:text-white block">
+                {session.date}
+              </span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                {session.time}
+              </span>
+            </div>
+            {isUpcoming && (
+              <span className="ml-auto px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Upcoming
+              </span>
+            )}
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{session.topic}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Hosted by: {session.hostName}
-            {session.attendeeCount && ` • ${session.attendeeCount} attended`}
-          </p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">{session.topic}</p>
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="flex items-center gap-1">
+              <UsersThree className="w-3.5 h-3.5" />
+              {session.hostName}
+            </span>
+            {session.attendeeCount && (
+              <>
+                <span>•</span>
+                <span>{session.attendeeCount} attended</span>
+              </>
+            )}
+          </div>
         </div>
         {isUpcoming && session.videoLink && (
           <Button
             size="sm"
-            className="bg-brand-secondary hover:bg-brand-secondary/90 text-white"
+            className="shrink-0 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold transition-all duration-200 hover:shadow-lg"
           >
-            <VideoCamera className="w-4 h-4 mr-1" />
-            Join
+            <VideoCamera className="w-4 h-4 mr-1.5" weight="fill" />
+            Join Now
           </Button>
         )}
         {!isUpcoming && (
-          <span className="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+          <span className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 font-medium">
             Completed
           </span>
         )}
@@ -480,35 +504,163 @@ function SessionItem({ session }: { session: GroupSession }) {
 // Member Item
 function MemberItem({ member }: { member: GroupMember }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/30">
+    <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-brand-primary/30 dark:hover:border-brand-primary/30 transition-all duration-200 hover:shadow-sm">
       <div className="flex items-center gap-3">
         <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-secondary/20 to-brand-primary/10 flex items-center justify-center text-sm font-semibold text-brand-secondary">
+          <div className="w-11 h-11 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-sm font-bold text-white shadow-md">
             {member.name.charAt(0)}
           </div>
           <div
             className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800",
+              "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-800 shadow-sm",
               member.isOnline ? "bg-green-500" : "bg-gray-400"
             )}
-          />
+          >
+            {member.isOnline && (
+              <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75" />
+            )}
+          </div>
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
               {member.name}
-              {member.isCurrentUser && " (You)"}
+              {member.isCurrentUser && <span className="text-brand-primary"> (You)</span>}
             </p>
             {member.isAdmin && (
-              <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
-                <Crown className="w-3 h-3" />
+              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-medium shrink-0">
+                <Crown className="w-3 h-3" weight="fill" />
                 Admin
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {member.isOnline ? "Online" : "Offline"}
+          <p className={cn(
+            "text-xs font-medium",
+            member.isOnline ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"
+          )}>
+            {member.isOnline ? "● Online" : "○ Offline"}
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Invitations Modal
+function InvitationsModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!isOpen) return null;
+
+  const handleAccept = (invitationId: number) => {
+    // In real app, accept invitation via backend
+    console.log("Accepted invitation:", invitationId);
+  };
+
+  const handleDecline = (invitationId: number) => {
+    // In real app, decline invitation via backend
+    console.log("Declined invitation:", invitationId);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center">
+              <Envelope className="w-5 h-5 text-brand-primary" weight="fill" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Group Invitations
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {mockInvitations.length} pending invitation{mockInvitations.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-auto max-h-[calc(80vh-140px)]">
+          {mockInvitations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="mb-4 p-4 rounded-full bg-gray-100 dark:bg-gray-800">
+                <Envelope className="w-16 h-16 text-gray-400 dark:text-gray-600" weight="duotone" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No Invitations
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                You don't have any pending group invitations at the moment
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {mockInvitations.map((invitation) => {
+                const subjectColor = getSubjectColor(invitation.subject);
+                return (
+                  <div
+                    key={invitation.id}
+                    className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                          {invitation.groupName}
+                        </h3>
+                        <span className={cn(
+                          "inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2",
+                          subjectColor.badge,
+                          subjectColor.text
+                        )}>
+                          {invitation.subject}
+                        </span>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="flex items-center gap-1">
+                            <UsersThree className="w-4 h-4" />
+                            {invitation.memberCount} members
+                          </span>
+                          <span>•</span>
+                          <span>Invited by {invitation.invitedBy}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                          {invitation.invitedAt}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          onClick={() => handleAccept(invitation.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Check className="w-4 h-4 mr-1" weight="bold" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDecline(invitation.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <XCircle className="w-4 h-4 mr-1" weight="bold" />
+                          Decline
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -649,12 +801,13 @@ function CreateGroupModal({
 
 // ============ MAIN COMPONENT ============
 export default function StudyGroupPage() {
-  const [activeTab, setActiveTab] = useState<"my-groups" | "discover" | "invitations">("my-groups");
+  const [activeTab, setActiveTab] = useState<"my-groups">("my-groups");
   const [selectedGroup, setSelectedGroup] = useState<StudyGroup | null>(mockGroups[0]);
-  const [groupTab, setGroupTab] = useState<"chat" | "resources" | "sessions" | "members">("chat");
+  const [groupTab, setGroupTab] = useState<"chat" | "resources" | "members">("chat");
   const [messageInput, setMessageInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showInvitations, setShowInvitations] = useState(false);
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -674,8 +827,6 @@ export default function StudyGroupPage() {
     setIsMobileDetailView(true);
   };
 
-  const groups = activeTab === "my-groups" ? mockGroups : activeTab === "discover" ? mockDiscoverGroups : [];
-
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       {/* Header */}
@@ -691,8 +842,8 @@ export default function StudyGroupPage() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-secondary/20 to-brand-primary/10 flex items-center justify-center">
-            <UsersThree className="w-6 h-6 text-brand-secondary" />
+          <div className="w-10 h-10 rounded-xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center">
+            <UsersThree className="w-6 h-6 text-brand-primary" weight="fill" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Study Groups</h1>
@@ -701,40 +852,28 @@ export default function StudyGroupPage() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-brand-primary hover:bg-brand-primary/90 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Create Group</span>
-        </Button>
-      </div>
-
-      {/* Tabs */}
-      <div className={cn("flex gap-2", isMobileDetailView && "hidden lg:flex")}>
-        {[
-          { id: "my-groups", label: "My Groups" },
-          { id: "discover", label: "Discover" },
-          { id: "invitations", label: "Invitations", badge: 2 },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={cn(
-              "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-              activeTab === tab.id
-                ? "bg-brand-primary/10 dark:bg-brand-primary/20 text-brand-primary"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
-            )}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowInvitations(true)}
+            variant="outline"
+            className="relative"
           >
-            {tab.label}
-            {tab.badge && (
-              <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-red-500 text-white">
-                {tab.badge}
+            <Envelope className="w-4 h-4 sm:mr-2" weight="fill" />
+            <span className="hidden sm:inline">Invitations</span>
+            {mockInvitations.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-semibold rounded-full flex items-center justify-center">
+                {mockInvitations.length}
               </span>
             )}
-          </button>
-        ))}
+          </Button>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-brand-primary hover:bg-brand-primary/90 text-white"
+          >
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Create Group</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -742,28 +881,42 @@ export default function StudyGroupPage() {
         {/* Groups Sidebar */}
         <Card
           className={cn(
-            "w-full lg:w-80 flex-shrink-0 flex flex-col bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm",
+            "w-full lg:w-80 shrink-0 flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden",
             isMobileDetailView && "hidden lg:flex"
           )}
         >
-          <CardHeader className="py-3 px-4 border-b border-gray-100 dark:border-gray-700">
+          <CardHeader className="py-4 px-4 border-b border-gray-200 dark:border-gray-700">
             <div className="relative">
               <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search groups..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none"
+                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all"
               />
             </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-auto p-2 space-y-2">
-            {groups.length === 0 ? (
-              <div className="text-center py-8">
-                <UsersThree className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">No groups found</p>
+          <CardContent className="flex-1 overflow-auto p-3 space-y-2">
+            {mockGroups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="mb-6 p-4 rounded-full bg-gray-100 dark:bg-gray-800">
+                  <UsersThree className="w-16 h-16 text-gray-400 dark:text-gray-600" weight="duotone" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No Study Groups Yet
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6 max-w-xs">
+                  Create your first group or join existing ones to start collaborating with peers
+                </p>
+                <Button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Group
+                </Button>
               </div>
             ) : (
-              groups.map((group) => (
+              mockGroups.map((group) => (
                 <GroupCard
                   key={group.id}
                   group={group}
@@ -779,59 +932,33 @@ export default function StudyGroupPage() {
         {selectedGroup ? (
           <Card
             className={cn(
-              "flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm",
+              "flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden",
               !isMobileDetailView && "hidden lg:flex"
             )}
           >
-            {/* Group Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {selectedGroup.name}
-                    </h2>
-                    {selectedGroup.privacy === "private" ? (
-                      <Lock className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <Globe className="w-4 h-4 text-gray-400" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                    {selectedGroup.subject} • {selectedGroup.topic}
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    👥 {selectedGroup.memberCount} members • 🟢 {selectedGroup.onlineCount} online
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <DotsThree className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-
             {/* Group Tabs */}
-            <div className="flex gap-1 px-4 pt-2 border-b border-gray-100 dark:border-gray-700">
-              {[
-                { id: "chat", label: "Chat", icon: ChatCircle },
-                { id: "resources", label: "Resources", icon: Folder },
-                { id: "sessions", label: "Sessions", icon: Calendar },
-                { id: "members", label: "Members", icon: UsersThree },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setGroupTab(tab.id as typeof groupTab)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg transition-colors",
-                    groupTab === tab.id
-                      ? "bg-gray-100 dark:bg-gray-700/50 text-brand-primary border-b-2 border-brand-primary -mb-px"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  )}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              ))}
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2">
+                {[
+                  { id: "chat", label: "Chat", icon: ChatCircle },
+                  { id: "resources", label: "Resources", icon: Folder },
+                  { id: "members", label: "Members", icon: UsersThree },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setGroupTab(tab.id as typeof groupTab)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                      groupTab === tab.id
+                        ? "bg-brand-primary text-white shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    <tab.icon className="w-4 h-4" weight={groupTab === tab.id ? "fill" : "regular"} />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Tab Content */}
@@ -844,7 +971,7 @@ export default function StudyGroupPage() {
                     ))}
                     <div ref={chatEndRef} />
                   </CardContent>
-                  <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 relative">
                         <input
@@ -853,13 +980,13 @@ export default function StudyGroupPage() {
                           onChange={(e) => setMessageInput(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                           placeholder="Type your message..."
-                          className="w-full px-4 py-3 rounded-xl text-sm bg-gray-50 dark:bg-gray-700/30 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 border border-gray-200 dark:border-gray-600 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none"
+                          className="w-full px-4 py-3 rounded-xl text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 border border-gray-200 dark:border-gray-700 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all"
                         />
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="flex-shrink-0 rounded-xl h-12 w-12 border-gray-200 dark:border-gray-600"
+                        className="shrink-0 rounded-xl h-12 w-12"
                       >
                         <Paperclip className="w-5 h-5" />
                       </Button>
@@ -867,10 +994,7 @@ export default function StudyGroupPage() {
                         variant={isRecording ? "destructive" : "outline"}
                         size="icon"
                         onClick={() => setIsRecording(!isRecording)}
-                        className={cn(
-                          "flex-shrink-0 rounded-xl h-12 w-12",
-                          !isRecording && "border-gray-200 dark:border-gray-600"
-                        )}
+                        className="shrink-0 rounded-xl h-12 w-12"
                       >
                         {isRecording ? (
                           <MicrophoneSlash className="w-5 h-5" />
@@ -881,9 +1005,9 @@ export default function StudyGroupPage() {
                       <Button
                         onClick={handleSendMessage}
                         disabled={!messageInput.trim()}
-                        className="flex-shrink-0 rounded-xl h-12 w-12 bg-brand-primary hover:bg-brand-primary/90"
+                        className="shrink-0 rounded-xl h-12 w-12 bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50 shadow-sm"
                       >
-                        <PaperPlaneRight className="w-5 h-5" />
+                        <PaperPlaneRight className="w-5 h-5" weight="fill" />
                       </Button>
                     </div>
                   </div>
@@ -892,13 +1016,16 @@ export default function StudyGroupPage() {
 
               {groupTab === "resources" && (
                 <CardContent className="flex-1 overflow-auto p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      Shared Resources
-                    </h3>
-                    <Button size="sm" variant="outline">
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Folder className="w-5 h-5 text-brand-primary" weight="fill" />
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Shared Resources
+                      </h3>
+                    </div>
+                    <Button size="sm" className="bg-brand-primary hover:bg-brand-primary/90 text-white">
                       <Plus className="w-4 h-4 mr-1" />
-                      Add
+                      Add Resource
                     </Button>
                   </div>
                   <div className="space-y-3">
@@ -922,48 +1049,21 @@ export default function StudyGroupPage() {
                 </CardContent>
               )}
 
-              {groupTab === "sessions" && (
-                <CardContent className="flex-1 overflow-auto p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      Study Sessions
-                    </h3>
-                    <Button size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Schedule
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Upcoming
-                    </h4>
-                    {mockSessions
-                      .filter((s) => s.status === "upcoming")
-                      .map((session) => (
-                        <SessionItem key={session.id} session={session} />
-                      ))}
-                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mt-4">
-                      Past Sessions
-                    </h4>
-                    {mockSessions
-                      .filter((s) => s.status === "completed")
-                      .map((session) => (
-                        <SessionItem key={session.id} session={session} />
-                      ))}
-                  </div>
-                </CardContent>
-              )}
-
               {groupTab === "members" && (
                 <CardContent className="flex-1 overflow-auto p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      Members ({mockMembers.length})
-                    </h3>
-                    <Button size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Invite
-                    </Button>
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <UsersThree className="w-5 h-5 text-brand-primary" weight="fill" />
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Members <span className="text-gray-500 dark:text-gray-400">({mockMembers.length})</span>
+                      </h3>
+                    </div>
+                    {selectedGroup.isAdmin && (
+                      <Button size="sm" className="bg-brand-primary hover:bg-brand-primary/90 text-white">
+                        <Plus className="w-4 h-4 mr-1" />
+                        Invite Members
+                      </Button>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {mockMembers.map((member) => (
@@ -975,14 +1075,24 @@ export default function StudyGroupPage() {
             </div>
           </Card>
         ) : (
-          <Card className="hidden lg:flex flex-1 items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-            <div className="text-center">
-              <UsersThree className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">Select a group to view details</p>
+          <Card className="hidden lg:flex flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-700">
+            <div className="text-center px-8 py-12">
+              <div className="mb-6 p-6 rounded-full bg-gray-100 dark:bg-gray-800 inline-block">
+                <UsersThree className="w-20 h-20 text-gray-400 dark:text-gray-600" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Select a Study Group
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                Choose a group from the sidebar to view conversations, resources, and upcoming sessions
+              </p>
             </div>
           </Card>
         )}
       </div>
+
+      {/* Invitations Modal */}
+      <InvitationsModal isOpen={showInvitations} onClose={() => setShowInvitations(false)} />
 
       {/* Create Group Modal */}
       <CreateGroupModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
