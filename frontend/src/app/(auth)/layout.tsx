@@ -174,7 +174,7 @@ export default function AuthLayout({
           </motion.div>
 
           {/* Stats */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
@@ -190,7 +190,7 @@ export default function AuthLayout({
                 <div className="text-xs text-white/60 mt-1">{stat.label}</div>
               </div>
             ))}
-          </motion.div>
+          </motion.div> */}
         </div>
       </div>
 

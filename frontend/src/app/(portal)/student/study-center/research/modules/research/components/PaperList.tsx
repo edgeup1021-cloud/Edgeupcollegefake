@@ -2,24 +2,12 @@
 
 import React, { useState } from "react";
 import PaperCard from "./PaperCard";
-
-interface Paper {
-  paperId: string;
-  title: string;
-  authors: string[];
-  year?: number;
-  venue?: string;
-  citationCount?: number;
-  abstract?: string;
-  isOpenAccess?: boolean;
-  externalIds?: {
-    DOI?: string;
-    ArXiv?: string;
-  };
-}
+import { Paper } from "../lib/types";
 
 interface PaperListProps {
   papers: Paper[];
+  keywords?: string[];
+  total?: number;
   isLoading?: boolean;
   error?: string | null;
 }
@@ -144,7 +132,7 @@ export default function PaperList({ papers = [], isLoading = false, error = null
               animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`,
             }}
           >
-            <PaperCard paper={paper} />
+            <PaperCard paper={paper} index={index} />
           </div>
         ))}
       </div>

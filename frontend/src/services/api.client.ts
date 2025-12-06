@@ -32,11 +32,21 @@ export class ApiClientError extends Error {
 }
 
 /**
- * Get auth token from localStorage
+ * Get current portal from localStorage
+ */
+function getCurrentPortal(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('currentPortal');
+}
+
+/**
+ * Get auth token from localStorage for current portal
  */
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
+  const portal = getCurrentPortal();
+  if (!portal) return null;
+  return localStorage.getItem(`${portal}_accessToken`);
 }
 
 /**

@@ -23,7 +23,7 @@ export interface FormattedCitation {
   reference: string;
 }
 
-export type CitationStyle = "apa" | "mla" | "chicago";
+export type CitationStyle = "apa" | "mla" | "chicago" | "harvard" | "ieee";
 
 export interface GenerateCitationRequest {
   input: string; // DOI or URL

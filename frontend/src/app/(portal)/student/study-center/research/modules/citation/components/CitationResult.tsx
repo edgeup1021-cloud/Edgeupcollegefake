@@ -58,6 +58,8 @@ const styleLabels: Record<CitationStyle, string> = {
   apa: "APA 7th Edition",
   mla: "MLA 9th Edition",
   chicago: "Chicago 17th Edition",
+  harvard: "Harvard Referencing",
+  ieee: "IEEE Standard",
 };
 
 export default function CitationResult({ metadata, citation, style, onReset }: CitationResultProps) {

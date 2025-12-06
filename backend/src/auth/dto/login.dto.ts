@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum } from 'class-validator';
+import { PortalType } from '../interfaces/jwt-payload.interface';
 
 export class LoginDto {
   @IsEmail()
@@ -9,4 +10,8 @@ export class LoginDto {
   @IsNotEmpty()
   @MinLength(6)
   password: string;
+
+  @IsEnum(PortalType)
+  @IsNotEmpty()
+  portalType: PortalType;
 }

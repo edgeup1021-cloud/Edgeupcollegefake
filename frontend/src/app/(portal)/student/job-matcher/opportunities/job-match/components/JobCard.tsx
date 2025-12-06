@@ -1,6 +1,6 @@
 "use client";
 
-import { MatchedJob } from "../lib/types";
+import { MatchedJob } from "@/lib/job-match/types";
 
 interface JobCardProps {
   job: MatchedJob;

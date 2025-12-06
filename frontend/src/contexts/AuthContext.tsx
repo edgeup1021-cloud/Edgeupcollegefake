@@ -102,13 +102,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           error: null,
         });
 
-        // Redirect based on user role
-        const roleRoutes: Record<string, string> = {
+        // Redirect based on portal type
+        const portalRoutes: Record<string, string> = {
           student: "/student/overview",
           teacher: "/teacher/overview",
-          admin: "/management/institutional-health",
+          management: "/management/institutional-health",
         };
-        const redirectPath = roleRoutes[response.user.role] || "/";
+        const redirectPath = portalRoutes[credentials.portalType] || "/";
         router.push(redirectPath);
 
         return response;
@@ -138,13 +138,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           error: null,
         });
 
-        // Redirect based on user role
-        const roleRoutes: Record<string, string> = {
+        // Redirect based on portal type
+        const portalRoutes: Record<string, string> = {
           student: "/student/overview",
           teacher: "/teacher/overview",
-          admin: "/management/institutional-health",
+          management: "/management/institutional-health",
         };
-        const redirectPath = roleRoutes[response.user.role] || "/";
+        const redirectPath = portalRoutes[response.user.portalType] || "/";
         router.push(redirectPath);
 
         return response;
@@ -163,14 +163,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 
   const logout = useCallback(() => {
-    authService.logout();
+    const currentPortal = authService.getCurrentPortal();
+    authService.logout(currentPortal || undefined);
     setState({
       user: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
     });
-    router.push("/login");
+    // Redirect to portal-specific login
+    const loginPath = currentPortal ? `/${currentPortal}/login` : "/student/login";
+    router.push(loginPath);
   }, [router]);
 
   const clearError = useCallback(() => {

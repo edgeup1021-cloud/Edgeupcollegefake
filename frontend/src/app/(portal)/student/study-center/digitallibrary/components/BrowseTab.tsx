@@ -57,14 +57,13 @@ export function BrowseTab({ onRefresh }: BrowseTabProps) {
 
   const resourceTypes: ResourceType[] = ["book", "paper", "video", "article", "presentation", "document"];
   const categories: ResourceCategory[] = [
-    "Computer Science",
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "Engineering",
-    "Business",
-    "Arts",
+    "Lecture Notes",
+    "Textbooks",
+    "Research Papers",
+    "Lab Manuals",
+    "Past Papers",
+    "Reference Materials",
+    "Study Guides",
     "Other",
   ];
 

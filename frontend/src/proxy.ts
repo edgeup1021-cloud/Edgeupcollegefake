@@ -1,67 +1,77 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes that require authentication
-const protectedRoutes = ["/student", "/teacher", "/management"];
+type PortalType = "student" | "teacher" | "management";
 
-// Routes that should redirect to dashboard if authenticated
-const authRoutes = ["/login", "/register"];
-
-// Role to route mapping
-const roleRoutes: Record<string, string> = {
+// Portal-specific routes
+const portalRoutes: Record<PortalType, string> = {
   student: "/student",
   teacher: "/teacher",
-  admin: "/management",
+  management: "/management",
 };
 
-// Get role from route path
-function getRoleFromPath(path: string): string | null {
+// Get portal type from route path
+function getPortalFromPath(path: string): PortalType | null {
   if (path.startsWith("/student")) return "student";
   if (path.startsWith("/teacher")) return "teacher";
-  if (path.startsWith("/management")) return "admin";
+  if (path.startsWith("/management")) return "management";
   return null;
+}
+
+// Check if path is a portal-specific auth route
+function isPortalAuthRoute(path: string): { isAuth: boolean; portal: PortalType | null } {
+  const portal = getPortalFromPath(path);
+  if (portal && (path.includes("/login") || path.includes("/register"))) {
+    return { isAuth: true, portal };
+  }
+  return { isAuth: false, portal: null };
 }
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check for access token in cookies (for SSR) or we'll rely on client-side check
-  // Since localStorage isn't accessible in middleware, we use cookies
-  const accessToken = request.cookies.get("accessToken")?.value;
+  // Get portal from path
+  const portal = getPortalFromPath(pathname);
+  
+  // Check for portal-specific tokens in cookies
+  const studentToken = request.cookies.get("student_accessToken")?.value;
+  const teacherToken = request.cookies.get("teacher_accessToken")?.value;
+  const managementToken = request.cookies.get("management_accessToken")?.value;
 
-  // For now, since we use localStorage, we'll do a soft check
-  // The actual auth check will happen client-side via AuthProvider
-  // This middleware mainly handles the redirect logic for auth routes
+  // Determine which portal has an active token
+  const hasStudentAuth = !!studentToken;
+  const hasTeacherAuth = !!teacherToken;
+  const hasManagementAuth = !!managementToken;
 
-  // Check if this is a protected route
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
+  // Check if this is a portal-specific auth route
+  const { isAuth: isAuthRoute, portal: authPortal } = isPortalAuthRoute(pathname);
 
-  // Check if this is an auth route
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-  // If user is on auth page and has a token cookie, redirect to dashboard
-  // Note: Full token validation happens client-side
-  if (isAuthRoute && accessToken) {
-    // Try to decode the token to get role (basic check, not full validation)
-    try {
-      const payload = JSON.parse(atob(accessToken.split(".")[1]));
-      const role = payload.role || "student";
-      const redirectPath = roleRoutes[role] + "/overview";
+  // If user is on portal auth page and already authenticated for that portal, redirect to dashboard
+  if (isAuthRoute && authPortal) {
+    const portalToken = request.cookies.get(`${authPortal}_accessToken`)?.value;
+    if (portalToken) {
+      const redirectPath = `${portalRoutes[authPortal]}/overview`;
       return NextResponse.redirect(new URL(redirectPath, request.url));
-    } catch {
-      // Invalid token, let them continue to auth page
     }
   }
 
-  // For protected routes, if no token, redirect to login
-  // But since we use localStorage, this won't catch all cases
-  // The AuthProvider will handle the full protection
-  if (isProtectedRoute && !accessToken) {
-    // We can't definitively know if user is logged in from middleware
-    // since tokens are in localStorage. Let the client-side handle it.
-    // This is a limitation of using localStorage vs cookies for tokens.
+  // For protected portal routes, check portal-specific authentication
+  if (portal && !isAuthRoute) {
+    const portalToken = request.cookies.get(`${portal}_accessToken`)?.value;
+    
+    // If no token for this portal, redirect to portal-specific login
+    if (!portalToken) {
+      // Allow client-side to handle the redirect since tokens are in localStorage
+      // Middleware can't access localStorage, so we rely on client-side checks
+    }
+  }
+
+  // Handle old /login and /register routes - redirect to student portal by default
+  if (pathname === "/login") {
+    return NextResponse.redirect(new URL("/student/login", request.url));
+  }
+  if (pathname === "/register") {
+    return NextResponse.redirect(new URL("/student/register", request.url));
   }
 
   return NextResponse.next();

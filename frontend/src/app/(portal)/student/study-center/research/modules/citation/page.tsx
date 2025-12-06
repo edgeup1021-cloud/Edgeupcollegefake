@@ -100,7 +100,7 @@ export default function CitationPage() {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
           {step === "input" && (
             <div className="p-8">
-              <CitationInput onGenerate={handleGenerate} isLoading={false} styles={selectedStyles} />
+              <CitationInput onGenerate={handleGenerate} isLoading={false} />
             </div>
           )}
 
@@ -151,7 +151,7 @@ export default function CitationPage() {
                 </div>
               )}
 
-              <CitationResult citation={citation} style={currentStyle} />
+              <CitationResult metadata={metadata!} citation={citation} style={currentStyle} onReset={handleReset} />
 
               <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button

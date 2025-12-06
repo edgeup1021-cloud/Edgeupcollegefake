@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ResumeUploader from "./components/ResumeUploader";
 import JobList from "./components/JobList";
-import { ResumeAnalysis, MatchedJob } from "./lib/types";
+import { ResumeAnalysis, MatchedJob } from "@/lib/job-match/types";
 
 type Step = "upload" | "analyzing" | "searching" | "matching" | "results";
 
@@ -21,35 +21,35 @@ export default function JobMatchPage() {
       const formData = new FormData();
       formData.append("resume", file);
 
-      const analyzeRes = await fetch("/student/career/opportunities/job-match/api/analyze", {
+      const analyzeRes = await fetch("/api/student/job-match/analyze", {
         method: "POST",
         body: formData,
       });
 
-      const analyzeData = await analyzeRes.json();
-
       if (!analyzeRes.ok) {
-        throw new Error(analyzeData.error || "Failed to analyze resume");
+        const errorText = await analyzeRes.text();
+        throw new Error(`Failed to analyze resume: ${errorText}`);
       }
 
+      const analyzeData = await analyzeRes.json();
       setResumeAnalysis(analyzeData.analysis);
       setStep("searching");
 
-      const searchRes = await fetch("/student/career/opportunities/job-match/api/search", {
+      const searchRes = await fetch("/api/student/job-match/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeAnalysis: analyzeData.analysis }),
       });
 
-      const searchData = await searchRes.json();
-
       if (!searchRes.ok) {
-        throw new Error(searchData.error || "Failed to search jobs");
+        const errorText = await searchRes.text();
+        throw new Error(`Failed to search jobs: ${errorText}`);
       }
 
+      const searchData = await searchRes.json();
       setStep("matching");
 
-      const matchRes = await fetch("/student/career/opportunities/job-match/api/match", {
+      const matchRes = await fetch("/api/student/job-match/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,12 +58,12 @@ export default function JobMatchPage() {
         }),
       });
 
-      const matchData = await matchRes.json();
-
       if (!matchRes.ok) {
-        throw new Error(matchData.error || "Failed to match jobs");
+        const errorText = await matchRes.text();
+        throw new Error(`Failed to match jobs: ${errorText}`);
       }
 
+      const matchData = await matchRes.json();
       setMatchedJobs(matchData.jobs);
       setStep("results");
     } catch (err) {
