@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getTeacherDashboard,
+  getTeacherProfile,
   TeacherApiError,
 } from '@/services/teacher.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,9 +61,9 @@ export function useTeacherDashboard() {
             label: 'Assignments to Grade',
           },
           attendanceRate: {
-            value: dashboardResponse.stats.attendanceRate,
+            value: 0,
             total: 100,
-            unit: '%',
+            unit: '',
             label: 'Class Attendance Rate',
           },
         },

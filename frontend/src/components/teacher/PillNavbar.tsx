@@ -28,7 +28,7 @@ import UserMenu from "./UserMenu";
 
 // Classroom Items
 const classroomItems = [
-  { label: "Attendance", href: "/teacher/classroom", icon: ClipboardCheck },
+  { label: "Classroom Operations", href: "/teacher/classroom", icon: ClipboardCheck },
   { label: "Live Classes", href: "/teacher/classroom/live-classes", icon: Users },
   { label: "Tasks & Assignments", href: "/teacher/classroom/tasks-assignments", icon: ClipboardList },
   { label: "Digital Library", href: "/teacher/classroom/digital-library", icon: Library },

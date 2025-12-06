@@ -36,12 +36,13 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@CurrentUser() user: CurrentUserData & { refreshToken: string }) {
+  async refresh(@CurrentUser() user: CurrentUserData & { refreshToken: string; portalType: string }) {
     return this.authService.refreshTokens(
       user.id,
       user.email,
       user.role,
       user.userType,
+      user.portalType as any,
     );
   }
 

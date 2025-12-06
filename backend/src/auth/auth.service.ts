@@ -15,7 +15,7 @@ import { AdminUser } from '../database/entities/management';
 import { UserRole, UserType } from '../common/enums/user-role.enum';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { JwtPayload, PortalType } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -110,7 +110,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const tokens = await this.generateTokens(user);
+    // Validate portal type matches user type
+    this.validatePortalAccess(loginDto.portalType, user.userType);
+
+    const tokens = await this.generateTokens({
+      ...user,
+      portalType: loginDto.portalType,
+    });
 
     return {
       user: {
@@ -119,9 +125,25 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        userType: user.userType,
+        portalType: loginDto.portalType,
       },
       ...tokens,
     };
+  }
+
+  private validatePortalAccess(portalType: PortalType, userType: UserType) {
+    const portalUserTypeMap = {
+      [PortalType.STUDENT]: UserType.STUDENT,
+      [PortalType.TEACHER]: UserType.TEACHER,
+      [PortalType.MANAGEMENT]: UserType.ADMIN,
+    };
+
+    if (portalUserTypeMap[portalType] !== userType) {
+      throw new UnauthorizedException(
+        `You cannot access the ${portalType} portal with your account type`,
+      );
+    }
   }
 
   async register(registerDto: RegisterDto) {
@@ -146,6 +168,7 @@ export class AuthService {
 
     let user: any;
     let userType: UserType;
+    let portalType: PortalType;
 
     if (role === UserRole.STUDENT) {
       if (!registerDto.admissionNo) {
@@ -172,6 +195,7 @@ export class AuthService {
         section: registerDto.section,
       });
       userType = UserType.STUDENT;
+      portalType = PortalType.STUDENT;
     } else if (role === UserRole.TEACHER) {
       user = await this.teacherRepository.save({
         email: registerDto.email,
@@ -182,6 +206,7 @@ export class AuthService {
         departmentId: registerDto.departmentId,
       });
       userType = UserType.TEACHER;
+      portalType = PortalType.TEACHER;
     } else {
       throw new BadRequestException(
         'Admin accounts cannot be created via registration',
@@ -193,6 +218,7 @@ export class AuthService {
       email: user.email,
       role,
       userType,
+      portalType,
     });
 
     return {
@@ -202,17 +228,23 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role,
+        userType,
+        portalType,
       },
       ...tokens,
     };
   }
 
-  async refreshTokens(userId: number, email: string, role: string, userType: string) {
+  async refreshTokens(userId: number, email: string, role: string, userType: string, portalType: PortalType) {
+    // Validate portal access on refresh as well
+    this.validatePortalAccess(portalType, userType as UserType);
+
     const tokens = await this.generateTokens({
       id: userId,
       email,
       role,
       userType,
+      portalType,
     });
 
     return tokens;
@@ -258,21 +290,28 @@ export class AuthService {
     email: string;
     role: string;
     userType: string;
+    portalType: PortalType;
   }) {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
       userType: user.userType,
+      portalType: user.portalType,
     };
+
+    // Use portal-specific secrets for better isolation
+    const portalSecretSuffix = `_${user.portalType.toUpperCase()}`;
+    const accessSecret = this.configService.get<string>('jwt.secret') + portalSecretSuffix;
+    const refreshSecret = this.configService.get<string>('jwt.refreshSecret') + portalSecretSuffix;
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('jwt.secret'),
+        secret: accessSecret,
         expiresIn: this.configService.get<string>('jwt.expiresIn'),
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('jwt.refreshSecret'),
+        secret: refreshSecret,
         expiresIn: this.configService.get<string>('jwt.refreshExpiresIn'),
       }),
     ]);

@@ -18,33 +18,27 @@ const teacherQuickAccessItems = [
     description: "Manage your classes and schedules",
   },
   {
-    icon: ClipboardCheck,
-    title: "Smart Assessment Suite",
-    href: "/teacher/smart-assessment-suite", 
-    description: "Create and grade assessments with AI",
-  },
-  {
     icon: ClipboardList,
     title: "Tasks & Assignments",
-    href: "/teacher/tasks-assignments",
+    href: "/teacher/classroom/tasks-assignments",
     description: "Create and manage student assignments",
   },
   {
     icon: BookOpen,
     title: "Content & Curriculum",
-    href: "/teacher/content-curriculum",
+    href: "/teacher/curriculum",
     description: "Manage course content and curriculum",
   },
   {
     icon: GraduationCap,
     title: "Student Development",
-    href: "/teacher/student-development",
+    href: "/teacher/students",
     description: "Track and support student progress",
   },
   {
     icon: TrendingUp,
     title: "Professional Learning",
-    href: "/teacher/professional-learning",
+    href: "/teacher/growth",
     description: "Enhance your teaching skills",
   },
 ];

@@ -1,3 +1,3 @@
 export default function OpportunitiesPage() {
-  return <div>Opportunities</div>
+  return <div>Opportunity</div>
 }

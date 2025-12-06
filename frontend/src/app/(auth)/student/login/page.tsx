@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { EnvelopeSimple } from "@phosphor-icons/react";
+import { EnvelopeSimple, Student } from "@phosphor-icons/react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
@@ -13,7 +13,7 @@ import {
   AuthButton,
 } from "@/components/ui/auth";
 
-export default function LoginPage() {
+export default function StudentLoginPage() {
   const { login, isLoading, error, clearError } = useAuth();
 
   const {
@@ -31,7 +31,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     clearError();
     try {
-      await login(data);
+      await login({ ...data, portalType: 'student' });
       // Redirect is handled by AuthContext
     } catch {
       // Error is handled by AuthContext
@@ -42,11 +42,16 @@ export default function LoginPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 dark:text-white">
-          Welcome back
-        </h2>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+            <Student className="w-6 h-6 text-blue-600 dark:text-blue-400" weight="duotone" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 dark:text-white">
+            Student Portal
+          </h2>
+        </div>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Sign in to continue to your dashboard
+          Sign in to access your student dashboard
         </p>
       </div>
 
@@ -62,7 +67,7 @@ export default function LoginPage() {
         <InputField
           label="Email address"
           type="email"
-          placeholder="you@example.com"
+          placeholder="student@example.com"
           icon={EnvelopeSimple}
           error={errors.email?.message}
           {...register("email")}
@@ -96,20 +101,11 @@ export default function LoginPage() {
 
         {/* Submit button */}
         <AuthButton type="submit" isLoading={isLoading}>
-          Sign in
+          Sign in as Student
         </AuthButton>
       </form>
 
-      {/* Register link */}
-      <p className="text-center text-gray-600 dark:text-gray-400">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="text-brand-primary hover:text-brand-secondary font-medium transition-colors"
-        >
-          Sign up
-        </Link>
-      </p>
+
     </div>
   );
 }

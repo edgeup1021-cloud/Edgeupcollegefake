@@ -15,7 +15,7 @@ export default function AttendancePage() {
       <div>
         <h1 className="text-3xl font-bold">Attendance</h1>
         <p className="text-muted-foreground mt-1">
-          Track your attendance, apply for leave, and view history
+          Track your attendance and view history
         </p>
       </div>
 
