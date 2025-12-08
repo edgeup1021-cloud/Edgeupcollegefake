@@ -44,7 +44,7 @@ export interface WellnessRecommendation {
   description: string;
   actionLabel: string;
   actionUrl?: string;
-  type: "pattern" | "upcoming" | "suggestion";
+  type: "pattern" | "upcoming" | "suggestion" | "insight";
 }
 
 export interface SupportResource {

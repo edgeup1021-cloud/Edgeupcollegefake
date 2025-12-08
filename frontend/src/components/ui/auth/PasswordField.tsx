@@ -109,8 +109,8 @@ const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
                   : "0 0 0 3px rgba(16, 172, 139, 0.1)"
                 : "none",
             }}
-            transition={{ duration: 0.2 }}
-            {...props}
+            transition={{ duration: 0.2 } as any}
+            {...props as any}
           />
 
           <motion.button

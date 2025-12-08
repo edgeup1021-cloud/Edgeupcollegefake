@@ -358,10 +358,11 @@ function StatCard({
   value: number;
   color: string;
 }) {
+  const IconComponent: any = Icon;
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm rounded-xl p-4 flex items-center gap-3">
       <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", color)}>
-        <Icon className="w-6 h-6" />
+        <IconComponent className="w-6 h-6" />
       </div>
       <div>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
