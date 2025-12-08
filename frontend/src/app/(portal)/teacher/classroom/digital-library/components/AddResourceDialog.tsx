@@ -49,7 +49,7 @@ export function AddResourceDialog({ open, onOpenChange, onSuccess }: AddResource
     resolver: zodResolver(resourceSchema),
     defaultValues: {
       type: "book",
-      author: user?.name || "",
+      author: user ? `${user.firstName} ${user.lastName}` : "",
     },
   });
 

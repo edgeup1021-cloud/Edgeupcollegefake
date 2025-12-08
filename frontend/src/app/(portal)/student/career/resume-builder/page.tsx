@@ -175,7 +175,7 @@ export default function ResumeBuilderPage() {
     setIsAnalyzing(true);
 
     try {
-      let result;
+      let result: any;
 
       if (isSubmitted && savedResumeId) {
         // Use database version if submitted
