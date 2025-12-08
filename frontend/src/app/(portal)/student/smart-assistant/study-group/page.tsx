@@ -125,14 +125,44 @@ export default function StudyGroupPage() {
 
     const token = getAccessToken('student') || getAccessToken();
     const socket = getSocket(token || undefined);
-    const doJoin = () => socket.emit("joinGroup", { groupId: selectedGroup.id });
-    socket.on("connect", doJoin);
-    doJoin();
+    const doJoin = () => {
+      console.log('📤 Emitting joinGroup for group:', selectedGroup.id);
+      socket.emit("joinGroup", { groupId: selectedGroup.id });
+    };
+
+    // Connection event handlers
+    const handleConnect = () => {
+      console.log('✅ Socket connected:', socket.id);
+      setSocketReady(true);
+      doJoin();
+    };
+
+    const handleConnectError = (error: Error) => {
+      console.error('❌ Socket connection error:', error);
+      setError("Failed to connect to chat. Please refresh the page.");
+      setSocketReady(false);
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.log('🔌 Socket disconnected:', reason);
+      setSocketReady(false);
+    };
+
+    const handleError = (error: Error) => {
+      console.error('❌ Socket error:', error);
+    };
 
     const handler = (msg: StudyGroupMessage) => {
-      if (msg.groupId !== selectedGroup.id) return;
+      console.log('📨 Received message:', msg);
+      if (msg.groupId !== selectedGroup.id) {
+        console.log('⚠️ Message groupId mismatch:', msg.groupId, 'vs', selectedGroup.id);
+        return;
+      }
       setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
+        if (prev.some((m) => m.id === msg.id)) {
+          console.log('⚠️ Duplicate message ignored:', msg.id);
+          return prev;
+        }
         return [...prev, msg];
       });
 
@@ -150,12 +180,28 @@ export default function StudyGroupPage() {
         return next;
       });
     };
+
+    // Register all event listeners
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("error", handleError);
     socket.on("newMessage", handler);
-    setSocketReady(true);
+
+    // If already connected, join immediately
+    if (socket.connected) {
+      console.log('Socket already connected, joining group immediately');
+      doJoin();
+      setSocketReady(true);
+    }
 
     return () => {
+      console.log('🧹 Cleaning up socket listeners for group:', selectedGroup.id);
       socket.emit("leaveGroup", { groupId: selectedGroup.id });
-      socket.off("connect", doJoin);
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("error", handleError);
       socket.off("newMessage", handler);
       setSocketReady(false);
     };

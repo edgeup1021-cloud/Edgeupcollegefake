@@ -159,11 +159,19 @@ export class StudyGroupsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   async broadcastMessage(groupId: number, payload: any) {
     try {
-      this.server.to(this.roomName(groupId)).emit('newMessage', payload);
-      this.logger.debug(`Broadcast message to group ${groupId}: ${payload.id}`);
+      const room = this.roomName(groupId);
+      const sockets = await this.server.in(room).fetchSockets();
+
+      this.logger.log(
+        `📢 Broadcasting message ${payload.id} to group ${groupId} room "${room}" with ${sockets.length} connected client(s)`,
+      );
+
+      this.server.to(room).emit('newMessage', payload);
+
+      this.logger.debug(`✅ Broadcast successful for message ${payload.id}`);
     } catch (error) {
       this.logger.error(
-        `Failed to broadcast message to group ${groupId}: ${error.message}`,
+        `❌ Failed to broadcast message to group ${groupId}: ${error.message}`,
         error.stack,
       );
       // Re-throw to let service handle it
