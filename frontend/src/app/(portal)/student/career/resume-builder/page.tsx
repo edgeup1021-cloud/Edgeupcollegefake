@@ -122,11 +122,15 @@ export default function ResumeBuilderPage() {
   const analyzeResume = async () => {
     setIsAnalyzing(true);
     const result = await magicalAPIService.analyzeATS(resumeData, jobDescription);
+    setIsAnalyzing(false);
+
     if (result.success && result.data) {
       setAtsScore(result.data);
+      setShowATSModal(true);
+    } else {
+      // Handle error gracefully
+      alert(result.error || "Failed to analyze resume. Please try again.");
     }
-    setIsAnalyzing(false);
-    setShowATSModal(true);
   };
 
   // Helper to format date for resume
@@ -514,9 +518,9 @@ export default function ResumeBuilderPage() {
       experience: prev.experience.map((exp) =>
         exp.id === expId
           ? {
-              ...exp,
-              description: exp.description.map((d, i) => (i === index ? value : d)),
-            }
+            ...exp,
+            description: exp.description.map((d, i) => (i === index ? value : d)),
+          }
           : exp
       ),
     }));
@@ -753,12 +757,11 @@ export default function ResumeBuilderPage() {
 
               {/* ATS Score Button */}
               <button
-                onClick={analyzeResume}
-                disabled={isAnalyzing}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors disabled:opacity-50"
+                onClick={() => setShowATSModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors"
               >
                 <ChartBar className="w-5 h-5" weight="duotone" />
-                {isAnalyzing ? "Analyzing..." : "ATS Score"}
+                ATS Score
               </button>
 
               {/* Preview Button */}
@@ -824,11 +827,10 @@ export default function ResumeBuilderPage() {
                     <button
                       key={section}
                       onClick={() => setActiveSection(section)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                          : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                      }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive
+                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        }`}
                     >
                       <Icon className="w-5 h-5" weight={isActive ? "fill" : "duotone"} />
                       <span className="flex-1 text-left text-sm font-medium">
@@ -973,13 +975,14 @@ export default function ResumeBuilderPage() {
       </div>
 
       {/* ATS Score Modal */}
-      {showATSModal && atsScore && (
+      {showATSModal && (
         <ATSScoreModal
           score={atsScore}
           onClose={() => setShowATSModal(false)}
           jobDescription={jobDescription}
           onJobDescriptionChange={setJobDescription}
-          onReanalyze={analyzeResume}
+          onAnalyze={analyzeResume}
+          isAnalyzing={isAnalyzing}
         />
       )}
     </div>
@@ -2252,13 +2255,12 @@ const ResumePreview = forwardRef<
     <div
       ref={ref}
       data-resume-preview="true"
-      className={`bg-white text-gray-900 p-8 min-h-[1100px] ${
-        template === "modern"
-          ? "font-sans"
-          : template === "classic"
+      className={`bg-white text-gray-900 p-8 min-h-[1100px] ${template === "modern"
+        ? "font-sans"
+        : template === "classic"
           ? "font-serif"
           : "font-sans"
-      }`}
+        }`}
       style={{ width: "8.5in", margin: "0 auto" }}
     >
       {/* Header / Personal Info */}
@@ -2477,13 +2479,15 @@ function ATSScoreModal({
   onClose,
   jobDescription,
   onJobDescriptionChange,
-  onReanalyze,
+  onAnalyze,
+  isAnalyzing,
 }: {
   score: ATSScore | null;
   onClose: () => void;
   jobDescription: string;
   onJobDescriptionChange: (value: string) => void;
-  onReanalyze: () => void;
+  onAnalyze: () => void;
+  isAnalyzing: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"built" | "upload">("built");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -2603,8 +2607,8 @@ function ATSScoreModal({
           {scoreData.overallScore >= 80
             ? "Great! Your resume is well-optimized"
             : scoreData.overallScore >= 60
-            ? "Good, but there's room for improvement"
-            : "Needs improvement for better ATS compatibility"}
+              ? "Good, but there's room for improvement"
+              : "Needs improvement for better ATS compatibility"}
         </p>
       </div>
 
@@ -2670,11 +2674,10 @@ function ATSScoreModal({
               {Object.entries(scoreData.details.contactInfo).map(([key, value]) => (
                 <span
                   key={key}
-                  className={`px-2 py-1 text-xs rounded-full ${
-                    value
-                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                      : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
-                  }`}
+                  className={`px-2 py-1 text-xs rounded-full ${value
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                    : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
+                    }`}
                 >
                   {value ? "✓" : "✗"} {key.replace(/^has/, "")}
                 </span>
@@ -2889,21 +2892,19 @@ function ATSScoreModal({
             <div className="flex mt-4 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
               <button
                 onClick={() => setActiveTab("built")}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "built"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "built"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 Built Resume
               </button>
               <button
                 onClick={() => setActiveTab("upload")}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "upload"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "upload"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 Upload Resume
               </button>
@@ -2911,29 +2912,83 @@ function ATSScoreModal({
           </div>
 
           <div className="p-6 space-y-6">
-            {activeTab === "built" && score && (
+            {activeTab === "built" && (
               <>
-                <ScoreDisplay scoreData={score} />
+                {score ? (
+                  <>
+                    <ScoreDisplay scoreData={score} />
 
-                {/* Job Description Input */}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Paste a job description to compare (Optional)
-                  </label>
-                  <textarea
-                    value={jobDescription}
-                    onChange={(e) => onJobDescriptionChange(e.target.value)}
-                    rows={4}
-                    placeholder="Paste the job description here to get tailored suggestions..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
-                  />
-                  <button
-                    onClick={onReanalyze}
-                    className="mt-3 w-full px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors"
-                  >
-                    Re-analyze with Job Description
-                  </button>
-                </div>
+                    {/* Job Description Input */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Paste a job description to compare (Optional)
+                      </label>
+                      <textarea
+                        value={jobDescription}
+                        onChange={(e) => onJobDescriptionChange(e.target.value)}
+                        rows={4}
+                        placeholder="Paste the job description here to get tailored suggestions..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
+                      />
+                      <button
+                        onClick={onAnalyze}
+                        disabled={isAnalyzing}
+                        className="mt-3 w-full px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          "Re-analyze with Job Description"
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <ChartBar className="w-8 h-8 text-purple-600 dark:text-purple-400" weight="duotone" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      Ready to Analyze?
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-8">
+                      Get detailed feedback on your resume's ATS compatibility, keyword matching, and formatting.
+                    </p>
+
+                    <div className="max-w-md mx-auto">
+                      <label className="block text-left text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Job Description (Optional)
+                      </label>
+                      <textarea
+                        value={jobDescription}
+                        onChange={(e) => onJobDescriptionChange(e.target.value)}
+                        rows={3}
+                        placeholder="Paste a job description to check keyword matching..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm mb-4"
+                      />
+                      <button
+                        onClick={onAnalyze}
+                        disabled={isAnalyzing}
+                        className="w-full px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-bold transition-colors shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Analyzing Resume...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkle className="w-5 h-5" weight="fill" />
+                            Analyze My Resume
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -2941,11 +2996,10 @@ function ATSScoreModal({
               <>
                 {/* File Upload Area */}
                 <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    uploadedFile
-                      ? "border-green-400 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500"
-                  }`}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${uploadedFile
+                    ? "border-green-400 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500"
+                    }`}
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                 >
