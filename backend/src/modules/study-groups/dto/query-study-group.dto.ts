@@ -50,4 +50,9 @@ export class QueryStudyGroupDto {
   @Min(1)
   @Max(100)
   limit?: number;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  includeAllPrograms?: boolean;
 }

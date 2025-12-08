@@ -90,7 +90,7 @@ export class AuthService {
     }
 
     if (user) {
-      return {
+      const userData: any = {
         id: user.id,
         email: user.email,
         firstName: user.firstName || user.fullName?.split(' ')[0],
@@ -98,6 +98,15 @@ export class AuthService {
         role,
         userType,
       };
+
+      // Add student-specific fields
+      if (userType === UserType.STUDENT) {
+        userData.program = user.program;
+        userData.batch = user.batch;
+        userData.section = user.section;
+      }
+
+      return userData;
     }
 
     return null;
@@ -118,16 +127,25 @@ export class AuthService {
       portalType: loginDto.portalType,
     });
 
+    const userResponse: any = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      userType: user.userType,
+      portalType: loginDto.portalType,
+    };
+
+    // Add student-specific fields
+    if (user.userType === UserType.STUDENT) {
+      userResponse.program = user.program;
+      userResponse.batch = user.batch;
+      userResponse.section = user.section;
+    }
+
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        userType: user.userType,
-        portalType: loginDto.portalType,
-      },
+      user: userResponse,
       ...tokens,
     };
   }
