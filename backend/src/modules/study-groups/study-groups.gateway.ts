@@ -168,11 +168,19 @@ export class StudyGroupsGateway implements OnGatewayConnection, OnGatewayDisconn
       client.join(roomName);
 
       this.logger.log(
-        `User ${user.email} joined room ${roomName} - Socket: ${client.id}`,
+        `✅ User ${user.email} joined room ${roomName} - Socket: ${client.id}`,
       );
+
+      // Return success acknowledgment to client
+      return { success: true, groupId: data.groupId, room: roomName };
     } catch (error) {
-      this.logger.error(`Join group error: ${error.message}`, error.stack);
-      throw error instanceof WsException ? error : new WsException('Failed to join group');
+      this.logger.error(`❌ Join group error: ${error.message}`, error.stack);
+      // Return error acknowledgment to client
+      return {
+        success: false,
+        error: error instanceof WsException ? error.message : 'Failed to join group',
+        groupId: data.groupId
+      };
     }
   }
 
@@ -201,13 +209,13 @@ export class StudyGroupsGateway implements OnGatewayConnection, OnGatewayDisconn
   async broadcastMessage(groupId: number, payload: any) {
     try {
       const room = this.roomName(groupId);
-      const sockets = await this.server.in(room).fetchSockets();
+
+      // Emit immediately without fetching sockets first (removes 10-50ms delay)
+      this.server.to(room).emit('newMessage', payload);
 
       this.logger.log(
-        `📢 Broadcasting message ${payload.id} to group ${groupId} room "${room}" with ${sockets.length} connected client(s)`,
+        `📢 Broadcast message ${payload.id} to group ${groupId} room "${room}"`,
       );
-
-      this.server.to(room).emit('newMessage', payload);
 
       this.logger.debug(`✅ Broadcast successful for message ${payload.id}`);
     } catch (error) {

@@ -328,13 +328,15 @@ export class StudyGroupsService {
       });
     } catch (error) {
       // Log error but don't fail message creation
+      // Message is already saved to DB - clients can get it via refresh or polling
       this.logger.error(
         `Failed to broadcast message ${saved.id} to group ${groupId}: ${error.message}`,
         error.stack,
       );
 
-      // Future enhancement: Store failed broadcast in a queue for retry
-      // For now, just log and continue - clients will get it on next fetch
+      // TODO: Implement broadcast retry queue for production reliability
+      // Failed broadcasts should be queued and retried with exponential backoff
+      // For now, clients will receive the message on next fetch/poll
     }
 
     return messageWithRelations || saved;

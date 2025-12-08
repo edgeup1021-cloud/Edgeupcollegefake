@@ -127,13 +127,22 @@ export default function StudyGroupPage() {
     const socket = getSocket(token || undefined);
     const doJoin = () => {
       console.log('📤 Emitting joinGroup for group:', selectedGroup.id);
-      socket.emit("joinGroup", { groupId: selectedGroup.id });
+      socket.emit("joinGroup", { groupId: selectedGroup.id }, (response: any) => {
+        if (response?.success) {
+          console.log('✅ Successfully joined room:', response.room);
+          setSocketReady(true);
+        } else {
+          console.error('❌ Failed to join room:', response?.error);
+          setError(`Failed to join chat: ${response?.error || 'Unknown error'}`);
+          setSocketReady(false);
+        }
+      });
     };
 
     // Connection event handlers
     const handleConnect = () => {
       console.log('✅ Socket connected:', socket.id);
-      setSocketReady(true);
+      // Note: setSocketReady(true) is now done in doJoin callback after successful room join
       doJoin();
     };
 
@@ -154,7 +163,7 @@ export default function StudyGroupPage() {
 
     const handler = (msg: StudyGroupMessage) => {
       console.log('📨 Received message:', msg);
-      if (msg.groupId !== selectedGroup.id) {
+      if (Number(msg.groupId) !== Number(selectedGroup.id)) {
         console.log('⚠️ Message groupId mismatch:', msg.groupId, 'vs', selectedGroup.id);
         return;
       }
@@ -192,7 +201,7 @@ export default function StudyGroupPage() {
     if (socket.connected) {
       console.log('Socket already connected, joining group immediately');
       doJoin();
-      setSocketReady(true);
+      // Note: setSocketReady(true) is now done in doJoin callback after successful room join
     }
 
     return () => {
@@ -205,7 +214,7 @@ export default function StudyGroupPage() {
       socket.off("newMessage", handler);
       setSocketReady(false);
     };
-  }, [selectedGroup?.id, user]);
+  }, [selectedGroup?.id, user?.id]);
 
   async function fetchGroups() {
     if (!user) return;
