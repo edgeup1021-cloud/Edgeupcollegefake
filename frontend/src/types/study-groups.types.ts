@@ -4,13 +4,13 @@ export type StudyGroupMemberRole = 'owner' | 'moderator' | 'member';
 export type StudyGroupMemberStatus = 'joined' | 'pending' | 'rejected';
 
 export interface StudyGroupMembership {
-  id?: number;
+  id?: string | number;
   role: StudyGroupMemberRole;
   status: StudyGroupMemberStatus;
 }
 
 export interface StudyGroup {
-  id: number;
+  id: string | number;
   name: string;
   description?: string | null;
   subject?: string | null;
@@ -46,19 +46,19 @@ export interface JoinStudyGroupInput {
 export type StudyGroupMessageType = 'text' | 'system';
 
 export interface StudyGroupMessageSender {
-  id?: number;
+  id?: string | number;
   firstName?: string;
   lastName?: string;
 }
 
 export interface StudyGroupMessage {
-  id: number;
-  groupId: number;
+  id: string | number;
+  groupId: string | number;
   content: string;
   messageType: StudyGroupMessageType;
   createdAt: string;
-  senderStudentId?: number | null;
-  senderTeacherId?: number | null;
+  senderStudentId?: string | number | null;
+  senderTeacherId?: string | number | null;
   senderStudent?: StudyGroupMessageSender | null;
   senderTeacher?: StudyGroupMessageSender | null;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { useEffect, useMemo, useState, useRef, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { Plus, UsersThree, Lock, Globe, PaperPlaneRight, ArrowLeft } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,8 @@ export default function StudyGroupPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
+  const [pendingMessages, setPendingMessages] = useState<Map<string, StudyGroupMessage>>(new Map());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selectedGroup = useMemo(
     () => groups.find((g) => g.id === selectedGroupId) || null,
@@ -103,10 +105,19 @@ export default function StudyGroupPage() {
   const membership = selectedGroup?.membership || null;
   const canChat = membership?.status === "joined";
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     if (!user || !isAuthenticated) return;
     fetchGroups();
   }, [user, isAuthenticated]);
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (!selectedGroup || !user) return;
@@ -114,26 +125,96 @@ export default function StudyGroupPage() {
 
     const token = getAccessToken('student') || getAccessToken();
     const socket = getSocket(token || undefined);
-    const doJoin = () => socket.emit("joinGroup", { groupId: selectedGroup.id });
-    socket.on("connect", doJoin);
-    doJoin();
-
-    const handler = (msg: StudyGroupMessage) => {
-      if (msg.groupId !== selectedGroup.id) return;
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
+    const doJoin = () => {
+      console.log('📤 Emitting joinGroup for group:', selectedGroup.id);
+      socket.emit("joinGroup", { groupId: selectedGroup.id }, (response: any) => {
+        if (response?.success) {
+          console.log('✅ Successfully joined room:', response.room);
+          setSocketReady(true);
+        } else {
+          console.error('❌ Failed to join room:', response?.error);
+          setError(`Failed to join chat: ${response?.error || 'Unknown error'}`);
+          setSocketReady(false);
+        }
       });
     };
+
+    // Connection event handlers
+    const handleConnect = () => {
+      console.log('✅ Socket connected:', socket.id);
+      // Note: setSocketReady(true) is now done in doJoin callback after successful room join
+      doJoin();
+    };
+
+    const handleConnectError = (error: Error) => {
+      console.error('❌ Socket connection error:', error);
+      setError("Failed to connect to chat. Please refresh the page.");
+      setSocketReady(false);
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.log('🔌 Socket disconnected:', reason);
+      setSocketReady(false);
+    };
+
+    const handleError = (error: Error) => {
+      console.error('❌ Socket error:', error);
+    };
+
+    const handler = (msg: StudyGroupMessage) => {
+      console.log('📨 Received message:', msg);
+      if (Number(msg.groupId) !== Number(selectedGroup.id)) {
+        console.log('⚠️ Message groupId mismatch:', msg.groupId, 'vs', selectedGroup.id);
+        return;
+      }
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) {
+          console.log('⚠️ Duplicate message ignored:', msg.id);
+          return prev;
+        }
+        return [...prev, msg];
+      });
+
+      // Remove from pending if exists (socket delivered before API response)
+      setPendingMessages((prev) => {
+        const next = new Map(prev);
+        // Find and remove any pending message with same content
+        for (const [key, pendingMsg] of prev.entries()) {
+          if (pendingMsg.content === msg.content &&
+              pendingMsg.senderStudentId === msg.senderStudentId) {
+            next.delete(key);
+            break;
+          }
+        }
+        return next;
+      });
+    };
+
+    // Register all event listeners
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("error", handleError);
     socket.on("newMessage", handler);
-    setSocketReady(true);
+
+    // If already connected, join immediately
+    if (socket.connected) {
+      console.log('Socket already connected, joining group immediately');
+      doJoin();
+      // Note: setSocketReady(true) is now done in doJoin callback after successful room join
+    }
 
     return () => {
+      console.log('🧹 Cleaning up socket listeners for group:', selectedGroup.id);
       socket.emit("leaveGroup", { groupId: selectedGroup.id });
-      socket.off("connect", doJoin);
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("error", handleError);
       socket.off("newMessage", handler);
+      setSocketReady(false);
     };
-  }, [selectedGroup?.id, user]);
+  }, [selectedGroup?.id, user?.id]);
 
   async function fetchGroups() {
     if (!user) return;
@@ -290,17 +371,61 @@ export default function StudyGroupPage() {
       setError("Join the group to send messages");
       return;
     }
+
+    const tempId = `temp-${Date.now()}`;
+    const trimmedContent = messageInput.trim();
+
+    // Create optimistic message
+    const optimisticMessage: StudyGroupMessage = {
+      id: tempId as any,
+      groupId: selectedGroup.id,
+      senderStudentId: user.id,
+      senderTeacherId: null,
+      messageType: "text",
+      content: trimmedContent,
+      createdAt: new Date().toISOString(),
+      senderStudent: {
+        id: user.id,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+      },
+      senderTeacher: null,
+    };
+
+    // Add to messages and pending
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setPendingMessages((prev) => new Map(prev).set(tempId, optimisticMessage));
+    setMessageInput("");
     setBusy(true);
     setError(null);
+
     try {
-      const saved = await postStudyGroupMessage(user.id, selectedGroup.id, messageInput.trim());
-      setMessageInput("");
-      // Optimistically append in case socket echo is delayed/missed
+      const saved = await postStudyGroupMessage(user.id, selectedGroup.id, trimmedContent);
+
+      // Remove optimistic message and add real one
+      setPendingMessages((prev) => {
+        const next = new Map(prev);
+        next.delete(tempId);
+        return next;
+      });
+
       setMessages((prev) => {
-        if (prev.some((m) => m.id === saved.id)) return prev;
-        return [...prev, saved];
+        // Replace temp with real message
+        const filtered = prev.filter((m) => String(m.id) !== tempId);
+        if (filtered.some((m) => m.id === saved.id)) {
+          return filtered; // Already have it from socket
+        }
+        return [...filtered, saved];
       });
     } catch (err) {
+      // Remove optimistic message on error
+      setPendingMessages((prev) => {
+        const next = new Map(prev);
+        next.delete(tempId);
+        return next;
+      });
+
+      setMessages((prev) => prev.filter((m) => String(m.id) !== tempId));
       handleError(err, "Failed to send message");
     } finally {
       setBusy(false);
@@ -484,7 +609,22 @@ export default function StudyGroupPage() {
                   ) : (
                     <div className="space-y-3">
                     {messages.map((msg) => {
-                      const isSelf = msg.senderStudentId === user.id;
+                      // Convert both to numbers for comparison to handle any type mismatches
+                      const isSelf = msg.senderStudentId != null && Number(msg.senderStudentId) === Number(user.id);
+                      const isPending = pendingMessages.has(msg.id as any);
+
+                      // Debug logging
+                      if (!isSelf && msg.senderStudentId) {
+                        console.log('Message not identified as self:', {
+                          msgSenderStudentId: msg.senderStudentId,
+                          msgSenderStudentIdType: typeof msg.senderStudentId,
+                          userId: user.id,
+                          userIdType: typeof user.id,
+                          comparison: Number(msg.senderStudentId) === Number(user.id),
+                          message: msg.content,
+                        });
+                      }
+
                       return (
                         <div
                           key={msg.id}
@@ -493,23 +633,26 @@ export default function StudyGroupPage() {
                             isSelf ? "justify-end" : "justify-start"
                           )}
                         >
-                            <div
-                          className={cn(
-                            "max-w-[80%] rounded-xl px-4 py-3 shadow-sm border",
-                            isSelf
-                              ? "bg-brand-primary text-white border-brand-primary"
-                              : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700"
-                          )}
-                        >
-                              <div className="text-xs font-semibold mb-1 opacity-80">
-                                {isSelf ? "You" : senderName(msg)}
-                              </div>
-                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                              <div className="text-[11px] opacity-70 mt-1">{formatDate(msg.createdAt)}</div>
+                          <div
+                            className={cn(
+                              "max-w-[80%] rounded-xl px-4 py-3 shadow-sm border relative",
+                              isSelf
+                                ? "bg-brand-primary text-white border-brand-primary"
+                                : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700",
+                              isPending && "opacity-60"
+                            )}
+                          >
+                            <div className="text-xs font-semibold mb-1 opacity-80">
+                              {isSelf ? "You" : senderName(msg)}
+                              {isPending && <span className="ml-2 text-[10px]">(Sending...)</span>}
                             </div>
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <div className="text-[11px] opacity-70 mt-1">{formatDate(msg.createdAt)}</div>
                           </div>
-                        );
-                      })}
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
                     </div>
                   )}
                 </div>

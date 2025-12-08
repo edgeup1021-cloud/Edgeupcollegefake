@@ -4,6 +4,37 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ServerOptions } from 'socket.io';
+
+// Custom IoAdapter with CORS configuration for WebSocket connections
+class CustomIoAdapter extends IoAdapter {
+  createIOServer(port: number, options?: ServerOptions): any {
+    const server = super.createIOServer(port, {
+      ...options,
+      cors: {
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+          // Allow requests with no origin (mobile apps, etc.)
+          if (!origin) return callback(null, true);
+
+          // Allow localhost and local network IPs on dev ports (3000-4000)
+          if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):3\d{3}$/.test(origin)) {
+            return callback(null, true);
+          }
+
+          // Allow any origin for development (can be restricted in production)
+          callback(null, true);
+        },
+        credentials: true,
+        methods: ['GET', 'POST'],
+      },
+      transports: ['websocket', 'polling'],
+      allowEIO3: true, // Enable Engine.IO v3 compatibility
+    });
+
+    console.log('WebSocket server created with CORS configuration');
+    return server;
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -69,8 +100,8 @@ async function bootstrap() {
   // Global response transform interceptor
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // WebSocket adapter
-  app.useWebSocketAdapter(new IoAdapter(app));
+  // WebSocket adapter with CORS configuration
+  app.useWebSocketAdapter(new CustomIoAdapter(app));
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

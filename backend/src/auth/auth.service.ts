@@ -264,6 +264,7 @@ export class AuthService {
       user = await this.adminRepository.findOne({ where: { id: userId } });
       role = UserRole.ADMIN;
     } else {
+      console.log('[getProfile] Invalid user type:', userType);
       throw new UnauthorizedException('Invalid user type');
     }
 

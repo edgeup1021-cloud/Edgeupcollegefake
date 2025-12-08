@@ -1,10 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-<<<<<<< HEAD
-import { User, Settings, LogOut, GraduationCap } from "lucide-react";
-import { useAuth } from "@/src/contexts/AuthContext";
-=======
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { User, Settings, LogOut, GraduationCap, Briefcase, Shield } from "lucide-react";
@@ -18,14 +14,10 @@ const roleConfig: Record<UserRole, { icon: typeof GraduationCap; label: string }
   teacher: { icon: Briefcase, label: "Teacher" },
   admin: { icon: Shield, label: "Admin" },
 };
->>>>>>> aakif
 
 export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-<<<<<<< HEAD
-  const { logout } = useAuth();
-=======
   const router = useRouter();
   const { user, isLoading, logout } = useAuth();
 
@@ -33,7 +25,6 @@ export default function UserMenu() {
   const { dashboard } = useStudentDashboard(
     user?.role === "student" ? user.id : null
   );
->>>>>>> aakif
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -146,14 +137,7 @@ export default function UserMenu() {
               Settings
             </button>
             <button
-<<<<<<< HEAD
-              onClick={() => {
-                setIsOpen(false);
-                logout();
-              }}
-=======
               onClick={handleLogout}
->>>>>>> aakif
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
               <LogOut className="w-4 h-4" />
