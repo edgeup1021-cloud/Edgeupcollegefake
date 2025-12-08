@@ -12,7 +12,10 @@ import { Server, Socket } from 'socket.io';
 import { UseGuards, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
+import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 import {
   StudyGroupMember,
   StudyGroupMemberStatus,
@@ -40,17 +43,55 @@ export class StudyGroupsGateway implements OnGatewayConnection, OnGatewayDisconn
     private readonly memberRepo: Repository<StudyGroupMember>,
     @InjectRepository(StudyGroupTeacherModerator)
     private readonly teacherModRepo: Repository<StudyGroupTeacherModerator>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async handleConnection(client: Socket) {
     try {
-      const user = client.data.user;
+      // Manually validate JWT token (guards don't run on lifecycle hooks)
+      const token = this.extractToken(client);
 
-      if (!user) {
-        this.logger.warn(`Connection rejected: No user data attached`);
+      if (!token) {
+        this.logger.warn(`Connection rejected: Missing authentication token - Socket: ${client.id}`);
         client.disconnect();
         return;
       }
+
+      // Decode first to get portalType
+      const decoded = this.jwtService.decode(token) as JwtPayload;
+
+      if (!decoded || !decoded.portalType) {
+        this.logger.warn(`Connection rejected: Invalid token format - Socket: ${client.id}`);
+        client.disconnect();
+        return;
+      }
+
+      // Get the correct secret based on portal type
+      const portalSecretSuffix = `_${decoded.portalType.toUpperCase()}`;
+      const secret = this.configService.get<string>('jwt.secret') + portalSecretSuffix;
+
+      // Verify token with correct secret
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret,
+      });
+
+      if (!payload.sub || !payload.email || !payload.portalType) {
+        this.logger.warn(`Connection rejected: Invalid token payload - Socket: ${client.id}`);
+        client.disconnect();
+        return;
+      }
+
+      // Attach user data to socket for later use
+      client.data.user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+        userType: payload.userType,
+        portalType: payload.portalType,
+      };
+
+      const user = client.data.user;
 
       // Track connection
       const userId = `${user.portalType}:${user.id}`;
@@ -60,7 +101,7 @@ export class StudyGroupsGateway implements OnGatewayConnection, OnGatewayDisconn
       this.connectedUsers.get(userId)!.add(client.id);
 
       this.logger.log(
-        `User connected: ${user.email} (${user.portalType}:${user.id}) - Socket: ${client.id}`,
+        `✅ User connected: ${user.email} (${user.portalType}:${user.id}) - Socket: ${client.id}`,
       );
     } catch (error) {
       this.logger.error(`Connection error: ${error.message}`, error.stack);
@@ -220,5 +261,28 @@ export class StudyGroupsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   private roomName(groupId: number) {
     return `group_${groupId}`;
+  }
+
+  private extractToken(client: Socket): string | null {
+    // Try multiple token sources (same as WsJwtGuard)
+    // 1. Authorization header
+    const authHeader = client.handshake.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+
+    // 2. Auth object (sent via socket.io client config)
+    if (client.handshake.auth?.token) {
+      const token = client.handshake.auth.token;
+      return token.startsWith('Bearer ') ? token.substring(7) : token;
+    }
+
+    // 3. Query parameter (fallback)
+    if (client.handshake.query?.token) {
+      const token = client.handshake.query.token as string;
+      return token.startsWith('Bearer ') ? token.substring(7) : token;
+    }
+
+    return null;
   }
 }
