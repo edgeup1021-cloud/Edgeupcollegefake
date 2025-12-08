@@ -1,16 +1,21 @@
 import {
   Controller,
   Post,
+  Get,
+  Put,
   Body,
   UseGuards,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CareerService, ResumeScoreResult } from './career.service';
 import { ScoreResumeByUrlDto, ScoreResumeByTextDto } from './dto';
+import { SaveResumeDto } from './dto/save-resume.dto';
+import { UpdateResumeDto } from './dto/update-resume.dto';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync, unlinkSync, readFileSync } from 'fs';
@@ -123,5 +128,42 @@ export class CareerController {
     }
 
     throw new BadRequestException('Unsupported file format');
+  }
+
+  // ===== RESUME STORAGE ENDPOINTS =====
+
+  @Post('resume')
+  async saveResume(@Request() req: any, @Body() dto: SaveResumeDto) {
+    const studentId = req.user.id;
+    const resume = await this.careerService.saveResume(studentId, dto);
+    return { success: true, data: resume };
+  }
+
+  @Put('resume')
+  async updateResume(@Request() req: any, @Body() dto: UpdateResumeDto) {
+    const studentId = req.user.id;
+    const resume = await this.careerService.saveResume(studentId, dto as SaveResumeDto);
+    return { success: true, data: resume };
+  }
+
+  @Get('resume')
+  async getResume(@Request() req: any) {
+    const studentId = req.user.id;
+    const resume = await this.careerService.getResume(studentId);
+    return { success: true, data: resume };
+  }
+
+  @Post('resume/submit')
+  async submitResume(@Request() req: any) {
+    const studentId = req.user.id;
+    const resume = await this.careerService.submitResume(studentId);
+    return { success: true, data: resume, message: 'Resume submitted successfully' };
+  }
+
+  @Post('resume/analyze')
+  async analyzeStoredResume(@Request() req: any, @Body() body: { jobDescription?: string }): Promise<any> {
+    const studentId = req.user.id;
+    const analysis = await this.careerService.analyzeStoredResume(studentId, body.jobDescription);
+    return analysis;
   }
 }

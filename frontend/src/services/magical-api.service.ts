@@ -25,7 +25,11 @@ interface BulletPointSuggestion {
 
 class MagicalAPIService {
   private getAuthHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    let token = null;
+    if (typeof window !== 'undefined') {
+      const portal = localStorage.getItem('currentPortal');
+      token = portal ? localStorage.getItem(`${portal}_accessToken`) : null;
+    }
     return {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -162,7 +166,11 @@ class MagicalAPIService {
         formData.append('jobDescription', jobDescription);
       }
 
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      let token = null;
+      if (typeof window !== 'undefined') {
+        const portal = localStorage.getItem('currentPortal');
+        token = portal ? localStorage.getItem(`${portal}_accessToken`) : null;
+      }
 
       const response = await fetch(`${BACKEND_URL}/api/career/resume/score-by-file`, {
         method: 'POST',
