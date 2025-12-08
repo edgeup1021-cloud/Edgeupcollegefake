@@ -1,1101 +1,852 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import {
-  UsersThree,
-  ChatCircle,
-  Folder,
-  Calendar,
-  Plus,
-  PaperPlaneRight,
-  Microphone,
-  MicrophoneSlash,
-  Paperclip,
-  Crown,
-  Globe,
-  Lock,
-  VideoCamera,
-  File,
-  Link as LinkIcon,
-  ArrowLeft,
-  X,
-  MagnifyingGlass,
-  DotsThree,
-  Download,
-  CaretDown,
-  Envelope,
-  Check,
-  XCircle,
-} from "@phosphor-icons/react";
+import { useEffect, useMemo, useState, useRef, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Plus, UsersThree, Lock, Globe, PaperPlaneRight, ArrowLeft } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { getAccessToken } from "@/services/auth.service";
+import {
+  getStudentStudyGroups,
+  createStudyGroup,
+  joinStudyGroup,
+  leaveStudyGroup,
+  getStudyGroupMessages,
+  postStudyGroupMessage,
+  deleteStudyGroup,
+} from "@/services/study-groups.service";
+import type { StudyGroup, StudyGroupJoinType, StudyGroupMessage } from "@/types/study-groups.types";
+import { ApiClientError } from "@/services/api.client";
+import { DeleteDialog } from "./DeleteDialog";
+import { getSocket, disconnectSocket } from "@/lib/socket";
 
-// ============ HELPER FUNCTIONS ============
-const getSubjectColor = (subject: string) => {
-  const colors = {
-    Mathematics: { bg: "bg-blue-50 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-300", border: "border-blue-200 dark:border-blue-700", badge: "bg-blue-100 dark:bg-blue-900/40" },
-    "Computer Science": { bg: "bg-purple-50 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", border: "border-purple-200 dark:border-purple-700", badge: "bg-purple-100 dark:bg-purple-900/40" },
-    Physics: { bg: "bg-emerald-50 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-700", badge: "bg-emerald-100 dark:bg-emerald-900/40" },
-    Chemistry: { bg: "bg-amber-50 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", border: "border-amber-200 dark:border-amber-700", badge: "bg-amber-100 dark:bg-amber-900/40" },
-  };
-  return colors[subject as keyof typeof colors] || { bg: "bg-gray-50 dark:bg-gray-800", text: "text-gray-700 dark:text-gray-300", border: "border-gray-200 dark:border-gray-700", badge: "bg-gray-100 dark:bg-gray-700" };
+type CreateFormState = {
+  name: string;
+  description: string;
+  subject: string;
+  program: string;
+  batch: string;
+  section: string;
+  joinType: StudyGroupJoinType;
+  inviteCode: string;
+  maxMembers: number;
 };
 
-// ============ TYPES ============
-interface StudyGroup {
-  id: number;
-  name: string;
-  subject: string;
-  topic: string;
-  description: string;
-  privacy: "public" | "private";
-  memberCount: number;
-  onlineCount: number;
-  lastActivity: string;
-  nextSession?: {
-    date: string;
-    time: string;
-    topic: string;
-    videoLink?: string;
-  };
-  isAdmin: boolean;
-}
+const defaultCreateForm: CreateFormState = {
+  name: "",
+  description: "",
+  subject: "",
+  program: "",
+  batch: "",
+  section: "",
+  joinType: "open",
+  inviteCode: "",
+  maxMembers: 25,
+};
 
-interface GroupMessage {
-  id: number;
-  userId: number;
-  userName: string;
-  content: string;
-  timestamp: string;
-  isCurrentUser: boolean;
-}
-
-interface GroupResource {
-  id: number;
-  type: "file" | "link";
-  name: string;
-  url: string;
-  size?: string;
-  addedBy: string;
-  addedAt: string;
-}
-
-interface GroupSession {
-  id: number;
-  date: string;
-  time: string;
-  topic: string;
-  hostName: string;
-  videoLink?: string;
-  status: "upcoming" | "completed";
-  attendeeCount?: number;
-}
-
-interface GroupMember {
-  id: number;
-  name: string;
-  isOnline: boolean;
-  isAdmin: boolean;
-  isCurrentUser: boolean;
-}
-
-interface GroupInvitation {
-  id: number;
-  groupName: string;
-  subject: string;
-  invitedBy: string;
-  invitedAt: string;
-  memberCount: number;
-}
-
-// ============ MOCK DATA ============
-const mockGroups: StudyGroup[] = [
-  {
-    id: 1,
-    name: "Calculus Study Squad",
-    subject: "Mathematics",
-    topic: "Calculus",
-    description: "Collaborative space for mastering calculus concepts and problem-solving.",
-    privacy: "private",
-    memberCount: 5,
-    onlineCount: 3,
-    lastActivity: "10 min ago",
-    nextSession: {
-      date: "Today",
-      time: "4:00 PM",
-      topic: "Integration Review",
-      videoLink: "https://meet.google.com/abc-defg-hij",
-    },
-    isAdmin: true,
-  },
-  {
-    id: 2,
-    name: "Data Structures Hub",
-    subject: "Computer Science",
-    topic: "Data Structures",
-    description: "Master data structures and algorithms through collaborative learning.",
-    privacy: "public",
-    memberCount: 8,
-    onlineCount: 2,
-    lastActivity: "2 hours ago",
-    isAdmin: false,
-  },
-];
-
-const mockMessages: GroupMessage[] = [
-  {
-    id: 1,
-    userId: 2,
-    userName: "Sarah Chen",
-    content: "Hey everyone! Can someone explain integration by parts?",
-    timestamp: "10:30 AM",
-    isCurrentUser: false,
-  },
-  {
-    id: 2,
-    userId: 1,
-    userName: "You",
-    content: "Sure! The formula is ∫u dv = uv - ∫v du. Use LIATE to choose u wisely.",
-    timestamp: "10:32 AM",
-    isCurrentUser: true,
-  },
-  {
-    id: 3,
-    userId: 2,
-    userName: "Sarah Chen",
-    content: "That makes so much sense! Thanks! 🙌",
-    timestamp: "10:35 AM",
-    isCurrentUser: false,
-  },
-];
-
-const mockResources: GroupResource[] = [
-  {
-    id: 1,
-    type: "file",
-    name: "Calculus_Notes_Ch5.pdf",
-    url: "/files/calculus-notes.pdf",
-    size: "1.2 MB",
-    addedBy: "Sarah Chen",
-    addedAt: "2 days ago",
-  },
-  {
-    id: 2,
-    type: "link",
-    name: "Khan Academy - Integration",
-    url: "https://khanacademy.org/math/calculus",
-    addedBy: "You",
-    addedAt: "3 days ago",
-  },
-];
-
-const mockSessions: GroupSession[] = [
-  {
-    id: 1,
-    date: "Today",
-    time: "4:00 PM",
-    topic: "Integration Review",
-    hostName: "Sarah Chen",
-    videoLink: "https://meet.google.com/abc-defg-hij",
-    status: "upcoming",
-  },
-  {
-    id: 2,
-    date: "Dec 1",
-    time: "3:00 PM",
-    topic: "Derivatives Deep Dive",
-    hostName: "You",
-    status: "completed",
-    attendeeCount: 4,
-  },
-];
-
-const mockMembers: GroupMember[] = [
-  { id: 1, name: "You", isOnline: true, isAdmin: true, isCurrentUser: true },
-  { id: 2, name: "Sarah Chen", isOnline: true, isAdmin: true, isCurrentUser: false },
-  { id: 3, name: "Mike Johnson", isOnline: false, isAdmin: false, isCurrentUser: false },
-];
-
-const mockInvitations: GroupInvitation[] = [
-  {
-    id: 1,
-    groupName: "Advanced Algorithms Study Group",
-    subject: "Computer Science",
-    invitedBy: "Dr. Emily Watson",
-    invitedAt: "2 hours ago",
-    memberCount: 15,
-  },
-  {
-    id: 2,
-    groupName: "Quantum Physics Discussion",
-    subject: "Physics",
-    invitedBy: "Prof. Michael Chen",
-    invitedAt: "1 day ago",
-    memberCount: 8,
-  },
-  {
-    id: 3,
-    groupName: "Linear Algebra Mastery",
-    subject: "Mathematics",
-    invitedBy: "Sarah Chen",
-    invitedAt: "3 days ago",
-    memberCount: 12,
-  },
-];
-
-// ============ SUB-COMPONENTS ============
-
-// Group Card for sidebar
-function GroupCard({
-  group,
-  isSelected,
-  onClick,
-}: {
-  group: StudyGroup;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const subjectColor = getSubjectColor(group.subject);
-  
+function FormInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <button
-      onClick={onClick}
+    <input
+      {...props}
       className={cn(
-        "w-full p-4 rounded-xl text-left transition-all duration-200 border",
-        isSelected
-          ? "bg-white dark:bg-gray-800 border-brand-primary shadow-md ring-2 ring-brand-primary/20"
-          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-primary/50 hover:shadow-sm"
+        "w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white",
+        "focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary",
+        props.className,
       )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className={cn(
-              "text-sm font-semibold truncate",
-              isSelected ? subjectColor.text : "text-gray-900 dark:text-white"
-            )}>
-              {group.name}
-            </h4>
-            {group.privacy === "private" ? (
-              <div className="shrink-0 p-1 rounded bg-orange-100 dark:bg-orange-900/30">
-                <Lock className="w-3 h-3 text-orange-600 dark:text-orange-400" />
-              </div>
-            ) : (
-              <div className="shrink-0 p-1 rounded bg-green-100 dark:bg-green-900/30">
-                <Globe className="w-3 h-3 text-green-600 dark:text-green-400" />
-              </div>
-            )}
-          </div>
-          <span className={cn(
-            "inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2",
-            subjectColor.badge,
-            subjectColor.text
-          )}>
-            {group.subject}
-          </span>
-          <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-              <UsersThree className="w-3.5 h-3.5" />
-              {group.memberCount}
-            </span>
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              {group.onlineCount} online
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-            {group.lastActivity}
-          </p>
-        </div>
-        {group.nextSession && (
-          <div className="shrink-0">
-            <div className="relative w-2.5 h-2.5">
-              <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75" />
-              <div className="relative w-2.5 h-2.5 rounded-full bg-green-500" />
-            </div>
-          </div>
-        )}
-      </div>
-      {group.nextSession && (
-        <div className="mt-3 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
-          <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            {group.nextSession.date} at {group.nextSession.time}
-          </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
-            {group.nextSession.topic}
-          </p>
-        </div>
-      )}
-    </button>
+    />
   );
 }
 
-// Message Bubble
-function MessageBubble({ message }: { message: GroupMessage }) {
-  const [showReactions, setShowReactions] = useState(false);
-  
+function FormTextarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <div
+    <textarea
+      {...props}
       className={cn(
-        "flex gap-3 mb-4 group",
-        message.isCurrentUser ? "flex-row-reverse" : "flex-row"
+        "w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white",
+        "focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary",
+        props.className,
       )}
-    >
-      <div
-        className={cn(
-          "shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ring-2 ring-white dark:ring-gray-800",
-          message.isCurrentUser
-            ? "bg-brand-primary text-white"
-            : "bg-blue-500 dark:bg-blue-600 text-white"
-        )}
-      >
-        {message.userName.charAt(0)}
+    />
+  );
+}
+
+function formatDate(ts?: string) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleString();
+}
+
+export default function StudyGroupPage() {
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+
+  const [groups, setGroups] = useState<StudyGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<StudyGroupMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messageInput, setMessageInput] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateFormState>(defaultCreateForm);
+  const [joinCode, setJoinCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [socketReady, setSocketReady] = useState(false);
+  const [pendingMessages, setPendingMessages] = useState<Map<string, StudyGroupMessage>>(new Map());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const selectedGroup = useMemo(
+    () => groups.find((g) => g.id === selectedGroupId) || null,
+    [groups, selectedGroupId],
+  );
+
+  const membership = selectedGroup?.membership || null;
+  const canChat = membership?.status === "joined";
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (!user || !isAuthenticated) return;
+    fetchGroups();
+  }, [user, isAuthenticated]);
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (!selectedGroup || !user) return;
+    fetchMessages(selectedGroup.id);
+
+    const token = getAccessToken('student') || getAccessToken();
+    const socket = getSocket(token || undefined);
+    const doJoin = () => {
+      console.log('📤 Emitting joinGroup for group:', selectedGroup.id);
+      socket.emit("joinGroup", { groupId: selectedGroup.id }, (response: any) => {
+        if (response?.success) {
+          console.log('✅ Successfully joined room:', response.room);
+          setSocketReady(true);
+        } else {
+          console.error('❌ Failed to join room:', response?.error);
+          setError(`Failed to join chat: ${response?.error || 'Unknown error'}`);
+          setSocketReady(false);
+        }
+      });
+    };
+
+    // Connection event handlers
+    const handleConnect = () => {
+      console.log('✅ Socket connected:', socket.id);
+      // Note: setSocketReady(true) is now done in doJoin callback after successful room join
+      doJoin();
+    };
+
+    const handleConnectError = (error: Error) => {
+      console.error('❌ Socket connection error:', error);
+      setError("Failed to connect to chat. Please refresh the page.");
+      setSocketReady(false);
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.log('🔌 Socket disconnected:', reason);
+      setSocketReady(false);
+    };
+
+    const handleError = (error: Error) => {
+      console.error('❌ Socket error:', error);
+    };
+
+    const handler = (msg: StudyGroupMessage) => {
+      console.log('📨 Received message:', msg);
+      if (Number(msg.groupId) !== Number(selectedGroup.id)) {
+        console.log('⚠️ Message groupId mismatch:', msg.groupId, 'vs', selectedGroup.id);
+        return;
+      }
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) {
+          console.log('⚠️ Duplicate message ignored:', msg.id);
+          return prev;
+        }
+        return [...prev, msg];
+      });
+
+      // Remove from pending if exists (socket delivered before API response)
+      setPendingMessages((prev) => {
+        const next = new Map(prev);
+        // Find and remove any pending message with same content
+        for (const [key, pendingMsg] of prev.entries()) {
+          if (pendingMsg.content === msg.content &&
+              pendingMsg.senderStudentId === msg.senderStudentId) {
+            next.delete(key);
+            break;
+          }
+        }
+        return next;
+      });
+    };
+
+    // Register all event listeners
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("error", handleError);
+    socket.on("newMessage", handler);
+
+    // If already connected, join immediately
+    if (socket.connected) {
+      console.log('Socket already connected, joining group immediately');
+      doJoin();
+      // Note: setSocketReady(true) is now done in doJoin callback after successful room join
+    }
+
+    return () => {
+      console.log('🧹 Cleaning up socket listeners for group:', selectedGroup.id);
+      socket.emit("leaveGroup", { groupId: selectedGroup.id });
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("error", handleError);
+      socket.off("newMessage", handler);
+      setSocketReady(false);
+    };
+  }, [selectedGroup?.id, user?.id]);
+
+  async function fetchGroups() {
+    if (!user) return;
+    setLoadingGroups(true);
+    setError(null);
+    try {
+      const data = await getStudentStudyGroups(user.id, { limit: 50 });
+      setGroups(data);
+      if (!selectedGroupId && data.length > 0) {
+        setSelectedGroupId(data[0].id);
+      }
+    } catch (err) {
+      handleError(err, "Failed to load study groups");
+    } finally {
+      setLoadingGroups(false);
+    }
+  }
+
+  async function fetchMessages(groupId: number) {
+    if (!user) return;
+    setLoadingMessages(true);
+    setError(null);
+    try {
+      const data = await getStudyGroupMessages(user.id, groupId, { limit: 50 });
+      setMessages(data);
+    } catch (err) {
+      handleError(err, "Failed to load messages");
+    } finally {
+      setLoadingMessages(false);
+    }
+  }
+
+  function senderName(msg: StudyGroupMessage) {
+    if (msg.senderStudent) {
+      const { firstName = "", lastName = "" } = msg.senderStudent;
+      const full = `${firstName} ${lastName}`.trim();
+      if (full) return full;
+    }
+    if (msg.senderTeacher) {
+      const { firstName = "", lastName = "" } = msg.senderTeacher;
+      const full = `${firstName} ${lastName}`.trim();
+      if (full) return full;
+    }
+    if (msg.senderStudentId) return `Student #${msg.senderStudentId}`;
+    if (msg.senderTeacherId) return `Teacher #${msg.senderTeacherId}`;
+    return "System";
+  }
+
+  function handleError(err: unknown, fallback: string) {
+    console.error(err);
+    if (err instanceof ApiClientError) {
+      const message = Array.isArray(err.data.message) ? err.data.message.join(", ") : err.data.message;
+      setError(message || fallback);
+    } else if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError(fallback);
+    }
+  }
+
+  async function handleCreateGroup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const payload: any = {
+        name: createForm.name,
+        description: createForm.description || undefined,
+        subject: createForm.subject || undefined,
+        program: createForm.program || undefined,
+        batch: createForm.batch || undefined,
+        section: createForm.section || undefined,
+        joinType: createForm.joinType,
+        maxMembers: createForm.maxMembers,
+      };
+      if (createForm.joinType === "code") {
+        payload.inviteCode = createForm.inviteCode;
+      }
+      const newGroup = await createStudyGroup(user.id, payload);
+      setGroups((prev) => [newGroup, ...prev]);
+      setSelectedGroupId(newGroup.id);
+      setCreateOpen(false);
+      setCreateForm(defaultCreateForm);
+    } catch (err) {
+      handleError(err, "Failed to create group");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleJoin(group: StudyGroup) {
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await joinStudyGroup(user.id, group.id, group.joinType === "code" ? { inviteCode: joinCode } : undefined);
+      await fetchGroups();
+      setJoinCode("");
+      setSelectedGroupId(group.id);
+    } catch (err) {
+      // If already joined, refresh state so UI reflects membership
+      if (err instanceof ApiClientError && err.statusCode === 409) {
+        await fetchGroups();
+        setSelectedGroupId(group.id);
+        setJoinCode("");
+        return;
+      }
+      handleError(err, "Failed to join group");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleLeave(group: StudyGroup) {
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await leaveStudyGroup(user.id, group.id);
+      await fetchGroups();
+      setSelectedGroupId(null);
+      setMessages([]);
+    } catch (err) {
+      handleError(err, "Failed to leave group");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDeleteGroup(group: StudyGroup) {
+    if (!user) return;
+    setDeleteLoading(true);
+    setError(null);
+    try {
+      await deleteStudyGroup(user.id, group.id);
+      setGroups((prev) => prev.filter((g) => g.id !== group.id));
+      if (selectedGroupId === group.id) {
+        setSelectedGroupId(null);
+        setMessages([]);
+      }
+      setDeleteOpen(false);
+    } catch (err) {
+      handleError(err, "Failed to delete group");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user || !selectedGroup || !messageInput.trim()) return;
+    if (!canChat) {
+      setError("Join the group to send messages");
+      return;
+    }
+
+    const tempId = `temp-${Date.now()}`;
+    const trimmedContent = messageInput.trim();
+
+    // Create optimistic message
+    const optimisticMessage: StudyGroupMessage = {
+      id: tempId as any,
+      groupId: selectedGroup.id,
+      senderStudentId: user.id,
+      senderTeacherId: null,
+      messageType: "text",
+      content: trimmedContent,
+      createdAt: new Date().toISOString(),
+      senderStudent: {
+        id: user.id,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+      },
+      senderTeacher: null,
+    };
+
+    // Add to messages and pending
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setPendingMessages((prev) => new Map(prev).set(tempId, optimisticMessage));
+    setMessageInput("");
+    setBusy(true);
+    setError(null);
+
+    try {
+      const saved = await postStudyGroupMessage(user.id, selectedGroup.id, trimmedContent);
+
+      // Remove optimistic message and add real one
+      setPendingMessages((prev) => {
+        const next = new Map(prev);
+        next.delete(tempId);
+        return next;
+      });
+
+      setMessages((prev) => {
+        // Replace temp with real message
+        const filtered = prev.filter((m) => String(m.id) !== tempId);
+        if (filtered.some((m) => m.id === saved.id)) {
+          return filtered; // Already have it from socket
+        }
+        return [...filtered, saved];
+      });
+    } catch (err) {
+      // Remove optimistic message on error
+      setPendingMessages((prev) => {
+        const next = new Map(prev);
+        next.delete(tempId);
+        return next;
+      });
+
+      setMessages((prev) => prev.filter((m) => String(m.id) !== tempId));
+      handleError(err, "Failed to send message");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="p-6 text-sm text-gray-500 dark:text-gray-400">
+        Loading...
       </div>
-      <div className={cn("max-w-[75%] space-y-1", message.isCurrentUser ? "text-right" : "text-left")}>
-        {!message.isCurrentUser && (
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{message.userName}</p>
-        )}
-        <div className="relative group/message">
-          <div
-            className={cn(
-              "px-4 py-3 rounded-2xl inline-block shadow-sm transition-all duration-200 hover:shadow-md",
-              message.isCurrentUser
-                ? "bg-brand-primary text-white rounded-br-md"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-600"
-            )}
-          >
-            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-          </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="p-6 text-sm text-gray-500 dark:text-gray-400">
+        Please sign in as a student to access study groups.
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Collaborate with peers</p>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Study Groups</h1>
         </div>
         <div className="flex items-center gap-2">
-          <p
-            className={cn(
-              "text-xs",
-              message.isCurrentUser ? "text-gray-400" : "text-gray-500 dark:text-gray-400"
-            )}
-          >
-            {message.timestamp}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Resource Item
-function ResourceItem({ resource }: { resource: GroupResource }) {
-  return (
-    <div className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-brand-primary/50 dark:hover:border-brand-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer">
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110",
-            resource.type === "file"
-              ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-              : "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
-          )}
-        >
-          {resource.type === "file" ? (
-            <File className="w-5 h-5" weight="duotone" />
-          ) : (
-            <LinkIcon className="w-5 h-5" weight="duotone" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-brand-primary transition-colors">{resource.name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
-            {resource.size && <><span className="font-medium">{resource.size}</span> <span>•</span></>}
-            <span>{resource.addedBy}</span>
-            <span>•</span>
-            <span>{resource.addedAt}</span>
-          </p>
-        </div>
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="shrink-0 text-gray-400 hover:text-brand-primary hover:bg-brand-primary/10 transition-all"
-      >
-        {resource.type === "file" ? (
-          <Download className="w-5 h-5" weight="bold" />
-        ) : (
-          <LinkIcon className="w-5 h-5" weight="bold" />
-        )}
-      </Button>
-    </div>
-  );
-}
-
-// Session Item
-function SessionItem({ session }: { session: GroupSession }) {
-  const isUpcoming = session.status === "upcoming";
-
-  return (
-    <div
-      className={cn(
-        "p-4 rounded-xl border-2 transition-all duration-200",
-        isUpcoming
-          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-sm hover:shadow-md"
-          : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-      )}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <div className={cn(
-              "p-1.5 rounded-lg",
-              isUpcoming ? "bg-blue-100 dark:bg-blue-900/30" : "bg-gray-200 dark:bg-gray-700"
-            )}>
-              <Calendar className={cn(
-                "w-4 h-4",
-                isUpcoming ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
-              )} weight="duotone" />
-            </div>
-            <div>
-              <span className="text-sm font-semibold text-gray-900 dark:text-white block">
-                {session.date}
-              </span>
-              <span className="text-xs text-gray-600 dark:text-gray-400">
-                {session.time}
-              </span>
-            </div>
-            {isUpcoming && (
-              <span className="ml-auto px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                Upcoming
-              </span>
-            )}
-          </div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">{session.topic}</p>
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">
-              <UsersThree className="w-3.5 h-3.5" />
-              {session.hostName}
-            </span>
-            {session.attendeeCount && (
-              <>
-                <span>•</span>
-                <span>{session.attendeeCount} attended</span>
-              </>
-            )}
-          </div>
-        </div>
-        {isUpcoming && session.videoLink && (
           <Button
-            size="sm"
-            className="shrink-0 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold transition-all duration-200 hover:shadow-lg"
+            onClick={() => setCreateOpen(true)}
+            className="bg-brand-primary text-white hover:bg-brand-primary/90"
           >
-            <VideoCamera className="w-4 h-4 mr-1.5" weight="fill" />
-            Join Now
+            <Plus className="w-4 h-4 mr-2" />
+            Create Group
           </Button>
-        )}
-        {!isUpcoming && (
-          <span className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 font-medium">
-            Completed
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Member Item
-function MemberItem({ member }: { member: GroupMember }) {
-  return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-brand-primary/30 dark:hover:border-brand-primary/30 transition-all duration-200 hover:shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className="w-11 h-11 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-sm font-bold text-white shadow-md">
-            {member.name.charAt(0)}
-          </div>
-          <div
-            className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-800 shadow-sm",
-              member.isOnline ? "bg-green-500" : "bg-gray-400"
-            )}
-          >
-            {member.isOnline && (
-              <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75" />
-            )}
-          </div>
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {member.name}
-              {member.isCurrentUser && <span className="text-brand-primary"> (You)</span>}
-            </p>
-            {member.isAdmin && (
-              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-medium shrink-0">
-                <Crown className="w-3 h-3" weight="fill" />
-                Admin
-              </span>
-            )}
-          </div>
-          <p className={cn(
-            "text-xs font-medium",
-            member.isOnline ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"
-          )}>
-            {member.isOnline ? "● Online" : "○ Offline"}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Invitations Modal
-function InvitationsModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  if (!isOpen) return null;
-
-  const handleAccept = (invitationId: number) => {
-    // In real app, accept invitation via backend
-    console.log("Accepted invitation:", invitationId);
-  };
-
-  const handleDecline = (invitationId: number) => {
-    // In real app, decline invitation via backend
-    console.log("Declined invitation:", invitationId);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center">
-              <Envelope className="w-5 h-5 text-brand-primary" weight="fill" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Group Invitations
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {mockInvitations.length} pending invitation{mockInvitations.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
+          <Button variant="outline" onClick={fetchGroups} disabled={loadingGroups}>
+            Refresh
           </Button>
         </div>
+      </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-auto max-h-[calc(80vh-140px)]">
-          {mockInvitations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="mb-4 p-4 rounded-full bg-gray-100 dark:bg-gray-800">
-                <Envelope className="w-16 h-16 text-gray-400 dark:text-gray-600" weight="duotone" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No Invitations
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                You don't have any pending group invitations at the moment
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {mockInvitations.map((invitation) => {
-                const subjectColor = getSubjectColor(invitation.subject);
-                return (
-                  <div
-                    key={invitation.id}
-                    className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                          {invitation.groupName}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-1 border-gray-200 dark:border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-semibold">Your Groups</CardTitle>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{groups.length} total</span>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loadingGroups && <p className="text-sm text-gray-500">Loading groups...</p>}
+            {!loadingGroups && groups.length === 0 && (
+              <p className="text-sm text-gray-500">No groups yet. Create or join one to get started.</p>
+            )}
+            {groups.map((group) => {
+              const isSelected = selectedGroupId === group.id;
+              const isPrivate = group.joinType === "code" || group.joinType === "approval";
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => setSelectedGroupId(group.id)}
+                  className={cn(
+                    "w-full text-left p-4 rounded-xl border transition-all",
+                    isSelected
+                      ? "border-brand-primary bg-brand-primary/5 shadow-sm"
+                      : "border-gray-200 dark:border-gray-800 hover:border-brand-primary/60"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                          {group.name}
                         </h3>
-                        <span className={cn(
-                          "inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2",
-                          subjectColor.badge,
-                          subjectColor.text
-                        )}>
-                          {invitation.subject}
-                        </span>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <UsersThree className="w-4 h-4" />
-                            {invitation.memberCount} members
-                          </span>
-                          <span>•</span>
-                          <span>Invited by {invitation.invitedBy}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {invitation.invitedAt}
-                        </p>
+                        {isPrivate ? (
+                          <Lock className="w-4 h-4 text-orange-500" />
+                        ) : (
+                          <Globe className="w-4 h-4 text-green-500" />
+                        )}
                       </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button
-                          size="sm"
-                          onClick={() => handleAccept(invitation.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Check className="w-4 h-4 mr-1" weight="bold" />
-                          Accept
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDecline(invitation.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <XCircle className="w-4 h-4 mr-1" weight="bold" />
-                          Decline
-                        </Button>
+                      {group.subject && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                          {group.subject}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        <UsersThree className="w-4 h-4" />
+                        <span>{group.currentMembers}/{group.maxMembers} members</span>
+                        <span>•</span>
+                        <span className="capitalize">{group.joinType} join</span>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Create Group Modal
-function CreateGroupModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [subject, setSubject] = useState("");
-  const [topic, setTopic] = useState("");
-  const [description, setDescription] = useState("");
-  const [privacy, setPrivacy] = useState<"public" | "private">("private");
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Create Study Group
-          </h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Group Name *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Calculus Study Squad"
-              className="w-full mt-1 px-3 py-2 rounded-lg border bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Subject *
-            </label>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g., Mathematics"
-              className="w-full mt-1 px-3 py-2 rounded-lg border bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Topic
-            </label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., Calculus"
-              className="w-full mt-1 px-3 py-2 rounded-lg border bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your study group..."
-              rows={3}
-              className="w-full mt-1 px-3 py-2 rounded-lg border bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Privacy
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <input
-                  type="radio"
-                  name="privacy"
-                  checked={privacy === "public"}
-                  onChange={() => setPrivacy("public")}
-                  className="text-brand-primary"
-                />
-                <Globe className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Public</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Anyone can find and join</p>
-                </div>
-              </label>
-              <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <input
-                  type="radio"
-                  name="privacy"
-                  checked={privacy === "private"}
-                  onChange={() => setPrivacy("private")}
-                  className="text-brand-primary"
-                />
-                <Lock className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Private</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Invite only</p>
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3 mt-6">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button className="flex-1 bg-brand-primary hover:bg-brand-primary/90">
-            Create Group
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============ MAIN COMPONENT ============
-export default function StudyGroupPage() {
-  const [activeTab, setActiveTab] = useState<"my-groups">("my-groups");
-  const [selectedGroup, setSelectedGroup] = useState<StudyGroup | null>(mockGroups[0]);
-  const [groupTab, setGroupTab] = useState<"chat" | "resources" | "members">("chat");
-  const [messageInput, setMessageInput] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showInvitations, setShowInvitations] = useState(false);
-  const [isMobileDetailView, setIsMobileDetailView] = useState(false);
-
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    // In real app, send message to backend
-    setMessageInput("");
-  };
-
-  const handleGroupSelect = (group: StudyGroup) => {
-    setSelectedGroup(group);
-    setIsMobileDetailView(true);
-  };
-
-  return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {isMobileDetailView && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setIsMobileDetailView(false)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          )}
-          <div className="w-10 h-10 rounded-xl bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center">
-            <UsersThree className="w-6 h-6 text-brand-primary" weight="fill" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Study Groups</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Collaborate and learn together
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setShowInvitations(true)}
-            variant="outline"
-            className="relative"
-          >
-            <Envelope className="w-4 h-4 sm:mr-2" weight="fill" />
-            <span className="hidden sm:inline">Invitations</span>
-            {mockInvitations.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-semibold rounded-full flex items-center justify-center">
-                {mockInvitations.length}
-              </span>
-            )}
-          </Button>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-brand-primary hover:bg-brand-primary/90 text-white"
-          >
-            <Plus className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Create Group</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex gap-4 min-h-0">
-        {/* Groups Sidebar */}
-        <Card
-          className={cn(
-            "w-full lg:w-80 shrink-0 flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden",
-            isMobileDetailView && "hidden lg:flex"
-          )}
-        >
-          <CardHeader className="py-4 px-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="relative">
-              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search groups..."
-                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all"
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-auto p-3 space-y-2">
-            {mockGroups.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="mb-6 p-4 rounded-full bg-gray-100 dark:bg-gray-800">
-                  <UsersThree className="w-16 h-16 text-gray-400 dark:text-gray-600" weight="duotone" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  No Study Groups Yet
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6 max-w-xs">
-                  Create your first group or join existing ones to start collaborating with peers
-                </p>
-                <Button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Group
-                </Button>
-              </div>
-            ) : (
-              mockGroups.map((group) => (
-                <GroupCard
-                  key={group.id}
-                  group={group}
-                  isSelected={selectedGroup?.id === group.id}
-                  onClick={() => handleGroupSelect(group)}
-                />
-              ))
-            )}
+                </button>
+              );
+            })}
           </CardContent>
         </Card>
 
-        {/* Group Detail */}
-        {selectedGroup ? (
-          <Card
-            className={cn(
-              "flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden",
-              !isMobileDetailView && "hidden lg:flex"
-            )}
-          >
-            {/* Group Tabs */}
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex gap-2">
-                {[
-                  { id: "chat", label: "Chat", icon: ChatCircle },
-                  { id: "resources", label: "Resources", icon: Folder },
-                  { id: "members", label: "Members", icon: UsersThree },
-                ].map((tab) => (
+        <Card className="lg:col-span-2 border-gray-200 dark:border-gray-800 min-h-[600px]">
+          {!selectedGroup ? (
+            <CardContent className="flex items-center justify-center h-full">
+              <p className="text-sm text-gray-500">Select or create a study group to get started.</p>
+            </CardContent>
+          ) : (
+            <>
+              <CardHeader className="space-y-2">
+                <div className="flex items-start gap-3">
                   <button
-                    key={tab.id}
-                    onClick={() => setGroupTab(tab.id as typeof groupTab)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                      groupTab === tab.id
-                        ? "bg-brand-primary text-white shadow-sm"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                    )}
+                    className="lg:hidden p-2 rounded-lg border border-gray-200 dark:border-gray-700"
+                    onClick={() => setSelectedGroupId(null)}
                   >
-                    <tab.icon className="w-4 h-4" weight={groupTab === tab.id ? "fill" : "regular"} />
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    <ArrowLeft className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tab Content */}
-            <div className="flex-1 overflow-hidden flex flex-col">
-              {groupTab === "chat" && (
-                <>
-                  <CardContent className="flex-1 overflow-auto p-4">
-                    {mockMessages.map((message) => (
-                      <MessageBubble key={message.id} message={message} />
-                    ))}
-                    <div ref={chatEndRef} />
-                  </CardContent>
-                  <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          value={messageInput}
-                          onChange={(e) => setMessageInput(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                          placeholder="Type your message..."
-                          className="w-full px-4 py-3 rounded-xl text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 border border-gray-200 dark:border-gray-700 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all"
-                        />
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 rounded-xl h-12 w-12"
-                      >
-                        <Paperclip className="w-5 h-5" />
-                      </Button>
-                      <Button
-                        variant={isRecording ? "destructive" : "outline"}
-                        size="icon"
-                        onClick={() => setIsRecording(!isRecording)}
-                        className="shrink-0 rounded-xl h-12 w-12"
-                      >
-                        {isRecording ? (
-                          <MicrophoneSlash className="w-5 h-5" />
-                        ) : (
-                          <Microphone className="w-5 h-5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wide">Study Group</p>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">{selectedGroup.name}</h2>
+                    {selectedGroup.subject && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{selectedGroup.subject}</p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {selectedGroup.program ? `${selectedGroup.program}` : "Open"} {selectedGroup.batch && `• Batch ${selectedGroup.batch}`} {selectedGroup.section && `• Section ${selectedGroup.section}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {membership?.status === "joined" ? (
+                      <>
+                        {membership.role === "owner" && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setDeleteOpen(true)}
+                            disabled={busy}
+                          >
+                            Delete Group
+                          </Button>
                         )}
-                      </Button>
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!messageInput.trim()}
-                        className="shrink-0 rounded-xl h-12 w-12 bg-brand-primary hover:bg-brand-primary/90 disabled:opacity-50 shadow-sm"
-                      >
-                        <PaperPlaneRight className="w-5 h-5" weight="fill" />
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {groupTab === "resources" && (
-                <CardContent className="flex-1 overflow-auto p-4">
-                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2">
-                      <Folder className="w-5 h-5 text-brand-primary" weight="fill" />
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Shared Resources
-                      </h3>
-                    </div>
-                    <Button size="sm" className="bg-brand-primary hover:bg-brand-primary/90 text-white">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Resource
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Files
-                    </h4>
-                    {mockResources
-                      .filter((r) => r.type === "file")
-                      .map((resource) => (
-                        <ResourceItem key={resource.id} resource={resource} />
-                      ))}
-                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mt-4">
-                      Links
-                    </h4>
-                    {mockResources
-                      .filter((r) => r.type === "link")
-                      .map((resource) => (
-                        <ResourceItem key={resource.id} resource={resource} />
-                      ))}
-                  </div>
-                </CardContent>
-              )}
-
-              {groupTab === "members" && (
-                <CardContent className="flex-1 overflow-auto p-4">
-                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2">
-                      <UsersThree className="w-5 h-5 text-brand-primary" weight="fill" />
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Members <span className="text-gray-500 dark:text-gray-400">({mockMembers.length})</span>
-                      </h3>
-                    </div>
-                    {selectedGroup.isAdmin && (
-                      <Button size="sm" className="bg-brand-primary hover:bg-brand-primary/90 text-white">
-                        <Plus className="w-4 h-4 mr-1" />
-                        Invite Members
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleLeave(selectedGroup)}
+                          disabled={busy || membership.role === "owner"}
+                        >
+                          Leave
+                        </Button>
+                      </>
+                    ) : (
+                      <JoinControls
+                        group={selectedGroup}
+                        joinCode={joinCode}
+                        onJoin={() => handleJoin(selectedGroup)}
+                        onCodeChange={setJoinCode}
+                        disabled={busy || membership?.status === "pending"}
+                        pending={membership?.status === "pending"}
+                      />
                     )}
                   </div>
-                  <div className="space-y-2">
-                    {mockMembers.map((member) => (
-                      <MemberItem key={member.id} member={member} />
-                    ))}
+                </div>
+                {selectedGroup.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{selectedGroup.description}</p>
+                )}
+                {membership?.status === "pending" && (
+                  <div className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                    Your join request is pending approval.
                   </div>
-                </CardContent>
-              )}
-            </div>
-          </Card>
-        ) : (
-          <Card className="hidden lg:flex flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-700">
-            <div className="text-center px-8 py-12">
-              <div className="mb-6 p-6 rounded-full bg-gray-100 dark:bg-gray-800 inline-block">
-                <UsersThree className="w-20 h-20 text-gray-400 dark:text-gray-600" weight="duotone" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Select a Study Group
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                Choose a group from the sidebar to view conversations, resources, and upcoming sessions
-              </p>
-            </div>
-          </Card>
-        )}
+                )}
+              </CardHeader>
+
+              <CardContent className="grid grid-rows-[1fr_auto] gap-3 h-[520px]">
+                <div className="overflow-y-auto pr-1">
+                  {loadingMessages ? (
+                    <p className="text-sm text-gray-500">Loading messages...</p>
+                  ) : messages.length === 0 ? (
+                    <p className="text-sm text-gray-500">No messages yet. Start the conversation!</p>
+                  ) : (
+                    <div className="space-y-3">
+                    {messages.map((msg) => {
+                      // Convert both to numbers for comparison to handle any type mismatches
+                      const isSelf = msg.senderStudentId != null && Number(msg.senderStudentId) === Number(user.id);
+                      const isPending = pendingMessages.has(msg.id as any);
+
+                      // Debug logging
+                      if (!isSelf && msg.senderStudentId) {
+                        console.log('Message not identified as self:', {
+                          msgSenderStudentId: msg.senderStudentId,
+                          msgSenderStudentIdType: typeof msg.senderStudentId,
+                          userId: user.id,
+                          userIdType: typeof user.id,
+                          comparison: Number(msg.senderStudentId) === Number(user.id),
+                          message: msg.content,
+                        });
+                      }
+
+                      return (
+                        <div
+                          key={msg.id}
+                          className={cn(
+                            "flex",
+                            isSelf ? "justify-end" : "justify-start"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "max-w-[80%] rounded-xl px-4 py-3 shadow-sm border relative",
+                              isSelf
+                                ? "bg-brand-primary text-white border-brand-primary"
+                                : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700",
+                              isPending && "opacity-60"
+                            )}
+                          >
+                            <div className="text-xs font-semibold mb-1 opacity-80">
+                              {isSelf ? "You" : senderName(msg)}
+                              {isPending && <span className="ml-2 text-[10px]">(Sending...)</span>}
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <div className="text-[11px] opacity-70 mt-1">{formatDate(msg.createdAt)}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </div>
+
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                  <FormInput
+                    placeholder={
+                      membership?.status === "joined"
+                        ? "Type a message..."
+                        : "Join the group to chat"
+                    }
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    disabled={!canChat || busy}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!canChat || !messageInput.trim() || busy}
+                    className="bg-brand-primary text-white hover:bg-brand-primary/90"
+                  >
+                    <PaperPlaneRight className="w-4 h-4" />
+                  </Button>
+                </form>
+              </CardContent>
+            </>
+          )}
+        </Card>
       </div>
 
-      {/* Invitations Modal */}
-      <InvitationsModal isOpen={showInvitations} onClose={() => setShowInvitations(false)} />
+      {createOpen && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+              <div>
+                <p className="text-xs uppercase text-gray-500">Create Study Group</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Bring learners together</h3>
+              </div>
+              <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+                Close
+              </Button>
+            </div>
+            <form onSubmit={handleCreateGroup} className="px-6 py-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">Name</label>
+                  <FormInput
+                    required
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                    placeholder="e.g., Algorithms Peer Group"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Subject</label>
+                  <FormInput
+                    value={createForm.subject}
+                    onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })}
+                    placeholder="Computer Science"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Description</label>
+                <FormTextarea
+                  rows={3}
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  placeholder="What will you cover in this group?"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">Program</label>
+                  <FormInput
+                    value={createForm.program}
+                    onChange={(e) => setCreateForm({ ...createForm, program: e.target.value })}
+                    placeholder="e.g., CSE"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Batch</label>
+                  <FormInput
+                    value={createForm.batch}
+                    onChange={(e) => setCreateForm({ ...createForm, batch: e.target.value })}
+                    placeholder="2024"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Section</label>
+                  <FormInput
+                    value={createForm.section}
+                    onChange={(e) => setCreateForm({ ...createForm, section: e.target.value })}
+                    placeholder="A"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">Join Type</label>
+                  <select
+                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                    value={createForm.joinType}
+                    onChange={(e) => setCreateForm({ ...createForm, joinType: e.target.value as StudyGroupJoinType })}
+                  >
+                    <option value="open">Open (auto join)</option>
+                    <option value="code">Invite code</option>
+                    <option value="approval">Approval required</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Invite Code (for code-based)</label>
+                  <FormInput
+                    value={createForm.inviteCode}
+                    onChange={(e) => setCreateForm({ ...createForm, inviteCode: e.target.value })}
+                    placeholder="Optional"
+                    disabled={createForm.joinType !== "code"}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Max Members</label>
+                  <FormInput
+                    type="number"
+                    min={2}
+                    max={500}
+                    value={createForm.maxMembers}
+                    onChange={(e) => setCreateForm({ ...createForm, maxMembers: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button variant="ghost" onClick={() => setCreateOpen(false)} type="button">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-brand-primary text-white hover:bg-brand-primary/90"
+                  disabled={busy}
+                >
+                  Create Group
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-      {/* Create Group Modal */}
-      <CreateGroupModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      {selectedGroup && membership?.role === "owner" && (
+        <DeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onConfirm={() => handleDeleteGroup(selectedGroup)}
+          loading={deleteLoading}
+        />
+      )}
+    </div>
+  );
+}
+
+function JoinControls({
+  group,
+  joinCode,
+  onCodeChange,
+  onJoin,
+  disabled,
+  pending,
+}: {
+  group: StudyGroup;
+  joinCode: string;
+  onCodeChange: (v: string) => void;
+  onJoin: () => void;
+  disabled: boolean;
+  pending?: boolean;
+}) {
+  const needsCode = group.joinType === "code";
+  const needsApproval = group.joinType === "approval";
+
+  return (
+    <div className="flex items-center gap-2">
+      {needsCode && (
+        <FormInput
+          placeholder="Invite code"
+          value={joinCode}
+          onChange={(e) => onCodeChange(e.target.value)}
+          className="w-32"
+        />
+      )}
+      <Button
+        size="sm"
+        onClick={onJoin}
+        disabled={disabled || pending || (needsCode && !joinCode.trim())}
+        className="bg-brand-primary text-white hover:bg-brand-primary/90"
+      >
+        {pending ? "Pending" : needsApproval ? "Request to Join" : "Join"}
+      </Button>
     </div>
   );
 }

@@ -18,6 +18,14 @@ import {
   CalendarEvent,
 } from './entities/student';
 
+// Study group entities
+import {
+  StudyGroup,
+  StudyGroupMember,
+  StudyGroupMessage,
+  StudyGroupTeacherModerator,
+} from './entities/study-groups';
+
 // Teacher entities
 import {
   TeacherUser,
@@ -49,6 +57,11 @@ const entities = [
   StudentAssessment,
   StudentActivityLog,
   CalendarEvent,
+  // Study groups
+  StudyGroup,
+  StudyGroupMember,
+  StudyGroupMessage,
+  StudyGroupTeacherModerator,
   // Teacher
   TeacherUser,
   TeacherCourse,

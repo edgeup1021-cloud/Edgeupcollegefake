@@ -251,21 +251,17 @@ export class AuthService {
   }
 
   async getProfile(userId: number, userType: string) {
-    console.log('[getProfile] Looking for user:', { userId, userType });
     let user: any;
     let role: UserRole = UserRole.STUDENT; // Default value
 
     if (userType === UserType.STUDENT) {
       user = await this.studentRepository.findOne({ where: { id: userId } });
-      console.log('[getProfile] Student query result:', user ? 'Found' : 'Not found');
       role = UserRole.STUDENT;
     } else if (userType === UserType.TEACHER) {
       user = await this.teacherRepository.findOne({ where: { id: userId } });
-      console.log('[getProfile] Teacher query result:', user ? 'Found' : 'Not found');
       role = UserRole.TEACHER;
     } else if (userType === UserType.ADMIN) {
       user = await this.adminRepository.findOne({ where: { id: userId } });
-      console.log('[getProfile] Admin query result:', user ? 'Found' : 'Not found');
       role = UserRole.ADMIN;
     } else {
       console.log('[getProfile] Invalid user type:', userType);
@@ -273,7 +269,6 @@ export class AuthService {
     }
 
     if (!user) {
-      console.log('[getProfile] User not found for:', { userId, userType });
       throw new UnauthorizedException('User not found');
     }
 
