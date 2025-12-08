@@ -11,11 +11,13 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { StudentUser } from '../database/entities/student';
 import { TeacherUser } from '../database/entities/teacher';
 import { AdminUser } from '../database/entities/management';
+import { SuperadminUser } from '../database/entities/superadmin';
 import { getJwtConfig } from '../config/jwt.config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([StudentUser, TeacherUser, AdminUser]),
+    TypeOrmModule.forFeature([SuperadminUser], 'superadmin'),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

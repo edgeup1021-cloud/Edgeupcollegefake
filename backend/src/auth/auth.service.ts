@@ -12,6 +12,7 @@ import { PasswordService } from '../shared/services/password.service';
 import { StudentUser } from '../database/entities/student';
 import { TeacherUser } from '../database/entities/teacher';
 import { AdminUser } from '../database/entities/management';
+import { SuperadminUser } from '../database/entities/superadmin';
 import { UserRole, UserType } from '../common/enums/user-role.enum';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -26,6 +27,8 @@ export class AuthService {
     private teacherRepository: Repository<TeacherUser>,
     @InjectRepository(AdminUser)
     private adminRepository: Repository<AdminUser>,
+    @InjectRepository(SuperadminUser, 'superadmin')
+    private superadminRepository: Repository<SuperadminUser>,
     private jwtService: JwtService,
     private configService: ConfigService,
     private passwordService: PasswordService,
@@ -89,6 +92,24 @@ export class AuthService {
       }
     }
 
+    // Check superadmins (from database - multiple superadmins)
+    if (!user) {
+      const superadmin = await this.superadminRepository.findOne({
+        where: { email },
+      });
+      if (superadmin && superadmin.password) {
+        const isValid = await this.passwordService.compare(
+          password,
+          superadmin.password,
+        );
+        if (isValid) {
+          user = superadmin;
+          userType = UserType.SUPERADMIN;
+          role = UserRole.SUPERADMIN;
+        }
+      }
+    }
+
     if (user) {
       return {
         id: user.id,
@@ -137,6 +158,7 @@ export class AuthService {
       [PortalType.STUDENT]: UserType.STUDENT,
       [PortalType.TEACHER]: UserType.TEACHER,
       [PortalType.MANAGEMENT]: UserType.ADMIN,
+      [PortalType.SUPERADMIN]: UserType.SUPERADMIN,
     };
 
     if (portalUserTypeMap[portalType] !== userType) {
@@ -159,8 +181,11 @@ export class AuthService {
     const existingAdmin = await this.adminRepository.findOne({
       where: { email: registerDto.email },
     });
+    const existingSuperadmin = await this.superadminRepository.findOne({
+      where: { email: registerDto.email },
+    });
 
-    if (existingStudent || existingTeacher || existingAdmin) {
+    if (existingStudent || existingTeacher || existingAdmin || existingSuperadmin) {
       throw new ConflictException('Email already exists');
     }
 
@@ -267,6 +292,11 @@ export class AuthService {
       user = await this.adminRepository.findOne({ where: { id: userId } });
       console.log('[getProfile] Admin query result:', user ? 'Found' : 'Not found');
       role = UserRole.ADMIN;
+    } else if (userType === UserType.SUPERADMIN) {
+      // Return superadmin from database
+      user = await this.superadminRepository.findOne({ where: { id: userId } });
+      console.log('[getProfile] Superadmin query result:', user ? 'Found' : 'Not found');
+      role = UserRole.SUPERADMIN;
     } else {
       console.log('[getProfile] Invalid user type:', userType);
       throw new UnauthorizedException('Invalid user type');
@@ -278,7 +308,7 @@ export class AuthService {
     }
 
     // Remove sensitive data and add role
-    const { passwordHash, ...result } = user;
+    const { passwordHash, password, ...result } = user;
     return {
       ...result,
       role,

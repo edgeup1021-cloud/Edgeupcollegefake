@@ -42,12 +42,22 @@ export const ROUTES = {
     PREDICTIVE: '/management/predictive-intelligence',
     RISK: '/management/risk-mitigation',
   },
+
+  // Superadmin routes
+  SUPERADMIN: {
+    ROOT: '/superadmin',
+    OVERVIEW: '/superadmin/overview',
+    COURSE: '/superadmin/course',
+    ROLE: '/superadmin/role',
+    INSTITUTE: '/superadmin/institute',
+    ADMIN_LOGS: '/superadmin/admin-logs',
+  },
 } as const;
 
 /**
  * Get the base route for a given user role
  */
-export function getRoleBaseRoute(role: 'student' | 'teacher' | 'admin'): string {
+export function getRoleBaseRoute(role: 'student' | 'teacher' | 'admin' | 'superadmin'): string {
   switch (role) {
     case 'student':
       return ROUTES.STUDENT.OVERVIEW;
@@ -55,6 +65,8 @@ export function getRoleBaseRoute(role: 'student' | 'teacher' | 'admin'): string 
       return ROUTES.TEACHER.OVERVIEW;
     case 'admin':
       return ROUTES.MANAGEMENT.FINANCIAL;
+    case 'superadmin':
+      return ROUTES.SUPERADMIN.OVERVIEW;
     default:
       return ROUTES.AUTH.LOGIN;
   }

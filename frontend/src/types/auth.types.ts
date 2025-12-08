@@ -2,8 +2,8 @@
  * auth.types.ts - Authentication Types
  */
 
-export type UserRole = 'student' | 'teacher' | 'admin';
-export type PortalType = 'student' | 'teacher' | 'management';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'superadmin';
+export type PortalType = 'student' | 'teacher' | 'management' | 'superadmin';
 
 export interface User {
   id: number;

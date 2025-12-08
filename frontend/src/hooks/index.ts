@@ -13,3 +13,6 @@ export * from './teacher';
 
 // Management hooks
 export * from './management';
+
+// Superadmin hooks
+export * from './superadmin';
