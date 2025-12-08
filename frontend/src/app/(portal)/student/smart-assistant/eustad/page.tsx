@@ -278,7 +278,7 @@ function ConversationItem({
   );
 }
 
-export default function EustadPage() {
+export default function eUstadPage() {
   // Filter states
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -290,7 +290,7 @@ export default function EustadPage() {
       id: 1,
       role: "assistant",
       content:
-        "Hello! I'm Eustad, your AI class assistant. Select a class from the filters above to start asking questions about your recent lectures.",
+        "Hello! I'm eUstad, your AI class assistant. Select a class from the filters above to start asking questions about your recent lectures.",
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -396,7 +396,7 @@ export default function EustadPage() {
         id: 1,
         role: "assistant",
         content:
-          "Hello! I'm Eustad, your AI class assistant. Select a class from the filters above to start asking questions about your recent lectures.",
+          "Hello! I'm eUstad, your AI class assistant. Select a class from the filters above to start asking questions about your recent lectures.",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -450,7 +450,7 @@ export default function EustadPage() {
             <Robot className="w-7 h-7 text-brand-secondary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Eustad</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">eUstad</h1>
             <p className="text-base text-gray-500 dark:text-gray-400">
               AI Class Assistant - Ask about your recent classes
             </p>

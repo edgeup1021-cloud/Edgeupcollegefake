@@ -36,16 +36,16 @@ import UserMenu from "./UserMenu";
 const studyCenterItems = [
   { label: "Timetable", href: "/student/study-center/timetable", icon: Calendar },
   { label: "Attendance", href: "/student/study-center/attendance", icon: ClipboardCheck },
-  { label: "Live Classes", href: "/student/live-classes", icon: Users },
+  { label: "Live Classes", href: "/student/study-center/live-classes", icon: Users },
   { label: "Task and Assignment", href: "/student/study-center/assignments", icon: FileText },
   { label: "Digital Library", href: "/student/study-center/digitallibrary", icon: BookOpen },
-  { label: "Research and Assistant", href: "/student/study-center/research", icon: Brain },
+  { label: "Study Group", href: "/student/study-center/study-group", icon: Users }
 ];
 
 // Smart Assistant Items
 const smartAssistantItems = [
-  { label: "EUSTAD (Chatbot)", href: "/student/smart-assistant/eustad", icon: Bot },
-  { label: "Study Group", href: "/student/smart-assistant/study-group", icon: Users },
+  { label: "eUstad (Chatbot)", href: "/student/smart-assistant/eustad", icon: Bot },
+  { label: "Research Assistant", href: "/student/smart-assistant/research", icon: Brain },
   { label: "Deadline Tracker", href: "/student/smart-assistant/deadlines", icon: Calendar },
   { label: "Performance Analytics", href: "/student/smart-assistant/analytics", icon: BarChart3 },
 ];
