@@ -14,6 +14,10 @@ export interface User {
   userType: string;
   portalType: PortalType;
   profileImage: string | null;
+  // Student-specific fields
+  program?: string;
+  batch?: string;
+  section?: string;
 }
 
 export interface LoginCredentials {

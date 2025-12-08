@@ -8,7 +8,7 @@ import {
   StudyGroupMessage,
   StudyGroupTeacherModerator,
 } from '../../database/entities/study-groups';
-import { StudentUser } from '../../database/entities/student';
+import { StudentUser, StudentNotification } from '../../database/entities/student';
 import { TeacherCourseOffering, TeacherUser } from '../../database/entities/teacher';
 import { StudyGroupsService } from './study-groups.service';
 import { StudentStudyGroupsController } from './student-study-groups.controller';
@@ -24,6 +24,7 @@ import { getJwtConfig } from '../../config/jwt.config';
       StudyGroupMessage,
       StudyGroupTeacherModerator,
       StudentUser,
+      StudentNotification,
       TeacherUser,
       TeacherCourseOffering,
     ]),

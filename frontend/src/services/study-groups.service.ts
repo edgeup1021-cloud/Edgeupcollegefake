@@ -66,3 +66,24 @@ export async function postStudyGroupMessage(
     content,
   });
 }
+
+export async function getStudentPendingRequests(studentId: number): Promise<any> {
+  return api.get(`/student/${studentId}/study-groups/pending-requests`);
+}
+
+export async function getPendingMembers(studentId: number, groupId: number): Promise<any> {
+  return api.get(`/student/${studentId}/study-groups/${groupId}/pending-members`);
+}
+
+export async function moderateMember(
+  studentId: number,
+  groupId: number,
+  memberId: number,
+  action: 'approve' | 'reject' | 'kick',
+  reason?: string,
+) {
+  return api.patch(`/student/${studentId}/study-groups/${groupId}/members/${memberId}`, {
+    action,
+    reason,
+  });
+}

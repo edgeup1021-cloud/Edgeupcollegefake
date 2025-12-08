@@ -26,7 +26,7 @@ import {
   StudyGroupTeacherModerator,
   StudyGroupTeacherRole,
 } from '../../database/entities/study-groups/study-group-teacher-moderator.entity';
-import { StudentUser } from '../../database/entities/student';
+import { StudentUser, StudentNotification } from '../../database/entities/student';
 import { TeacherUser, TeacherCourseOffering } from '../../database/entities/teacher';
 import {
   CreateStudyGroupDto,
@@ -59,6 +59,8 @@ export class StudyGroupsService {
     private readonly teacherRepo: Repository<TeacherUser>,
     @InjectRepository(TeacherCourseOffering)
     private readonly offeringRepo: Repository<TeacherCourseOffering>,
+    @InjectRepository(StudentNotification)
+    private readonly notificationRepo: Repository<StudentNotification>,
     private readonly dataSource: DataSource,
     private readonly gateway: StudyGroupsGateway,
   ) {}
@@ -142,6 +144,22 @@ export class StudyGroupsService {
         qb.andWhere('g.status = :status', { status: query.status });
       } else {
         qb.andWhere('g.status = :status', { status: StudyGroupStatus.ACTIVE });
+      }
+
+      // AUTO-FILTER BY PROGRAM (unless explicitly disabled)
+      if (!query.includeAllPrograms) {
+        const student = await this.studentRepo.findOne({
+          where: { id: studentId },
+          select: ['id', 'program'],
+        });
+
+        if (student?.program) {
+          // Show groups that match student's program OR have no program restriction
+          qb.andWhere(
+            '(g.program IS NULL OR g.program = \'\' OR g.program = :studentProgram)',
+            { studentProgram: student.program },
+          );
+        }
       }
 
       if (query.courseOfferingId) {
@@ -236,17 +254,25 @@ export class StudyGroupsService {
         existing.status = StudyGroupMemberStatus.PENDING;
         existing.joinedAt = null;
         await this.memberRepo.save(existing);
-        return { status: 'pending' };
+      } else {
+        await this.memberRepo.save(
+          this.memberRepo.create({
+            groupId,
+            studentId,
+            status: StudyGroupMemberStatus.PENDING,
+            role: StudyGroupMemberRole.MEMBER,
+          }),
+        );
       }
 
-      await this.memberRepo.save(
-        this.memberRepo.create({
-          groupId,
-          studentId,
-          status: StudyGroupMemberStatus.PENDING,
-          role: StudyGroupMemberRole.MEMBER,
-        }),
+      // NOTIFY MODERATORS
+      const studentName = `${student.firstName} ${student.lastName}`.trim() || `Student #${studentId}`;
+      await this.notifyGroupModerators(
+        groupId,
+        'New Join Request',
+        `${studentName} has requested to join "${group.name}"`,
       );
+
       return { status: 'pending' };
     }
 
@@ -439,13 +465,30 @@ export class StudyGroupsService {
         await manager.getRepository(StudyGroupMember).save(membership);
         await manager.getRepository(StudyGroup).increment({ id: groupId }, 'currentMembers', 1);
       });
+
+      // NOTIFY STUDENT
+      await this.createNotification(
+        membership.studentId,
+        'Join Request Approved',
+        `Your request to join "${group.name}" has been approved!`,
+      );
+
       return membership;
     }
 
     if (dto.action === ModerateMemberAction.REJECT) {
       membership.status = StudyGroupMemberStatus.REJECTED;
       membership.joinedAt = null;
-      return this.memberRepo.save(membership);
+      const saved = await this.memberRepo.save(membership);
+
+      // NOTIFY STUDENT
+      await this.createNotification(
+        membership.studentId,
+        'Join Request Rejected',
+        `Your request to join "${group.name}" was not approved.`,
+      );
+
+      return saved;
     }
 
     if (dto.action === ModerateMemberAction.KICK) {
@@ -498,6 +541,49 @@ export class StudyGroupsService {
     // Cascade deletes will remove members/messages/moderators
     await this.groupRepo.delete({ id: groupId });
     return { message: 'Study group deleted' };
+  }
+
+  async getStudentPendingRequests(studentId: number) {
+    const pendingMemberships = await this.memberRepo.find({
+      where: {
+        studentId,
+        status: StudyGroupMemberStatus.PENDING,
+      },
+      relations: ['group'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return pendingMemberships.map((membership) => ({
+      membershipId: membership.id,
+      group: membership.group,
+      requestedAt: membership.createdAt,
+    }));
+  }
+
+  async getPendingMembers(groupId: number, studentId: number) {
+    // First check if the student is a moderator/owner
+    await this.ensureCanModerate(groupId, { studentId });
+
+    const pendingMembers = await this.memberRepo.find({
+      where: {
+        groupId,
+        status: StudyGroupMemberStatus.PENDING,
+      },
+      relations: ['student'],
+      order: { createdAt: 'ASC' },
+    });
+
+    return pendingMembers.map((membership) => ({
+      id: membership.id,
+      studentId: membership.studentId,
+      studentName: membership.student
+        ? `${membership.student.firstName} ${membership.student.lastName}`.trim()
+        : `Student #${membership.studentId}`,
+      program: membership.student?.program,
+      batch: membership.student?.batch,
+      section: membership.student?.section,
+      requestedAt: membership.createdAt,
+    }));
   }
 
   private async ensureCanViewGroup(
@@ -572,5 +658,54 @@ export class StudyGroupsService {
 
   private matchesNormalized(a: string, b: string): boolean {
     return a.trim().toLowerCase() === b.trim().toLowerCase();
+  }
+
+  private async createNotification(
+    studentId: number,
+    title: string,
+    message: string,
+    type: string = 'General',
+  ): Promise<void> {
+    try {
+      const notification = this.notificationRepo.create({
+        studentId,
+        title,
+        message,
+        type,
+        isRead: false,
+      });
+      await this.notificationRepo.save(notification);
+    } catch (error) {
+      this.logger.error(
+        `Failed to create notification for student ${studentId}: ${error.message}`,
+        error.stack,
+      );
+      // Don't throw - notifications are non-critical
+    }
+  }
+
+  private async notifyGroupModerators(
+    groupId: number,
+    title: string,
+    message: string,
+  ): Promise<void> {
+    try {
+      // Get all owners and moderators
+      const moderators = await this.memberRepo.find({
+        where: [
+          { groupId, role: StudyGroupMemberRole.OWNER, status: StudyGroupMemberStatus.JOINED },
+          { groupId, role: StudyGroupMemberRole.MODERATOR, status: StudyGroupMemberStatus.JOINED },
+        ],
+        select: ['studentId'],
+      });
+
+      const notificationPromises = moderators.map((mod) =>
+        this.createNotification(mod.studentId, title, message),
+      );
+
+      await Promise.all(notificationPromises);
+    } catch (error) {
+      this.logger.error(`Failed to notify moderators for group ${groupId}: ${error.message}`);
+    }
   }
 }

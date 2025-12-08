@@ -62,3 +62,19 @@ export interface StudyGroupMessage {
   senderStudent?: StudyGroupMessageSender | null;
   senderTeacher?: StudyGroupMessageSender | null;
 }
+
+export interface PendingRequest {
+  membershipId: number;
+  group: StudyGroup;
+  requestedAt: string;
+}
+
+export interface PendingMember {
+  id: number;
+  studentId: number;
+  studentName: string;
+  program?: string | null;
+  batch?: string | null;
+  section?: string | null;
+  requestedAt: string;
+}

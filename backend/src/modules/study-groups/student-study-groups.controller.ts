@@ -9,6 +9,7 @@ import {
   UseGuards,
   ForbiddenException,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import { StudyGroupsService } from './study-groups.service';
 import {
@@ -17,6 +18,7 @@ import {
   QueryStudyGroupDto,
   PostStudyGroupMessageDto,
   QueryGroupMessagesDto,
+  ModerateMemberDto,
 } from './dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -101,6 +103,37 @@ export class StudentStudyGroupsController {
   ) {
     this.ensureSameStudent(studentId, user);
     return this.studyGroupsService.postMessage(groupId, { studentId }, dto);
+  }
+
+  @Get('pending-requests')
+  async getPendingRequests(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    this.ensureSameStudent(studentId, user);
+    return this.studyGroupsService.getStudentPendingRequests(studentId);
+  }
+
+  @Get(':groupId/pending-members')
+  async getPendingMembers(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('groupId', ParseIntPipe) groupId: number,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    this.ensureSameStudent(studentId, user);
+    return this.studyGroupsService.getPendingMembers(groupId, studentId);
+  }
+
+  @Patch(':groupId/members/:memberId')
+  async moderateMember(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('groupId', ParseIntPipe) groupId: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
+    @Body() dto: ModerateMemberDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    this.ensureSameStudent(studentId, user);
+    return this.studyGroupsService.moderateMember(groupId, memberId, dto, { studentId });
   }
 
   private ensureSameStudent(studentId: number, user: CurrentUserData) {

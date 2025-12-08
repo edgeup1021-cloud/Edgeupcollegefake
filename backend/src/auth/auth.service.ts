@@ -90,7 +90,7 @@ export class AuthService {
     }
 
     if (user) {
-      return {
+      const userData: any = {
         id: user.id,
         email: user.email,
         firstName: user.firstName || user.fullName?.split(' ')[0],
@@ -98,6 +98,15 @@ export class AuthService {
         role,
         userType,
       };
+
+      // Add student-specific fields
+      if (userType === UserType.STUDENT) {
+        userData.program = user.program;
+        userData.batch = user.batch;
+        userData.section = user.section;
+      }
+
+      return userData;
     }
 
     return null;
@@ -118,16 +127,25 @@ export class AuthService {
       portalType: loginDto.portalType,
     });
 
+    const userResponse: any = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      userType: user.userType,
+      portalType: loginDto.portalType,
+    };
+
+    // Add student-specific fields
+    if (user.userType === UserType.STUDENT) {
+      userResponse.program = user.program;
+      userResponse.batch = user.batch;
+      userResponse.section = user.section;
+    }
+
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        userType: user.userType,
-        portalType: loginDto.portalType,
-      },
+      user: userResponse,
       ...tokens,
     };
   }
@@ -251,21 +269,17 @@ export class AuthService {
   }
 
   async getProfile(userId: number, userType: string) {
-    console.log('[getProfile] Looking for user:', { userId, userType });
     let user: any;
     let role: UserRole = UserRole.STUDENT; // Default value
 
     if (userType === UserType.STUDENT) {
       user = await this.studentRepository.findOne({ where: { id: userId } });
-      console.log('[getProfile] Student query result:', user ? 'Found' : 'Not found');
       role = UserRole.STUDENT;
     } else if (userType === UserType.TEACHER) {
       user = await this.teacherRepository.findOne({ where: { id: userId } });
-      console.log('[getProfile] Teacher query result:', user ? 'Found' : 'Not found');
       role = UserRole.TEACHER;
     } else if (userType === UserType.ADMIN) {
       user = await this.adminRepository.findOne({ where: { id: userId } });
-      console.log('[getProfile] Admin query result:', user ? 'Found' : 'Not found');
       role = UserRole.ADMIN;
     } else {
       console.log('[getProfile] Invalid user type:', userType);
@@ -273,7 +287,6 @@ export class AuthService {
     }
 
     if (!user) {
-      console.log('[getProfile] User not found for:', { userId, userType });
       throw new UnauthorizedException('User not found');
     }
 
