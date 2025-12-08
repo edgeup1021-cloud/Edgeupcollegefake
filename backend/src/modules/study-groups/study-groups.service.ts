@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -41,6 +42,8 @@ import { StudyGroupsGateway } from './study-groups.gateway';
 
 @Injectable()
 export class StudyGroupsService {
+  private readonly logger = new Logger(StudyGroupsService.name);
+
   constructor(
     @InjectRepository(StudyGroup)
     private readonly groupRepo: Repository<StudyGroup>,
@@ -311,18 +314,30 @@ export class StudyGroupsService {
 
     const saved = await this.messageRepo.save(message);
 
-    // Broadcast to room
+    // Fetch the message with relations for broadcasting
+    const messageWithRelations = await this.messageRepo.findOne({
+      where: { id: saved.id },
+      relations: ['senderStudent', 'senderTeacher'],
+    });
+
+    // Broadcast to room with error logging
     try {
       await this.gateway.broadcastMessage(groupId, {
-        ...saved,
+        ...(messageWithRelations || saved),
         groupId, // ensure present for clients
       });
-    } catch (e) {
-      // Do not fail message creation if broadcast fails
-      // Optionally log error here
+    } catch (error) {
+      // Log error but don't fail message creation
+      this.logger.error(
+        `Failed to broadcast message ${saved.id} to group ${groupId}: ${error.message}`,
+        error.stack,
+      );
+
+      // Future enhancement: Store failed broadcast in a queue for retry
+      // For now, just log and continue - clients will get it on next fetch
     }
 
-    return saved;
+    return messageWithRelations || saved;
   }
 
   async getMessages(
