@@ -9,12 +9,12 @@ const SYSTEM_PROMPT = `You are James, an AI interviewer conducting a mock interv
 
 Interview Flow:
 1. Start with a friendly greeting and ask "Tell me about yourself"
-2. Ask 1-2 general technical questions
+2. Ask 1-2 technical questions relevant to the job role and technologies
 3. On your 3rd question, use the ask_language_preference tool to let them choose their coding language
 4. After language selection, continue with a mix of:
-   - 2 coding challenges (spread out, not back-to-back)
-   - Technical questions about their experience
-   - Behavioral/HR questions (teamwork, handling challenges, career goals)
+   - 2 coding challenges (spread out, not back-to-back) - tailor to the job requirements and difficulty level
+   - Technical questions about their experience with the specific technologies
+   - Behavioral/HR questions related to the job requirements (teamwork, handling challenges, career goals)
    - Personal questions (interests, work-life balance)
 5. End with brief overall feedback
 
@@ -26,7 +26,9 @@ IMPORTANT - Language Selection:
 When using show_coding_challenge:
 - ALWAYS set "language" parameter to match user's selected preference
 - Generate function signatures in their preferred language syntax
+- Tailor challenges to the job description and required skill level
 - Space out the 2 coding challenges (don't do them back-to-back)
+- Consider the key technologies mentioned in the job description
 
 IMPORTANT - When user completes a coding challenge:
 - If you see "[User completed the coding challenge successfully]", congratulate briefly and move to a DIFFERENT type of question
@@ -36,16 +38,79 @@ IMPORTANT - When user completes a coding challenge:
 Guidelines:
 - Keep responses to 1-2 short sentences max
 - Brief acknowledgment, then next question
-- Coding challenges should be easy/entry-level
+- Adapt coding challenge difficulty based on the job level specified
+- Ask technical questions relevant to the technologies in the job description
 - Mix question types for a natural interview feel
 - After approximately 8-10 questions total, use the end_interview tool to conclude
 
 IMPORTANT - Ending the Interview:
 - After sufficient questions (8-10 total), use the end_interview tool
 - Provide honest scores and feedback based on the conversation
+- Evaluate against the job requirements provided
 - Be constructive with areas for improvement
 
-Start with a friendly greeting and ask them to tell you about themselves.`;
+Start with a friendly greeting referencing the job role if provided.`;
+
+// Job Description interface
+interface JobDescriptionData {
+  fullJD: string;
+  jobTitle: string;
+  keyTechnologies: string[];
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+// Function to build system prompt with JD context
+function buildSystemPromptWithJD(basePrompt: string, jd: JobDescriptionData): string {
+  const difficultyGuidance = {
+    easy: `
+- Ask entry-level technical questions suitable for junior candidates
+- Coding challenges: basic algorithms (arrays, strings, loops)
+- Examples: reverse string, find duplicates, sum array, FizzBuzz
+- Focus on fundamental concepts and syntax`,
+
+    medium: `
+- Ask mid-level technical questions about data structures
+- Coding challenges: hashmaps, linked lists, trees, two pointers
+- Examples: sliding window, BFS/DFS, basic dynamic programming
+- Explore system design fundamentals`,
+
+    hard: `
+- Ask advanced questions about complex algorithms and system design
+- Coding challenges: graph algorithms, advanced DP, optimization
+- Examples: LRU cache, tree manipulation, scalability
+- Include system design considerations`
+  };
+
+  const techStackContext = jd.keyTechnologies.length > 0
+    ? `\n\nKey Technologies for This Role:\n${jd.keyTechnologies.map(tech => `- ${tech}`).join('\n')}`
+    : '';
+
+  const jdSection = `
+===== JOB-SPECIFIC CONTEXT =====
+
+Job Title: ${jd.jobTitle}
+Difficulty Level: ${jd.difficulty.toUpperCase()}
+
+Full Job Description:
+${jd.fullJD}
+${techStackContext}
+
+${difficultyGuidance[jd.difficulty]}
+
+IMPORTANT - TAILOR YOUR INTERVIEW:
+1. Reference the job title in your greeting (e.g., "applying for ${jd.jobTitle}")
+2. Ask technical questions relevant to the listed technologies
+3. Design coding challenges matching the ${jd.difficulty} difficulty level
+4. Use show_coding_challenge with problems relevant to this role
+5. Relate behavioral questions to job requirements
+6. Prefer coding problems using the key technologies
+
+================================
+
+`;
+
+  return jdSection + basePrompt;
+}
 
 // Tool definitions
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
@@ -70,7 +135,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "show_coding_challenge",
-      description: "Display a coding challenge for the candidate to solve. Use this for 1-2 questions during the interview.",
+      description: "Display a coding challenge for the candidate to solve. Use this for 1-2 questions during the interview. Tailor the challenge to the job description provided, considering the role's key technologies and required difficulty level.",
       parameters: {
         type: "object",
         properties: {
@@ -173,14 +238,20 @@ interface ChatMessage {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, disableTools } = await request.json();
+    const { messages, disableTools, jobDescription } = await request.json();
 
     console.log("\n=== CHAT API REQUEST ===");
     console.log("Messages count:", messages?.length || 0);
     console.log("Disable tools:", disableTools || false);
+    console.log("Job Description:", jobDescription ? "Provided" : "None");
+
+    // Build system prompt with JD context if provided
+    const systemPrompt = jobDescription
+      ? buildSystemPromptWithJD(SYSTEM_PROMPT, jobDescription)
+      : SYSTEM_PROMPT;
 
     const chatMessages: ChatMessage[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
     ];
 
     // Add conversation history
@@ -188,9 +259,13 @@ export async function POST(request: NextRequest) {
       chatMessages.push(...messages);
     } else {
       // First message - prompt to start
+      const startMessage = jobDescription
+        ? `[Interview starting - candidate is ready. Job Role: ${jobDescription.jobTitle}]`
+        : "[Interview starting - candidate is ready]";
+
       chatMessages.push({
         role: "user",
-        content: "[Interview starting - candidate is ready]",
+        content: startMessage,
       });
     }
 

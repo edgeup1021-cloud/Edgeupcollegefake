@@ -9,8 +9,9 @@ import SpeechBubble from "@/components/student/mock-interview/SpeechBubble";
 import CodingPanel from "@/components/student/mock-interview/CodingPanel";
 import LanguageButtons from "@/components/student/mock-interview/LanguageButtons";
 import ReportPreview from "@/components/student/mock-interview/ReportPreview";
+import JobDescriptionModal from "@/components/student/mock-interview/JobDescriptionModal";
 import { useCodingChallenge } from "@/hooks/student/mock-interview/useCodingChallenge";
-import { CodingChallenge, SupportedLanguage, CodeOutput, InterviewReport, InterviewAssessment } from "@/types/mock-interview.types";
+import { CodingChallenge, SupportedLanguage, CodeOutput, InterviewReport, InterviewAssessment, JobDescriptionData } from "@/types/mock-interview.types";
 import { LANGUAGE_CONFIG } from "@/lib/mock-interview/languageConfig";
 import { interviewService } from "@/services/interview.service";
 
@@ -51,6 +52,10 @@ export default function MockInterviewPage() {
   const [isRequestingHint, setIsRequestingHint] = useState(false);
   const [showLanguageButtons, setShowLanguageButtons] = useState(false);
 
+  // Job Description state
+  const [showJDModal, setShowJDModal] = useState(false);
+  const [jobDescription, setJobDescription] = useState<JobDescriptionData | null>(null);
+
   // Report state
   const [showReport, setShowReport] = useState(false);
   const [reportData, setReportData] = useState<InterviewReport | null>(null);
@@ -64,16 +69,25 @@ export default function MockInterviewPage() {
   const audioEndHandledRef = useRef(false);
   const interviewStartTimeRef = useRef<string>("");
   const selectedLanguageRef = useRef<string>("python");
+  const jobDescriptionRef = useRef<JobDescriptionData | null>(null);
 
   // Coding challenge hook
   const { codingState, startChallenge, endChallenge, setOutput, setIsRunning } = useCodingChallenge();
 
   // Fetch AI response from OpenAI
-  const fetchAIResponse = useCallback(async (chatMessages: Message[], disableTools = false): Promise<ChatAPIResponse> => {
+  const fetchAIResponse = useCallback(async (
+    chatMessages: Message[],
+    jdData?: JobDescriptionData,
+    disableTools = false
+  ): Promise<ChatAPIResponse> => {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: chatMessages, disableTools }),
+      body: JSON.stringify({
+        messages: chatMessages,
+        disableTools,
+        jobDescription: jdData || jobDescriptionRef.current,
+      }),
     });
 
     if (!response.ok) throw new Error("Failed to get AI response");
@@ -100,7 +114,7 @@ export default function MockInterviewPage() {
 
     try {
       // Get AI response (disable tools if specified to prevent immediate new challenge)
-      const response = await fetchAIResponse(updatedMessages, disableTools);
+      const response = await fetchAIResponse(updatedMessages, undefined, disableTools);
 
       console.log("=== FRONTEND: API Response ===");
       console.log("Content:", response.content);
@@ -145,16 +159,18 @@ export default function MockInterviewPage() {
     handleUserInput(input);
   }, [textInput, state, handleUserInput]);
 
-  // Start interview - OpenAI takes full control
-  const handleStartInterview = useCallback(async () => {
+  // Start interview with JD data
+  const startInterviewWithJD = useCallback(async (jdData: JobDescriptionData) => {
     if (state !== "idle") return;
 
     setState("loading");
     interviewStartTimeRef.current = new Date().toISOString();
+    jobDescriptionRef.current = jdData;
+    setJobDescription(jdData);
 
     try {
-      // Empty messages array - OpenAI will start the interview
-      const response = await fetchAIResponse([]);
+      // Empty messages array - OpenAI will start the interview with JD context
+      const response = await fetchAIResponse([], jdData);
 
       console.log("=== FRONTEND: Start Interview Response ===");
       console.log("Content:", response.content);
@@ -183,6 +199,23 @@ export default function MockInterviewPage() {
       setState("idle");
     }
   }, [state, fetchAIResponse]);
+
+  // Open JD modal when user clicks "Start Interview"
+  const handleStartInterview = useCallback(() => {
+    if (state !== "idle") return;
+    setShowJDModal(true);
+  }, [state]);
+
+  // Handle JD modal submission
+  const handleJDSubmit = useCallback((data: JobDescriptionData) => {
+    setShowJDModal(false);
+    startInterviewWithJD(data);
+  }, [startInterviewWithJD]);
+
+  // Handle JD modal close
+  const handleJDModalClose = useCallback(() => {
+    setShowJDModal(false);
+  }, []);
 
   // Called when audio starts playing
   const handleAudioStart = useCallback(() => {
@@ -357,7 +390,7 @@ Keep it to 1-2 sentences max.`;
       const hintMessages = [...messagesRef.current, userMessage];
 
       // Get AI response with tools disabled (so AI gives text hint, not tool call)
-      const response = await fetchAIResponse(hintMessages, true);
+      const response = await fetchAIResponse(hintMessages, undefined, true);
 
       // Add to conversation history
       const aiMessage: Message = { role: "assistant", content: response.content };
@@ -429,6 +462,13 @@ Keep it to 1-2 sentences max.`;
             </Suspense>
           </Canvas>
         </div>
+
+        {/* Job Description Modal */}
+        <JobDescriptionModal
+          isOpen={showJDModal}
+          onClose={handleJDModalClose}
+          onSubmit={handleJDSubmit}
+        />
 
         {/* Start Interview Button */}
         {state === "idle" && (

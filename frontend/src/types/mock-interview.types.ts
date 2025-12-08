@@ -29,3 +29,13 @@ export interface InterviewSession {
 // Import types for re-export
 import { CodingChallenge } from '@/lib/mock-interview/codingTypes';
 import { InterviewAssessment } from '@/lib/mock-interview/reportTypes';
+
+// Job Description types
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+export interface JobDescriptionData {
+  fullJD: string;
+  jobTitle: string;
+  keyTechnologies: string[];
+  difficulty: DifficultyLevel;
+}
