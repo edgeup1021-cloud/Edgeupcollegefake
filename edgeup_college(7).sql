@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 08, 2025 at 07:17 AM
+-- Generation Time: Dec 09, 2025 at 03:42 AM
 -- Server version: 8.0.44-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -20,6 +20,57 @@ SET time_zone = "+00:00";
 --
 -- Database: `edgeup_college`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `live_classes`
+--
+
+CREATE TABLE `live_classes` (
+  `id` bigint UNSIGNED NOT NULL,
+  `teacher_id` bigint UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `subject` varchar(100) NOT NULL,
+  `meet_link` varchar(1024) NOT NULL,
+  `scheduled_date` date NOT NULL,
+  `scheduled_time` time NOT NULL,
+  `duration` int UNSIGNED NOT NULL COMMENT 'Duration in minutes',
+  `program` varchar(100) NOT NULL,
+  `batch` varchar(100) NOT NULL,
+  `section` varchar(50) NOT NULL,
+  `status` enum('SCHEDULED','LIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'SCHEDULED',
+  `started_at` timestamp NULL DEFAULT NULL,
+  `ended_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `live_classes`
+--
+
+INSERT INTO `live_classes` (`id`, `teacher_id`, `title`, `description`, `subject`, `meet_link`, `scheduled_date`, `scheduled_time`, `duration`, `program`, `batch`, `section`, `status`, `started_at`, `ended_at`, `created_at`, `updated_at`) VALUES
+(1, 3, 'DSA', 'asdad', 'Artificial Intelligence', 'https://meet.google.com/yzr-qpgi-ren', '2025-12-08', '15:56:00', 60, 'CSE - Computer Science and Engineering', '2024', 'A', 'SCHEDULED', NULL, NULL, '2025-12-08 10:26:03', '2025-12-08 10:26:03');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `live_class_attendance`
+--
+
+CREATE TABLE `live_class_attendance` (
+  `id` bigint UNSIGNED NOT NULL,
+  `live_class_id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `joined_at` timestamp NULL DEFAULT NULL,
+  `left_at` timestamp NULL DEFAULT NULL,
+  `duration` int UNSIGNED DEFAULT '0' COMMENT 'Duration in minutes',
+  `status` enum('PRESENT','ABSENT','LATE') NOT NULL DEFAULT 'ABSENT',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -535,6 +586,18 @@ CREATE TABLE `student_notifications` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `student_notifications`
+--
+
+INSERT INTO `student_notifications` (`id`, `student_id`, `title`, `message`, `type`, `is_read`, `created_at`) VALUES
+(1, 8, 'New Join Request', 'Rahul Sharma has requested to join \"test2\"', 'General', 0, '2025-12-08 09:20:20'),
+(2, 1, 'Join Request Approved', 'Your request to join \"test2\" has been approved!', 'General', 0, '2025-12-08 09:20:39'),
+(3, 8, 'New Join Request', 'Rahul Sharma has requested to join \"DSA Grind Group\"', 'General', 0, '2025-12-08 09:36:46'),
+(4, 1, 'Join Request Approved', 'Your request to join \"DSA Grind Group\" has been approved!', 'General', 0, '2025-12-08 09:37:07'),
+(5, 8, 'New Join Request', 'Rahul Sharma has requested to join \"Algoprep\"', 'General', 0, '2025-12-08 10:07:13'),
+(6, 1, 'Join Request Approved', 'Your request to join \"Algoprep\" has been approved!', 'General', 0, '2025-12-08 10:07:49');
+
 -- --------------------------------------------------------
 
 --
@@ -554,6 +617,32 @@ CREATE TABLE `student_profiles` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_resumes`
+--
+
+CREATE TABLE `student_resumes` (
+  `id` int UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `resumeData` json NOT NULL,
+  `templateUsed` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'modern',
+  `isSubmitted` tinyint(1) DEFAULT '0',
+  `submittedAt` timestamp NULL DEFAULT NULL,
+  `version` int DEFAULT '1',
+  `atsScore` float DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `student_resumes`
+--
+
+INSERT INTO `student_resumes` (`id`, `student_id`, `resumeData`, `templateUsed`, `isSubmitted`, `submittedAt`, `version`, `atsScore`, `created_at`, `updated_at`) VALUES
+(1, 8, '{\"awards\": [{\"id\": \"hsgqq6mko\", \"date\": \"\", \"title\": \"AWS\", \"description\": \"\", \"organization\": \"\"}], \"skills\": [{\"id\": \"xnpr62cdo\", \"name\": \"AWS\", \"category\": \"technical\", \"proficiency\": \"intermediate\"}, {\"id\": \"zqrpawlo1\", \"name\": \"REACT\", \"category\": \"technical\", \"proficiency\": \"intermediate\"}], \"summary\": {\"summary\": \"i am a good boy\"}, \"projects\": [{\"id\": \"x3mmjdahx\", \"name\": \"My good project\", \"endDate\": \"\", \"liveUrl\": \"\", \"githubUrl\": \"\", \"startDate\": \"\", \"description\": \"My good project desc\", \"technologies\": []}], \"education\": [{\"id\": \"psvlxvbfs\", \"gpa\": \"\", \"degree\": \"BSC\", \"endDate\": \"\", \"startDate\": \"\", \"institution\": \"anna\", \"isCurrently\": false, \"fieldOfStudy\": \"CS\", \"relevantCoursework\": []}], \"experience\": [{\"id\": \"v36puv11e\", \"company\": \"MNC\", \"endDate\": \"\", \"jobTitle\": \"Software Engineer\", \"location\": \"\", \"startDate\": \"\", \"description\": [\"\"], \"isCurrently\": false}], \"personalInfo\": {\"email\": \"aakif@gmail.com\", \"phone\": \"+919585499783\", \"github\": \"\", \"fullName\": \"Aakif\", \"linkedIn\": \"\", \"location\": \"\", \"portfolio\": \"\"}, \"certifications\": [{\"id\": \"kq0o48a1f\", \"name\": \"AWS\", \"issueDate\": \"\", \"credentialId\": \"\", \"credentialUrl\": \"\", \"expirationDate\": \"\", \"issuingOrganization\": \"AWS\"}], \"extracurriculars\": [{\"id\": \"ppva8nfr2\", \"role\": \"\", \"endDate\": \"\", \"activity\": \"MAX CLUB\", \"startDate\": \"\", \"description\": \"\", \"organization\": \"\"}]}', 'modern', 1, '2025-12-08 09:31:57', 36, 32, '2025-12-08 09:30:04', '2025-12-08 09:59:25');
 
 -- --------------------------------------------------------
 
@@ -1127,7 +1216,12 @@ CREATE TABLE `study_groups` (
 --
 
 INSERT INTO `study_groups` (`id`, `name`, `description`, `subject`, `course_offering_id`, `program`, `batch`, `section`, `join_type`, `invite_code`, `max_members`, `current_members`, `created_by_student_id`, `status`, `created_at`, `updated_at`) VALUES
-(5, 'DSA Group', 'DSA Desc', 'DSA', NULL, 'CSE', '2024', 'A', 'open', NULL, 25, 3, 1, 'active', '2025-12-06 09:20:29', '2025-12-06 09:37:17');
+(10, 'TEST', 'TEST', 'TEST', NULL, 'CSE - Computer Science and Engineering', '2024', 'A', 'open', NULL, 25, 1, 8, 'active', '2025-12-08 09:12:02', '2025-12-08 09:12:02'),
+(11, 'test2', 'test', 'test', NULL, 'CSE - Computer Science and Engineering', '2024', 'A', 'approval', NULL, 25, 2, 8, 'active', '2025-12-08 09:19:51', '2025-12-08 09:20:39'),
+(12, 'test3', 'test', 'test', NULL, 'ECE - Electronics and Communication Engineering', '2024', 'A', 'open', NULL, 25, 1, 8, 'active', '2025-12-08 09:21:13', '2025-12-08 09:21:13'),
+(13, 'rest', 'test', 'test', NULL, 'CSE - Computer Science and Engineering', '2024', 'A', 'open', NULL, 25, 2, 8, 'active', '2025-12-08 09:32:08', '2025-12-08 09:32:19'),
+(14, 'DSA Grind Group', 'DESC', 'CS', NULL, 'CSE - Computer Science and Engineering', '2024', 'A', 'approval', NULL, 25, 2, 8, 'active', '2025-12-08 09:36:34', '2025-12-08 09:37:07'),
+(15, 'Algoprep', 'AlgoDEsc', 'CS', NULL, 'CSE - Computer Science and Engineering', '2024', 'A', 'approval', NULL, 25, 2, 8, 'active', '2025-12-08 10:06:49', '2025-12-08 10:07:49');
 
 -- --------------------------------------------------------
 
@@ -1151,9 +1245,16 @@ CREATE TABLE `study_group_members` (
 --
 
 INSERT INTO `study_group_members` (`id`, `group_id`, `student_id`, `role`, `status`, `joined_at`, `created_at`, `updated_at`) VALUES
-(5, 5, 1, 'owner', 'joined', '2025-12-06 09:20:30', '2025-12-06 09:20:29', '2025-12-06 09:20:29'),
-(6, 5, 8, 'member', 'joined', '2025-12-06 09:20:56', '2025-12-06 09:20:56', '2025-12-06 09:20:56'),
-(7, 5, 2, 'member', 'joined', '2025-12-06 09:37:17', '2025-12-06 09:37:17', '2025-12-06 09:37:17');
+(12, 10, 8, 'owner', 'joined', '2025-12-08 09:12:02', '2025-12-08 09:12:02', '2025-12-08 09:12:02'),
+(13, 11, 8, 'owner', 'joined', '2025-12-08 09:19:52', '2025-12-08 09:19:51', '2025-12-08 09:19:51'),
+(14, 11, 1, 'member', 'joined', '2025-12-08 09:20:39', '2025-12-08 09:20:20', '2025-12-08 09:20:39'),
+(15, 12, 8, 'owner', 'joined', '2025-12-08 09:21:13', '2025-12-08 09:21:13', '2025-12-08 09:21:13'),
+(16, 13, 8, 'owner', 'joined', '2025-12-08 09:32:08', '2025-12-08 09:32:08', '2025-12-08 09:32:08'),
+(17, 13, 1, 'member', 'joined', '2025-12-08 09:32:20', '2025-12-08 09:32:19', '2025-12-08 09:32:19'),
+(18, 14, 8, 'owner', 'joined', '2025-12-08 09:36:35', '2025-12-08 09:36:34', '2025-12-08 09:36:34'),
+(19, 14, 1, 'member', 'joined', '2025-12-08 09:37:07', '2025-12-08 09:36:46', '2025-12-08 09:37:07'),
+(20, 15, 8, 'owner', 'joined', '2025-12-08 10:06:50', '2025-12-08 10:06:49', '2025-12-08 10:06:49'),
+(21, 15, 1, 'member', 'joined', '2025-12-08 10:07:50', '2025-12-08 10:07:13', '2025-12-08 10:07:49');
 
 -- --------------------------------------------------------
 
@@ -1176,54 +1277,15 @@ CREATE TABLE `study_group_messages` (
 --
 
 INSERT INTO `study_group_messages` (`id`, `group_id`, `sender_student_id`, `sender_teacher_id`, `message_type`, `content`, `created_at`) VALUES
-(3, 5, 8, NULL, 'text', 'hello', '2025-12-06 09:21:07'),
-(4, 5, 8, NULL, 'text', 'yo', '2025-12-06 09:22:01'),
-(5, 5, 8, NULL, 'text', 'whats up suhail?', '2025-12-06 09:22:19'),
-(6, 5, 1, NULL, 'text', 'yo', '2025-12-06 09:34:14'),
-(7, 5, 8, NULL, 'text', 'ssss', '2025-12-06 09:34:20'),
-(8, 5, 8, NULL, 'text', 'ulp', '2025-12-06 09:34:40'),
-(9, 5, 8, NULL, 'text', 'gg', '2025-12-06 09:34:52'),
-(10, 5, 1, NULL, 'text', 'y', '2025-12-06 09:37:12'),
-(11, 5, 1, NULL, 'text', 'ssssss', '2025-12-06 09:37:24'),
-(12, 5, 1, NULL, 'text', 'sss', '2025-12-06 09:37:29'),
-(13, 5, 1, NULL, 'text', 'ff', '2025-12-06 09:37:34'),
-(14, 5, 1, NULL, 'text', 'fff', '2025-12-06 09:37:39'),
-(15, 5, 1, NULL, 'text', 'fffff', '2025-12-06 09:37:42'),
-(16, 5, 1, NULL, 'text', 'rest', '2025-12-06 09:39:57'),
-(17, 5, 1, NULL, 'text', 'htytfjh', '2025-12-06 09:41:13'),
-(18, 5, 1, NULL, 'text', 'hello man how you doing', '2025-12-06 09:45:45'),
-(19, 5, 1, NULL, 'text', 'ye , what man whats up', '2025-12-06 09:49:52'),
-(20, 5, 1, NULL, 'text', 'how are you', '2025-12-06 09:56:34'),
-(21, 5, 1, NULL, 'text', 't', '2025-12-06 10:28:22'),
-(22, 5, 1, NULL, 'text', 'ssss', '2025-12-06 10:32:28'),
-(23, 5, 1, NULL, 'text', 'hello', '2025-12-06 11:02:18'),
-(24, 5, 8, NULL, 'text', 'hello', '2025-12-08 05:09:52'),
-(25, 5, 1, NULL, 'text', 'hello how are you', '2025-12-08 05:42:43'),
-(26, 5, 1, NULL, 'text', 'yo', '2025-12-08 05:43:23'),
-(27, 5, 1, NULL, 'text', 'hello', '2025-12-08 05:47:34'),
-(28, 5, 1, NULL, 'text', 'what are you doing', '2025-12-08 05:47:41'),
-(29, 5, 1, NULL, 'text', 'yeh man what are you', '2025-12-08 05:51:08'),
-(30, 5, 8, NULL, 'text', 'hello', '2025-12-08 05:53:17'),
-(31, 5, 1, NULL, 'text', 'yeah', '2025-12-08 05:53:27'),
-(32, 5, 8, NULL, 'text', 'yo', '2025-12-08 06:05:02'),
-(33, 5, 8, NULL, 'text', 'bismillah', '2025-12-08 06:21:09'),
-(34, 5, 2, NULL, 'text', 'hello', '2025-12-08 06:24:35'),
-(35, 5, 2, NULL, 'text', 'yo', '2025-12-08 06:33:25'),
-(36, 5, 2, NULL, 'text', 'ismail', '2025-12-08 06:34:41'),
-(37, 5, 8, NULL, 'text', 'hi', '2025-12-08 06:43:33'),
-(38, 5, 1, NULL, 'text', 'how are you aakif?', '2025-12-08 06:49:30'),
-(39, 5, 1, NULL, 'text', 'how are you aakif 2', '2025-12-08 06:53:44'),
-(40, 5, 1, NULL, 'text', 'yo', '2025-12-08 06:53:59'),
-(41, 5, 8, NULL, 'text', 'whats up', '2025-12-08 06:54:04'),
-(42, 5, 8, NULL, 'text', 'is it working ah?', '2025-12-08 06:55:39'),
-(43, 5, 8, NULL, 'text', 'hello', '2025-12-08 07:01:19'),
-(44, 5, 1, NULL, 'text', 'bismillah', '2025-12-08 07:04:08'),
-(45, 5, 1, NULL, 'text', 'hello', '2025-12-08 07:04:38'),
-(46, 5, 8, NULL, 'text', 'yo', '2025-12-08 07:04:39'),
-(47, 5, 8, NULL, 'text', 'enna aakif enna panra', '2025-12-08 07:04:46'),
-(48, 5, 1, NULL, 'text', 'ok finally working', '2025-12-08 07:04:52'),
-(49, 5, 8, NULL, 'text', 'all credits to ismaiel', '2025-12-08 07:05:06'),
-(50, 5, 1, NULL, 'text', 'yes', '2025-12-08 07:05:09');
+(52, 11, 1, NULL, 'text', 'yo', '2025-12-08 09:20:52'),
+(53, 13, 1, NULL, 'text', 'test', '2025-12-08 09:32:22'),
+(54, 14, 1, NULL, 'text', 'Hello', '2025-12-08 09:37:15'),
+(55, 14, 8, NULL, 'text', 'Hi', '2025-12-08 09:37:19'),
+(56, 15, 8, NULL, 'text', 'whats up', '2025-12-08 10:07:54'),
+(57, 15, 1, NULL, 'text', 'hello', '2025-12-08 10:08:09'),
+(58, 15, 8, NULL, 'text', 'yo', '2025-12-08 10:31:48'),
+(59, 15, 8, NULL, 'text', 'whatsup', '2025-12-08 10:32:17'),
+(60, 15, 8, NULL, 'text', 'hi', '2025-12-08 10:32:45');
 
 -- --------------------------------------------------------
 
@@ -2067,6 +2129,26 @@ INSERT INTO `teacher_users` (`id`, `first_name`, `last_name`, `email`, `phone`, 
 --
 
 --
+-- Indexes for table `live_classes`
+--
+ALTER TABLE `live_classes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_teacher_id` (`teacher_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_scheduled_date` (`scheduled_date`),
+  ADD KEY `idx_program_batch_section` (`program`,`batch`,`section`);
+
+--
+-- Indexes for table `live_class_attendance`
+--
+ALTER TABLE `live_class_attendance`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_live_class_student` (`live_class_id`,`student_id`),
+  ADD KEY `idx_live_class_id` (`live_class_id`),
+  ADD KEY `idx_student_id` (`student_id`),
+  ADD KEY `idx_status` (`status`);
+
+--
 -- Indexes for table `mgmt_academic_terms`
 --
 ALTER TABLE `mgmt_academic_terms`
@@ -2306,6 +2388,13 @@ ALTER TABLE `student_profiles`
   ADD KEY `idx_student` (`student_id`);
 
 --
+-- Indexes for table `student_resumes`
+--
+ALTER TABLE `student_resumes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_student_id` (`student_id`);
+
+--
 -- Indexes for table `student_roles`
 --
 ALTER TABLE `student_roles`
@@ -2521,6 +2610,18 @@ ALTER TABLE `teacher_users`
 --
 
 --
+-- AUTO_INCREMENT for table `live_classes`
+--
+ALTER TABLE `live_classes`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `live_class_attendance`
+--
+ALTER TABLE `live_class_attendance`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `mgmt_academic_terms`
 --
 ALTER TABLE `mgmt_academic_terms`
@@ -2686,13 +2787,19 @@ ALTER TABLE `student_library_downloads`
 -- AUTO_INCREMENT for table `student_notifications`
 --
 ALTER TABLE `student_notifications`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `student_profiles`
 --
 ALTER TABLE `student_profiles`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_resumes`
+--
+ALTER TABLE `student_resumes`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `student_roles`
@@ -2734,19 +2841,19 @@ ALTER TABLE `student_wellness_logs`
 -- AUTO_INCREMENT for table `study_groups`
 --
 ALTER TABLE `study_groups`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `study_group_members`
 --
 ALTER TABLE `study_group_members`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `study_group_messages`
 --
 ALTER TABLE `study_group_messages`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `study_group_teacher_moderators`
@@ -2849,6 +2956,19 @@ ALTER TABLE `teacher_users`
 --
 
 --
+-- Constraints for table `live_classes`
+--
+ALTER TABLE `live_classes`
+  ADD CONSTRAINT `fk_live_class_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `live_class_attendance`
+--
+ALTER TABLE `live_class_attendance`
+  ADD CONSTRAINT `fk_live_attendance_class` FOREIGN KEY (`live_class_id`) REFERENCES `live_classes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_live_attendance_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `student_calendar_events`
 --
 ALTER TABLE `student_calendar_events`
@@ -2882,6 +3002,12 @@ ALTER TABLE `student_library_bookmarks`
 ALTER TABLE `student_library_downloads`
   ADD CONSTRAINT `fk_download_resource` FOREIGN KEY (`resource_id`) REFERENCES `teacher_library_resources` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_download_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_resumes`
+--
+ALTER TABLE `student_resumes`
+  ADD CONSTRAINT `FK_student_resumes_student_id` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `study_groups`
