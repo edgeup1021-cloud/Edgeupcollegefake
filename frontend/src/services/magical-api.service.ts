@@ -25,7 +25,11 @@ interface BulletPointSuggestion {
 
 class MagicalAPIService {
   private getAuthHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    let token = null;
+    if (typeof window !== 'undefined') {
+      const portal = localStorage.getItem('currentPortal');
+      token = portal ? localStorage.getItem(`${portal}_accessToken`) : null;
+    }
     return {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -149,7 +153,7 @@ class MagicalAPIService {
     } catch (error) {
       console.error('ATS Analysis Error:', error);
       // Fallback to local mock scoring
-      return this.getMockATSScore(resumeData);
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to analyze resume' };
     }
   }
 
@@ -162,7 +166,11 @@ class MagicalAPIService {
         formData.append('jobDescription', jobDescription);
       }
 
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      let token = null;
+      if (typeof window !== 'undefined') {
+        const portal = localStorage.getItem('currentPortal');
+        token = portal ? localStorage.getItem(`${portal}_accessToken`) : null;
+      }
 
       const response = await fetch(`${BACKEND_URL}/api/career/resume/score-by-file`, {
         method: 'POST',
@@ -301,106 +309,7 @@ class MagicalAPIService {
     };
   }
 
-  // Mock ATS scoring when API is not available
-  private getMockATSScore(resumeData: ResumeData): MagicalAPIResponse<ATSScore> {
-    let score = 0;
-    const suggestions: string[] = [];
-    const missingKeywords: string[] = [];
-    const strongPoints: string[] = [];
 
-    // Check personal info completeness
-    const { personalInfo } = resumeData;
-    if (personalInfo.fullName) score += 10;
-    else suggestions.push('Add your full name');
-
-    if (personalInfo.email) score += 5;
-    else suggestions.push('Add your email address');
-
-    if (personalInfo.phone) score += 5;
-    else suggestions.push('Add your phone number');
-
-    if (personalInfo.linkedIn) {
-      score += 5;
-      strongPoints.push('LinkedIn profile included');
-    } else {
-      suggestions.push('Add your LinkedIn profile URL');
-    }
-
-    // Check summary
-    if (resumeData.summary.summary) {
-      score += 10;
-      if (resumeData.summary.summary.length > 100) {
-        strongPoints.push('Professional summary is well-detailed');
-      }
-    } else {
-      suggestions.push('Add a professional summary to highlight your value');
-    }
-
-    // Check education
-    if (resumeData.education.length > 0) {
-      score += 15;
-      strongPoints.push('Education section complete');
-    } else {
-      suggestions.push('Add your education history');
-    }
-
-    // Check experience
-    if (resumeData.experience.length > 0) {
-      score += 20;
-      const hasDescriptions = resumeData.experience.every((exp) => exp.description.length > 0);
-      if (hasDescriptions) {
-        strongPoints.push('Work experience includes detailed descriptions');
-      } else {
-        suggestions.push('Add bullet points describing your achievements in each role');
-      }
-    } else {
-      suggestions.push('Add work experience or internships');
-      missingKeywords.push('work experience', 'achievements', 'responsibilities');
-    }
-
-    // Check skills
-    if (resumeData.skills.length > 0) {
-      score += 15;
-      if (resumeData.skills.length >= 5) {
-        strongPoints.push('Good variety of skills listed');
-      }
-    } else {
-      suggestions.push('Add relevant skills to your resume');
-      missingKeywords.push('technical skills', 'soft skills');
-    }
-
-    // Check projects
-    if (resumeData.projects.length > 0) {
-      score += 10;
-      strongPoints.push('Projects section showcases practical experience');
-    } else {
-      suggestions.push('Add projects to demonstrate your hands-on experience');
-    }
-
-    // Check certifications
-    if (resumeData.certifications.length > 0) {
-      score += 5;
-      strongPoints.push('Certifications add credibility');
-    }
-
-    // Calculate sub-scores
-    const keywordMatch = Math.min(score + 10, 100);
-    const formatScore = resumeData.experience.length > 0 && resumeData.education.length > 0 ? 85 : 60;
-    const readabilityScore = resumeData.summary.summary && resumeData.summary.summary.length > 50 ? 80 : 65;
-
-    return {
-      success: true,
-      data: {
-        overallScore: Math.min(score, 100),
-        keywordMatch,
-        formatScore,
-        readabilityScore,
-        suggestions,
-        missingKeywords,
-        strongPoints,
-      },
-    };
-  }
 }
 
 export const magicalAPIService = new MagicalAPIService();

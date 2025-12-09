@@ -15,8 +15,11 @@ import {
   getStudyGroupMessages,
   postStudyGroupMessage,
   deleteStudyGroup,
+  getStudentPendingRequests,
+  getPendingMembers,
+  moderateMember,
 } from "@/services/study-groups.service";
-import type { StudyGroup, StudyGroupJoinType, StudyGroupMessage } from "@/types/study-groups.types";
+import type { StudyGroup, StudyGroupJoinType, StudyGroupMessage, PendingRequest, PendingMember } from "@/types/study-groups.types";
 import { ApiClientError } from "@/services/api.client";
 import { DeleteDialog } from "./DeleteDialog";
 import { getSocket, disconnectSocket } from "@/lib/socket";
@@ -25,11 +28,7 @@ type CreateFormState = {
   name: string;
   description: string;
   subject: string;
-  program: string;
-  batch: string;
-  section: string;
   joinType: StudyGroupJoinType;
-  inviteCode: string;
   maxMembers: number;
 };
 
@@ -37,11 +36,7 @@ const defaultCreateForm: CreateFormState = {
   name: "",
   description: "",
   subject: "",
-  program: "",
-  batch: "",
-  section: "",
   joinType: "open",
-  inviteCode: "",
   maxMembers: 25,
 };
 
@@ -88,17 +83,20 @@ export default function StudyGroupPage() {
   const [messageInput, setMessageInput] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateFormState>(defaultCreateForm);
-  const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
   const [pendingMessages, setPendingMessages] = useState<Map<string, StudyGroupMessage>>(new Map());
+  const [showAllPrograms, setShowAllPrograms] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
+  const [showPendingRequestsPanel, setShowPendingRequestsPanel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selectedGroup = useMemo(
-    () => groups.find((g) => g.id === selectedGroupId) || null,
+    () => groups.find((g) => Number(g.id) === selectedGroupId) || null,
     [groups, selectedGroupId],
   );
 
@@ -112,7 +110,8 @@ export default function StudyGroupPage() {
   useEffect(() => {
     if (!user || !isAuthenticated) return;
     fetchGroups();
-  }, [user, isAuthenticated]);
+    fetchPendingRequests();
+  }, [user, isAuthenticated, showAllPrograms]);
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -121,7 +120,12 @@ export default function StudyGroupPage() {
 
   useEffect(() => {
     if (!selectedGroup || !user) return;
-    fetchMessages(selectedGroup.id);
+    fetchMessages(Number(selectedGroup.id));
+
+    // Fetch pending members if user is moderator/owner
+    if (membership?.role === 'owner' || membership?.role === 'moderator') {
+      fetchPendingMembers(Number(selectedGroup.id));
+    }
 
     const token = getAccessToken('student') || getAccessToken();
     const socket = getSocket(token || undefined);
@@ -221,10 +225,14 @@ export default function StudyGroupPage() {
     setLoadingGroups(true);
     setError(null);
     try {
-      const data = await getStudentStudyGroups(user.id, { limit: 50 });
+      const params: any = { limit: 50 };
+      if (showAllPrograms) {
+        params.includeAllPrograms = true;
+      }
+      const data = await getStudentStudyGroups(user.id, params);
       setGroups(data);
       if (!selectedGroupId && data.length > 0) {
-        setSelectedGroupId(data[0].id);
+        setSelectedGroupId(Number(data[0].id));
       }
     } catch (err) {
       handleError(err, "Failed to load study groups");
@@ -244,6 +252,59 @@ export default function StudyGroupPage() {
       handleError(err, "Failed to load messages");
     } finally {
       setLoadingMessages(false);
+    }
+  }
+
+  async function fetchPendingRequests() {
+    if (!user) return;
+    try {
+      const data = await getStudentPendingRequests(user.id);
+      setPendingRequests(data);
+    } catch (err) {
+      console.error('Failed to load pending requests:', err);
+    }
+  }
+
+  async function fetchPendingMembers(groupId: number) {
+    if (!user) return;
+    try {
+      const data = await getPendingMembers(user.id, groupId);
+      setPendingMembers(data);
+    } catch (err) {
+      console.error('Failed to load pending members:', err);
+    }
+  }
+
+  async function handleApprove(memberId: number) {
+    if (!user || !selectedGroup) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await moderateMember(user.id, selectedGroup.id as number, memberId, 'approve');
+      await fetchPendingMembers(selectedGroup.id as number);
+      await fetchGroups(); // Refresh to update member count
+      // Clear error to show success
+      setError(null);
+    } catch (err) {
+      handleError(err, 'Failed to approve member');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReject(memberId: number) {
+    if (!user || !selectedGroup) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await moderateMember(user.id, selectedGroup.id as number, memberId, 'reject');
+      await fetchPendingMembers(selectedGroup.id as number);
+      // Clear error to show success
+      setError(null);
+    } catch (err) {
+      handleError(err, 'Failed to reject member');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -285,18 +346,17 @@ export default function StudyGroupPage() {
         name: createForm.name,
         description: createForm.description || undefined,
         subject: createForm.subject || undefined,
-        program: createForm.program || undefined,
-        batch: createForm.batch || undefined,
-        section: createForm.section || undefined,
+        // Automatically use student's program and batch
+        program: user.program || undefined,
+        batch: user.batch || undefined,
+        // Don't include section - only program and batch
         joinType: createForm.joinType,
         maxMembers: createForm.maxMembers,
       };
-      if (createForm.joinType === "code") {
-        payload.inviteCode = createForm.inviteCode;
-      }
       const newGroup = await createStudyGroup(user.id, payload);
-      setGroups((prev) => [newGroup, ...prev]);
-      setSelectedGroupId(newGroup.id);
+      // Refresh groups to get proper membership data
+      await fetchGroups();
+      setSelectedGroupId(Number(newGroup.id));
       setCreateOpen(false);
       setCreateForm(defaultCreateForm);
     } catch (err) {
@@ -311,19 +371,21 @@ export default function StudyGroupPage() {
     setBusy(true);
     setError(null);
     try {
-      await joinStudyGroup(user.id, group.id, group.joinType === "code" ? { inviteCode: joinCode } : undefined);
+      await joinStudyGroup(user.id, Number(group.id), undefined);
       await fetchGroups();
-      setJoinCode("");
-      setSelectedGroupId(group.id);
+      await fetchPendingRequests(); // Update pending requests count
+      setSelectedGroupId(Number(group.id));
     } catch (err) {
       // If already joined, refresh state so UI reflects membership
       if (err instanceof ApiClientError && err.statusCode === 409) {
         await fetchGroups();
-        setSelectedGroupId(group.id);
-        setJoinCode("");
-        return;
+        setSelectedGroupId(Number(group.id));
       }
-      handleError(err, "Failed to join group");
+
+      // Only show error if not a "already joined" conflict
+      if (!(err instanceof ApiClientError && err.statusCode === 409)) {
+        handleError(err, "Failed to join group");
+      }
     } finally {
       setBusy(false);
     }
@@ -334,7 +396,7 @@ export default function StudyGroupPage() {
     setBusy(true);
     setError(null);
     try {
-      await leaveStudyGroup(user.id, group.id);
+      await leaveStudyGroup(user.id, Number(group.id));
       await fetchGroups();
       setSelectedGroupId(null);
       setMessages([]);
@@ -350,9 +412,9 @@ export default function StudyGroupPage() {
     setDeleteLoading(true);
     setError(null);
     try {
-      await deleteStudyGroup(user.id, group.id);
-      setGroups((prev) => prev.filter((g) => g.id !== group.id));
-      if (selectedGroupId === group.id) {
+      await deleteStudyGroup(user.id, Number(group.id));
+      setGroups((prev) => prev.filter((g) => Number(g.id) !== Number(group.id)));
+      if (selectedGroupId === Number(group.id)) {
         setSelectedGroupId(null);
         setMessages([]);
       }
@@ -400,7 +462,7 @@ export default function StudyGroupPage() {
     setError(null);
 
     try {
-      const saved = await postStudyGroupMessage(user.id, selectedGroup.id, trimmedContent);
+      const saved = await postStudyGroupMessage(user.id, Number(selectedGroup.id), trimmedContent);
 
       // Remove optimistic message and add real one
       setPendingMessages((prev) => {
@@ -455,7 +517,19 @@ export default function StudyGroupPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Collaborate with peers</p>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Study Groups</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setShowPendingRequestsPanel(!showPendingRequestsPanel)}
+            variant="outline"
+            className="relative"
+          >
+            Pending Requests
+            {pendingRequests.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {pendingRequests.length}
+              </span>
+            )}
+          </Button>
           <Button
             onClick={() => setCreateOpen(true)}
             className="bg-brand-primary text-white hover:bg-brand-primary/90"
@@ -487,12 +561,12 @@ export default function StudyGroupPage() {
               <p className="text-sm text-gray-500">No groups yet. Create or join one to get started.</p>
             )}
             {groups.map((group) => {
-              const isSelected = selectedGroupId === group.id;
-              const isPrivate = group.joinType === "code" || group.joinType === "approval";
+              const isSelected = selectedGroupId === Number(group.id);
+              const isPrivate = group.joinType === "approval";
               return (
                 <button
                   key={group.id}
-                  onClick={() => setSelectedGroupId(group.id)}
+                  onClick={() => setSelectedGroupId(Number(group.id))}
                   className={cn(
                     "w-full text-left p-4 rounded-xl border transition-all",
                     isSelected
@@ -559,7 +633,7 @@ export default function StudyGroupPage() {
                   <div className="flex items-center gap-2">
                     {membership?.status === "joined" ? (
                       <>
-                        {membership.role === "owner" && (
+                        {membership.role === "owner" ? (
                           <Button
                             variant="destructive"
                             size="sm"
@@ -568,22 +642,21 @@ export default function StudyGroupPage() {
                           >
                             Delete Group
                           </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleLeave(selectedGroup)}
+                            disabled={busy}
+                          >
+                            Leave
+                          </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleLeave(selectedGroup)}
-                          disabled={busy || membership.role === "owner"}
-                        >
-                          Leave
-                        </Button>
                       </>
                     ) : (
                       <JoinControls
                         group={selectedGroup}
-                        joinCode={joinCode}
                         onJoin={() => handleJoin(selectedGroup)}
-                        onCodeChange={setJoinCode}
                         disabled={busy || membership?.status === "pending"}
                         pending={membership?.status === "pending"}
                       />
@@ -655,6 +728,49 @@ export default function StudyGroupPage() {
                     <div ref={messagesEndRef} />
                     </div>
                   )}
+
+                  {(membership?.role === 'owner' || membership?.role === 'moderator') && pendingMembers.length > 0 && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                      <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">Pending Approval Requests</h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {pendingMembers.map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-2 border rounded-lg border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-800"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate text-gray-900 dark:text-white">{member.studentName}</p>
+                              <p className="text-xs text-gray-500">
+                                {member.program && `${member.program}`}
+                                {member.batch && ` • ${member.batch}`}
+                                {member.section && ` • ${member.section}`}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 ml-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
+                                onClick={() => handleApprove(member.id)}
+                                disabled={busy}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800"
+                                onClick={() => handleReject(member.id)}
+                                disabled={busy}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
@@ -723,33 +839,7 @@ export default function StudyGroupPage() {
                   placeholder="What will you cover in this group?"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500">Program</label>
-                  <FormInput
-                    value={createForm.program}
-                    onChange={(e) => setCreateForm({ ...createForm, program: e.target.value })}
-                    placeholder="e.g., CSE"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Batch</label>
-                  <FormInput
-                    value={createForm.batch}
-                    onChange={(e) => setCreateForm({ ...createForm, batch: e.target.value })}
-                    placeholder="2024"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Section</label>
-                  <FormInput
-                    value={createForm.section}
-                    onChange={(e) => setCreateForm({ ...createForm, section: e.target.value })}
-                    placeholder="A"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-500">Join Type</label>
                   <select
@@ -758,18 +848,8 @@ export default function StudyGroupPage() {
                     onChange={(e) => setCreateForm({ ...createForm, joinType: e.target.value as StudyGroupJoinType })}
                   >
                     <option value="open">Open (auto join)</option>
-                    <option value="code">Invite code</option>
                     <option value="approval">Approval required</option>
                   </select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Invite Code (for code-based)</label>
-                  <FormInput
-                    value={createForm.inviteCode}
-                    onChange={(e) => setCreateForm({ ...createForm, inviteCode: e.target.value })}
-                    placeholder="Optional"
-                    disabled={createForm.joinType !== "code"}
-                  />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500">Max Members</label>
@@ -807,46 +887,120 @@ export default function StudyGroupPage() {
           loading={deleteLoading}
         />
       )}
+
+      {/* Pending Requests Modal */}
+      {showPendingRequestsPanel && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Your Pending Join Requests
+              </h2>
+              <button
+                onClick={() => setShowPendingRequestsPanel(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+              {pendingRequests.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No pending requests</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Join a group to see pending requests here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingRequests.map((req) => (
+                    <div
+                      key={req.membershipId}
+                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                              {req.group.name.substring(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{req.group.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Requested on {new Date(req.requestedAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        {req.group.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 ml-12">
+                            {req.group.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="ml-4">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-3 py-1.5 rounded-full">
+                          <svg className="w-3.5 h-3.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                            <circle cx="10" cy="10" r="3" />
+                          </svg>
+                          Pending Approval
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            {pendingRequests.length > 0 && (
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <p>{pendingRequests.length} pending {pendingRequests.length === 1 ? 'request' : 'requests'}</p>
+                  <p>Waiting for group owner approval</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function JoinControls({
   group,
-  joinCode,
-  onCodeChange,
   onJoin,
   disabled,
   pending,
 }: {
   group: StudyGroup;
-  joinCode: string;
-  onCodeChange: (v: string) => void;
   onJoin: () => void;
   disabled: boolean;
   pending?: boolean;
 }) {
-  const needsCode = group.joinType === "code";
   const needsApproval = group.joinType === "approval";
 
   return (
-    <div className="flex items-center gap-2">
-      {needsCode && (
-        <FormInput
-          placeholder="Invite code"
-          value={joinCode}
-          onChange={(e) => onCodeChange(e.target.value)}
-          className="w-32"
-        />
-      )}
-      <Button
-        size="sm"
-        onClick={onJoin}
-        disabled={disabled || pending || (needsCode && !joinCode.trim())}
-        className="bg-brand-primary text-white hover:bg-brand-primary/90"
-      >
-        {pending ? "Pending" : needsApproval ? "Request to Join" : "Join"}
-      </Button>
-    </div>
+    <Button
+      size="sm"
+      onClick={onJoin}
+      disabled={disabled || pending}
+      className="bg-brand-primary text-white hover:bg-brand-primary/90"
+    >
+      {pending ? "Pending" : needsApproval ? "Request to Join" : "Join"}
+    </Button>
   );
 }

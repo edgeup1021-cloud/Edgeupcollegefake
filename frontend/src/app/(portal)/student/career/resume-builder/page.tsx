@@ -47,6 +47,7 @@ import type {
 } from "@/types/resume.types";
 import { defaultResumeData, sectionLabels, templateLabels } from "@/types/resume.types";
 import { magicalAPIService } from "@/services/magical-api.service";
+import resumeService from "@/services/resume.service";
 
 const sectionIcons: Record<ResumeSection, React.ElementType> = {
   personal: User,
@@ -83,22 +84,73 @@ export default function ResumeBuilderPage() {
   const [jobDescription, setJobDescription] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // Load saved resume from localStorage
+  // New state for navigation and database integration
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedResumeId, setSavedResumeId] = useState<number | null>(null);
+
+  // Load resume from database on mount
   useEffect(() => {
-    const saved = localStorage.getItem("resumeData");
-    if (saved) {
+    const loadResumeFromDB = async () => {
       try {
-        setResumeData(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load saved resume", e);
+        const savedResume = await resumeService.getResume();
+        if (savedResume) {
+          setResumeData(savedResume.resumeData as ResumeData);
+          setIsSubmitted(savedResume.isSubmitted);
+          setSavedResumeId(savedResume.id);
+          setSelectedTemplate(savedResume.templateUsed as ResumeTemplate);
+        } else {
+          // Fall back to localStorage if no DB resume exists
+          const saved = localStorage.getItem("resumeData");
+          if (saved) {
+            try {
+              setResumeData(JSON.parse(saved));
+            } catch (e) {
+              console.error("Failed to load saved resume from localStorage", e);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load resume from database:', error);
+        // Fall back to localStorage on error
+        const saved = localStorage.getItem("resumeData");
+        if (saved) {
+          try {
+            setResumeData(JSON.parse(saved));
+          } catch (e) {
+            console.error("Failed to load saved resume from localStorage", e);
+          }
+        }
       }
-    }
+    };
+
+    loadResumeFromDB();
   }, []);
 
-  // Auto-save resume to localStorage
+  // Auto-save resume to localStorage and database
   useEffect(() => {
+    // Save to localStorage (immediate)
     localStorage.setItem("resumeData", JSON.stringify(resumeData));
-  }, [resumeData]);
+
+    // Debounced save to database
+    const timer = setTimeout(async () => {
+      try {
+        if (savedResumeId) {
+          // Update existing
+          await resumeService.updateResume(resumeData, selectedTemplate);
+        } else {
+          // Create new
+          const saved = await resumeService.saveResume(resumeData, selectedTemplate);
+          setSavedResumeId(saved.id);
+        }
+      } catch (error) {
+        console.error('Auto-save to database failed:', error);
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timer);
+  }, [resumeData, selectedTemplate, savedResumeId]);
 
   // Calculate completion percentage
   const calculateCompletion = (): number => {
@@ -118,15 +170,214 @@ export default function ResumeBuilderPage() {
     return Math.round((completed / total) * 100);
   };
 
-  // Analyze ATS Score
+  // Analyze ATS Score (used for manual re-analysis in modal)
   const analyzeResume = async () => {
     setIsAnalyzing(true);
-    const result = await magicalAPIService.analyzeATS(resumeData, jobDescription);
-    if (result.success && result.data) {
-      setAtsScore(result.data);
+
+    try {
+      let result: any;
+
+      if (isSubmitted && savedResumeId) {
+        // Use database version if submitted
+        result = await resumeService.analyzeStoredResume(jobDescription);
+      } else {
+        // Use in-memory version if not submitted yet
+        result = await magicalAPIService.analyzeATS(resumeData, jobDescription);
+      }
+
+      setIsAnalyzing(false);
+
+      if (result.success && result.data) {
+        setAtsScore(result.data);
+      } else {
+        alert(result.error || 'Failed to analyze resume');
+      }
+    } catch (error: any) {
+      setIsAnalyzing(false);
+      console.error('Analysis failed:', error);
+      alert('Failed to analyze resume');
     }
-    setIsAnalyzing(false);
-    setShowATSModal(true);
+  };
+
+  // Handle analyzing stored resume from database
+  const handleAnalyzeStoredResume = async () => {
+    if (!isSubmitted) {
+      alert('Please submit your resume first before analyzing it.');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      console.log('Calling analyzeStoredResume with jobDescription:', jobDescription);
+      const result = await resumeService.analyzeStoredResume(jobDescription);
+      console.log('Analysis result:', result);
+      console.log('result.success:', result.success);
+      console.log('result.data:', result.data);
+
+      if (result.success && result.data) {
+        console.log('Setting ATS score to:', result.data);
+        setAtsScore(result.data);
+        console.log('ATS score set successfully');
+      } else {
+        console.error('Analysis failed - success or data missing:', result);
+        alert(result.error || 'Failed to analyze resume');
+      }
+    } catch (error: any) {
+      console.error('ATS analysis failed:', error);
+      console.error('Error response:', error.response);
+      alert(error.response?.data?.message || error.message || 'Failed to analyze resume from database');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Navigation functions
+  const goToNextSection = () => {
+    if (currentSectionIndex < sections.length - 1) {
+      const nextIndex = currentSectionIndex + 1;
+      setCurrentSectionIndex(nextIndex);
+      setActiveSection(sections[nextIndex] as ResumeSection);
+    }
+  };
+
+  const goToPreviousSection = () => {
+    if (currentSectionIndex > 0) {
+      const prevIndex = currentSectionIndex - 1;
+      setCurrentSectionIndex(prevIndex);
+      setActiveSection(sections[prevIndex] as ResumeSection);
+    }
+  };
+
+  // Sync currentSectionIndex when activeSection changes via sidebar
+  useEffect(() => {
+    const index = sections.indexOf(activeSection);
+    if (index !== -1) {
+      setCurrentSectionIndex(index);
+    }
+  }, [activeSection]);
+
+  // Submit handler (first time)
+  const handleSubmit = async () => {
+    // Validate required fields
+    const { personalInfo } = resumeData;
+    if (!personalInfo.fullName || !personalInfo.email || !personalInfo.phone) {
+      alert('Please fill in all required fields: Name, Email, and Phone');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // First save the latest data
+      if (savedResumeId) {
+        await resumeService.updateResume(resumeData, selectedTemplate);
+      } else {
+        const saved = await resumeService.saveResume(resumeData, selectedTemplate);
+        setSavedResumeId(saved.id);
+      }
+
+      // Then submit
+      await resumeService.submitResume();
+      setIsSubmitted(true);
+
+      alert('Resume submitted successfully! You can now analyze it with ATS scoring.');
+    } catch (error: any) {
+      console.error('Submit failed:', error);
+      alert(error.response?.data?.message || 'Failed to submit resume');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save handler (after submission)
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await resumeService.updateResume(resumeData, selectedTemplate);
+      alert('Resume saved successfully!');
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Failed to save resume');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // NavigationButtons Component
+  const NavigationButtons = () => {
+    const isFirstSection = currentSectionIndex === 0;
+    const isLastSection = currentSectionIndex === sections.length - 1;
+
+    return (
+      <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-700">
+        {/* Previous Button */}
+        <button
+          onClick={goToPreviousSection}
+          disabled={isFirstSection}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all ${
+            isFirstSection
+              ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Previous
+        </button>
+
+        {/* Next or Submit/Save Button */}
+        {!isLastSection ? (
+          <button
+            onClick={goToNextSection}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all"
+          >
+            Next
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : (
+          // Show Submit or Save button on last section
+          <button
+            onClick={isSubmitted ? handleSave : handleSubmit}
+            disabled={isSaving}
+            className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-medium transition-all ${
+              isSaving
+                ? 'bg-gray-600 cursor-wait'
+                : 'bg-green-600 hover:bg-green-700'
+            } text-white`}
+          >
+            {isSaving ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                {isSubmitted ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    Save Changes
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Submit Resume
+                  </>
+                )}
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    );
   };
 
   // Helper to format date for resume
@@ -514,9 +765,9 @@ export default function ResumeBuilderPage() {
       experience: prev.experience.map((exp) =>
         exp.id === expId
           ? {
-              ...exp,
-              description: exp.description.map((d, i) => (i === index ? value : d)),
-            }
+            ...exp,
+            description: exp.description.map((d, i) => (i === index ? value : d)),
+          }
           : exp
       ),
     }));
@@ -753,12 +1004,11 @@ export default function ResumeBuilderPage() {
 
               {/* ATS Score Button */}
               <button
-                onClick={analyzeResume}
-                disabled={isAnalyzing}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors disabled:opacity-50"
+                onClick={() => setShowATSModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors"
               >
                 <ChartBar className="w-5 h-5" weight="duotone" />
-                {isAnalyzing ? "Analyzing..." : "ATS Score"}
+                ATS Score
               </button>
 
               {/* Preview Button */}
@@ -824,11 +1074,10 @@ export default function ResumeBuilderPage() {
                     <button
                       key={section}
                       onClick={() => setActiveSection(section)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                          : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                      }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${isActive
+                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        }`}
                     >
                       <Icon className="w-5 h-5" weight={isActive ? "fill" : "duotone"} />
                       <span className="flex-1 text-left text-sm font-medium">
@@ -880,91 +1129,118 @@ export default function ResumeBuilderPage() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 {/* Personal Info Section */}
                 {activeSection === "personal" && (
-                  <PersonalInfoForm
-                    data={resumeData.personalInfo}
-                    onChange={updatePersonalInfo}
-                  />
+                  <>
+                    <PersonalInfoForm
+                      data={resumeData.personalInfo}
+                      onChange={updatePersonalInfo}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Summary Section */}
                 {activeSection === "summary" && (
-                  <SummaryForm
-                    data={resumeData.summary}
-                    onChange={updateSummary}
-                  />
+                  <>
+                    <SummaryForm
+                      data={resumeData.summary}
+                      onChange={updateSummary}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Education Section */}
                 {activeSection === "education" && (
-                  <EducationForm
-                    data={resumeData.education}
-                    onAdd={addEducation}
-                    onUpdate={updateEducation}
-                    onRemove={removeEducation}
-                  />
+                  <>
+                    <EducationForm
+                      data={resumeData.education}
+                      onAdd={addEducation}
+                      onUpdate={updateEducation}
+                      onRemove={removeEducation}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Experience Section */}
                 {activeSection === "experience" && (
-                  <ExperienceForm
-                    data={resumeData.experience}
-                    onAdd={addExperience}
-                    onUpdate={updateExperience}
-                    onRemove={removeExperience}
-                    onAddBullet={addExperienceBullet}
-                    onUpdateBullet={updateExperienceBullet}
-                    onRemoveBullet={removeExperienceBullet}
-                  />
+                  <>
+                    <ExperienceForm
+                      data={resumeData.experience}
+                      onAdd={addExperience}
+                      onUpdate={updateExperience}
+                      onRemove={removeExperience}
+                      onAddBullet={addExperienceBullet}
+                      onUpdateBullet={updateExperienceBullet}
+                      onRemoveBullet={removeExperienceBullet}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Projects Section */}
                 {activeSection === "projects" && (
-                  <ProjectsForm
-                    data={resumeData.projects}
-                    onAdd={addProject}
-                    onUpdate={updateProject}
-                    onRemove={removeProject}
-                  />
+                  <>
+                    <ProjectsForm
+                      data={resumeData.projects}
+                      onAdd={addProject}
+                      onUpdate={updateProject}
+                      onRemove={removeProject}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Skills Section */}
                 {activeSection === "skills" && (
-                  <SkillsForm
-                    data={resumeData.skills}
-                    onAdd={addSkill}
-                    onUpdate={updateSkill}
-                    onRemove={removeSkill}
-                  />
+                  <>
+                    <SkillsForm
+                      data={resumeData.skills}
+                      onAdd={addSkill}
+                      onUpdate={updateSkill}
+                      onRemove={removeSkill}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Certifications Section */}
                 {activeSection === "certifications" && (
-                  <CertificationsForm
-                    data={resumeData.certifications}
-                    onAdd={addCertification}
-                    onUpdate={updateCertification}
-                    onRemove={removeCertification}
-                  />
+                  <>
+                    <CertificationsForm
+                      data={resumeData.certifications}
+                      onAdd={addCertification}
+                      onUpdate={updateCertification}
+                      onRemove={removeCertification}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Awards Section */}
                 {activeSection === "awards" && (
-                  <AwardsForm
-                    data={resumeData.awards}
-                    onAdd={addAward}
-                    onUpdate={updateAward}
-                    onRemove={removeAward}
-                  />
+                  <>
+                    <AwardsForm
+                      data={resumeData.awards}
+                      onAdd={addAward}
+                      onUpdate={updateAward}
+                      onRemove={removeAward}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
 
                 {/* Extracurriculars Section */}
                 {activeSection === "extracurriculars" && (
-                  <ExtracurricularsForm
-                    data={resumeData.extracurriculars}
-                    onAdd={addExtracurricular}
-                    onUpdate={updateExtracurricular}
-                    onRemove={removeExtracurricular}
-                  />
+                  <>
+                    <ExtracurricularsForm
+                      data={resumeData.extracurriculars}
+                      onAdd={addExtracurricular}
+                      onUpdate={updateExtracurricular}
+                      onRemove={removeExtracurricular}
+                    />
+                    <NavigationButtons />
+                  </>
                 )}
               </div>
             )}
@@ -973,13 +1249,16 @@ export default function ResumeBuilderPage() {
       </div>
 
       {/* ATS Score Modal */}
-      {showATSModal && atsScore && (
+      {showATSModal && (
         <ATSScoreModal
           score={atsScore}
           onClose={() => setShowATSModal(false)}
           jobDescription={jobDescription}
           onJobDescriptionChange={setJobDescription}
-          onReanalyze={analyzeResume}
+          onAnalyze={analyzeResume}
+          onAnalyzeStored={handleAnalyzeStoredResume}
+          isAnalyzing={isAnalyzing}
+          isSubmitted={isSubmitted}
         />
       )}
     </div>
@@ -2252,13 +2531,12 @@ const ResumePreview = forwardRef<
     <div
       ref={ref}
       data-resume-preview="true"
-      className={`bg-white text-gray-900 p-8 min-h-[1100px] ${
-        template === "modern"
-          ? "font-sans"
-          : template === "classic"
+      className={`bg-white text-gray-900 p-8 min-h-[1100px] ${template === "modern"
+        ? "font-sans"
+        : template === "classic"
           ? "font-serif"
           : "font-sans"
-      }`}
+        }`}
       style={{ width: "8.5in", margin: "0 auto" }}
     >
       {/* Header / Personal Info */}
@@ -2477,13 +2755,19 @@ function ATSScoreModal({
   onClose,
   jobDescription,
   onJobDescriptionChange,
-  onReanalyze,
+  onAnalyze,
+  onAnalyzeStored,
+  isAnalyzing,
+  isSubmitted,
 }: {
   score: ATSScore | null;
   onClose: () => void;
   jobDescription: string;
   onJobDescriptionChange: (value: string) => void;
-  onReanalyze: () => void;
+  onAnalyze: () => void;
+  onAnalyzeStored: () => void;
+  isAnalyzing: boolean;
+  isSubmitted: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"built" | "upload">("built");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -2603,8 +2887,8 @@ function ATSScoreModal({
           {scoreData.overallScore >= 80
             ? "Great! Your resume is well-optimized"
             : scoreData.overallScore >= 60
-            ? "Good, but there's room for improvement"
-            : "Needs improvement for better ATS compatibility"}
+              ? "Good, but there's room for improvement"
+              : "Needs improvement for better ATS compatibility"}
         </p>
       </div>
 
@@ -2670,11 +2954,10 @@ function ATSScoreModal({
               {Object.entries(scoreData.details.contactInfo).map(([key, value]) => (
                 <span
                   key={key}
-                  className={`px-2 py-1 text-xs rounded-full ${
-                    value
-                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                      : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
-                  }`}
+                  className={`px-2 py-1 text-xs rounded-full ${value
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                    : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
+                    }`}
                 >
                   {value ? "✓" : "✗"} {key.replace(/^has/, "")}
                 </span>
@@ -2889,21 +3172,19 @@ function ATSScoreModal({
             <div className="flex mt-4 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
               <button
                 onClick={() => setActiveTab("built")}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "built"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "built"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 Built Resume
               </button>
               <button
                 onClick={() => setActiveTab("upload")}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === "upload"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === "upload"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 Upload Resume
               </button>
@@ -2911,29 +3192,83 @@ function ATSScoreModal({
           </div>
 
           <div className="p-6 space-y-6">
-            {activeTab === "built" && score && (
+            {activeTab === "built" && (
               <>
-                <ScoreDisplay scoreData={score} />
+                {score ? (
+                  <>
+                    <ScoreDisplay scoreData={score} />
 
-                {/* Job Description Input */}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Paste a job description to compare (Optional)
-                  </label>
-                  <textarea
-                    value={jobDescription}
-                    onChange={(e) => onJobDescriptionChange(e.target.value)}
-                    rows={4}
-                    placeholder="Paste the job description here to get tailored suggestions..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
-                  />
-                  <button
-                    onClick={onReanalyze}
-                    className="mt-3 w-full px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors"
-                  >
-                    Re-analyze with Job Description
-                  </button>
-                </div>
+                    {/* Job Description Input */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Paste a job description to compare (Optional)
+                      </label>
+                      <textarea
+                        value={jobDescription}
+                        onChange={(e) => onJobDescriptionChange(e.target.value)}
+                        rows={4}
+                        placeholder="Paste the job description here to get tailored suggestions..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
+                      />
+                      <button
+                        onClick={onAnalyze}
+                        disabled={isAnalyzing}
+                        className="mt-3 w-full px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          "Re-analyze with Job Description"
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <ChartBar className="w-8 h-8 text-purple-600 dark:text-purple-400" weight="duotone" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      Ready to Analyze?
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-8">
+                      Get detailed feedback on your resume's ATS compatibility, keyword matching, and formatting.
+                    </p>
+
+                    <div className="max-w-md mx-auto">
+                      <label className="block text-left text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Job Description (Optional)
+                      </label>
+                      <textarea
+                        value={jobDescription}
+                        onChange={(e) => onJobDescriptionChange(e.target.value)}
+                        rows={3}
+                        placeholder="Paste a job description to check keyword matching..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm mb-4"
+                      />
+                      <button
+                        onClick={isSubmitted ? onAnalyzeStored : onAnalyze}
+                        disabled={isAnalyzing || (!isSubmitted && !score)}
+                        className="w-full px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-bold transition-colors shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Analyzing Resume...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkle className="w-5 h-5" weight="fill" />
+                            {isSubmitted ? 'Analyze Stored Resume' : 'Analyze My Resume'}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -2941,11 +3276,10 @@ function ATSScoreModal({
               <>
                 {/* File Upload Area */}
                 <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    uploadedFile
-                      ? "border-green-400 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500"
-                  }`}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${uploadedFile
+                    ? "border-green-400 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500"
+                    }`}
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                 >

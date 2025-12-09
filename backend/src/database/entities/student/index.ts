@@ -15,3 +15,4 @@ export * from './student-library-bookmark.entity';
 export * from './student-library-download.entity';
 export * from './student-library-access-log.entity';
 export * from './student-live-class-attendance.entity';
+export * from './student-resume.entity';

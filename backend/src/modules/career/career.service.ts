@@ -1,5 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { StudentResume } from '../../database/entities/student/student-resume.entity';
+import { SaveResumeDto } from './dto/save-resume.dto';
 
 interface MagicalAPIResponse {
   data?: {
@@ -104,7 +108,11 @@ export class CareerService {
     'strengthened', 'supervised', 'trained', 'transformed', 'upgraded',
   ];
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(StudentResume)
+    private readonly resumeRepo: Repository<StudentResume>,
+  ) {
     this.magicalApiKey = this.configService.get<string>('MAGICAL_API_KEY') || '';
     this.magicalApiUrl = this.configService.get<string>('MAGICAL_API_URL') || 'https://gw.magicalapi.com';
   }
@@ -579,5 +587,161 @@ export class CareerService {
         ],
       },
     };
+  }
+
+  // ===== RESUME STORAGE METHODS =====
+
+  async saveResume(studentId: number, dto: SaveResumeDto): Promise<StudentResume> {
+    // Check if resume exists
+    let resume = await this.resumeRepo.findOne({ where: { studentId } });
+
+    if (resume) {
+      // Update existing
+      resume.resumeData = dto.resumeData;
+      resume.templateUsed = dto.templateUsed || resume.templateUsed;
+      resume.version += 1;
+    } else {
+      // Create new
+      resume = this.resumeRepo.create({
+        studentId,
+        resumeData: dto.resumeData,
+        templateUsed: dto.templateUsed || 'modern',
+        isSubmitted: false,
+      });
+    }
+
+    return await this.resumeRepo.save(resume);
+  }
+
+  async submitResume(studentId: number): Promise<StudentResume> {
+    const resume = await this.resumeRepo.findOne({ where: { studentId } });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found. Please save your resume first.');
+    }
+
+    resume.isSubmitted = true;
+    resume.submittedAt = new Date();
+
+    return await this.resumeRepo.save(resume);
+  }
+
+  async getResume(studentId: number): Promise<StudentResume | null> {
+    return await this.resumeRepo.findOne({ where: { studentId } });
+  }
+
+  async analyzeStoredResume(studentId: number, jobDescription?: string): Promise<ResumeScoreResult> {
+    const resume = await this.getResume(studentId);
+
+    if (!resume) {
+      throw new NotFoundException('No resume found in database. Please add resume data first.');
+    }
+
+    // Convert resumeData to text format
+    const resumeText = this.convertResumeDataToText(resume.resumeData);
+
+    // Use existing analysis method
+    const analysis = await this.analyzeResumeText(resumeText, jobDescription);
+
+    return analysis;
+  }
+
+  private convertResumeDataToText(resumeData: any): string {
+    const sections: string[] = [];
+
+    // Personal Info
+    if (resumeData.personalInfo) {
+      const pi = resumeData.personalInfo;
+      sections.push(`${pi.fullName}`);
+      sections.push(`${pi.email} | ${pi.phone} | ${pi.location}`);
+      if (pi.linkedin) sections.push(`LinkedIn: ${pi.linkedin}`);
+      if (pi.github) sections.push(`GitHub: ${pi.github}`);
+      if (pi.portfolio) sections.push(`Portfolio: ${pi.portfolio}`);
+    }
+
+    // Summary
+    if (resumeData.summary?.summary) {
+      sections.push(`\nPROFESSIONAL SUMMARY\n${resumeData.summary.summary}`);
+    }
+
+    // Education
+    if (resumeData.education?.length > 0) {
+      sections.push('\nEDUCATION');
+      resumeData.education.forEach((edu: any) => {
+        sections.push(`${edu.degree} in ${edu.fieldOfStudy}`);
+        sections.push(`${edu.institution} | ${edu.startDate} - ${edu.isCurrently ? 'Present' : edu.endDate}`);
+        if (edu.gpa) sections.push(`GPA: ${edu.gpa}`);
+      });
+    }
+
+    // Experience
+    if (resumeData.experience?.length > 0) {
+      sections.push('\nWORK EXPERIENCE');
+      resumeData.experience.forEach((exp: any) => {
+        sections.push(`${exp.jobTitle} at ${exp.company}`);
+        sections.push(`${exp.location} | ${exp.startDate} - ${exp.isCurrently ? 'Present' : exp.endDate}`);
+        if (exp.description?.length > 0) {
+          exp.description.forEach((desc: string) => sections.push(`• ${desc}`));
+        }
+      });
+    }
+
+    // Projects
+    if (resumeData.projects?.length > 0) {
+      sections.push('\nPROJECTS');
+      resumeData.projects.forEach((proj: any) => {
+        sections.push(`${proj.name}`);
+        sections.push(proj.description);
+        if (proj.technologies?.length > 0) {
+          sections.push(`Technologies: ${proj.technologies.join(', ')}`);
+        }
+        if (proj.url) sections.push(`URL: ${proj.url}`);
+      });
+    }
+
+    // Skills
+    if (resumeData.skills?.length > 0) {
+      sections.push('\nSKILLS');
+      const skillsByCategory: Record<string, string[]> = {};
+      resumeData.skills.forEach((skill: any) => {
+        if (!skillsByCategory[skill.category]) {
+          skillsByCategory[skill.category] = [];
+        }
+        skillsByCategory[skill.category].push(skill.name);
+      });
+      Object.entries(skillsByCategory).forEach(([category, skills]) => {
+        sections.push(`${category.charAt(0).toUpperCase() + category.slice(1)}: ${skills.join(', ')}`);
+      });
+    }
+
+    // Certifications
+    if (resumeData.certifications?.length > 0) {
+      sections.push('\nCERTIFICATIONS');
+      resumeData.certifications.forEach((cert: any) => {
+        sections.push(`${cert.name} - ${cert.issuingOrganization} (${cert.issueDate})`);
+        if (cert.credentialId) sections.push(`Credential ID: ${cert.credentialId}`);
+      });
+    }
+
+    // Awards
+    if (resumeData.awards?.length > 0) {
+      sections.push('\nAWARDS & HONORS');
+      resumeData.awards.forEach((award: any) => {
+        sections.push(`${award.title} - ${award.organization} (${award.date})`);
+        if (award.description) sections.push(award.description);
+      });
+    }
+
+    // Extracurriculars
+    if (resumeData.extracurriculars?.length > 0) {
+      sections.push('\nEXTRACURRICULAR ACTIVITIES');
+      resumeData.extracurriculars.forEach((activity: any) => {
+        sections.push(`${activity.activityName} - ${activity.organization}`);
+        sections.push(`${activity.role} | ${activity.startDate} - ${activity.isCurrently ? 'Present' : activity.endDate}`);
+        if (activity.description) sections.push(activity.description);
+      });
+    }
+
+    return sections.join('\n');
   }
 }

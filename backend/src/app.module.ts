@@ -12,6 +12,7 @@ import { LeaveModule } from './modules/leave/leave.module';
 import { LibraryModule } from './modules/library/library.module';
 import { LiveClassesModule } from './modules/live-classes/live-classes.module';
 import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
+import { CareerModule } from './modules/career/career.module';
 
 @Module({
   imports: [
@@ -23,14 +24,15 @@ import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
     // Feature modules
     AuthModule,
     StudentModule,
-    LiveClassesModule, // Must come before TeacherModule to avoid route conflicts
     TeacherModule,
     ManagementModule,
     CalendarModule,
     AttendanceModule,
     LeaveModule,
     LibraryModule,
+    LiveClassesModule,
     StudyGroupsModule,
+    CareerModule,
   ],
 })
 export class AppModule { }

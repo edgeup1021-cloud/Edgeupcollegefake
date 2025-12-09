@@ -16,6 +16,7 @@ import {
   StudentAssessment,
   StudentActivityLog,
   CalendarEvent,
+  StudentResume,
 } from './entities/student';
 
 // Study group entities
@@ -57,6 +58,7 @@ const entities = [
   StudentAssessment,
   StudentActivityLog,
   CalendarEvent,
+  StudentResume,
   // Study groups
   StudyGroup,
   StudyGroupMember,

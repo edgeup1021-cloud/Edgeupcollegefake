@@ -18,7 +18,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useTheme } from "@/src/components/providers/ThemeProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -26,7 +26,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from "@/src/components/ui/navigation-menu";
+} from "@/components/ui/navigation-menu";
 import UserMenu from "./UserMenu";
 
 const studyItems = [
