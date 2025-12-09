@@ -21,3 +21,6 @@ export * from './teacher.service';
 
 // Management Service
 export * from './management.service';
+
+// Superadmin Service
+export * from './superadmin.service';

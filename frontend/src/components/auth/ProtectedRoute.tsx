@@ -33,6 +33,7 @@ export default function ProtectedRoute({
           student: "/student/overview",
           teacher: "/teacher/overview",
           admin: "/management/institutional-health",
+          superadmin: "/superadmin/overview",
         };
         router.push(roleRoutes[user.role] || "/");
       }
