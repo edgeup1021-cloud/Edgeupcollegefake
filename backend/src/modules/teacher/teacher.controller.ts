@@ -22,6 +22,14 @@ import {
 } from './dto/assignment';
 import { TeacherAttendanceService } from './services/teacher-attendance.service';
 import { MarkAttendanceDto } from './dto/attendance-roster-response.dto';
+import { IdeaSandboxService } from './services/idea-sandbox.service';
+import {
+  CreateIdeaSandboxPostDto,
+  UpdateIdeaSandboxPostDto,
+  QueryIdeaSandboxPostsDto,
+  CreateCommentDto,
+  ArchivePostDto,
+} from './dto/idea-sandbox';
 
 @Controller('teacher')
 export class TeacherController {
@@ -29,6 +37,7 @@ export class TeacherController {
     private readonly teacherService: TeacherService,
     private readonly assignmentsService: AssignmentsService,
     private readonly teacherAttendanceService: TeacherAttendanceService,
+    private readonly ideaSandboxService: IdeaSandboxService,
   ) {}
 
   @Get()
@@ -151,6 +160,150 @@ export class TeacherController {
   ) {
     const id = teacherId ? parseInt(teacherId, 10) : 1;
     return this.teacherAttendanceService.markSessionAttendance(sessionId, dto, id);
+  }
+
+  // ==================== Idea Sandbox Routes ====================
+
+  // Teacher-specific routes (must be before generic :id routes)
+  @Get('idea-sandbox/my-posts')
+  @Public()
+  getMyPosts(
+    @Query('teacherId') teacherId?: string,
+    @Query('status') status?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.getMyPosts(id, status as any);
+  }
+
+  @Get('idea-sandbox/my-upvoted-posts')
+  @Public()
+  getMyUpvotedPosts(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.getMyUpvotedPosts(id);
+  }
+
+  // Post CRUD
+  @Post('idea-sandbox/posts')
+  @Public()
+  createIdeaSandboxPost(
+    @Body() dto: CreateIdeaSandboxPostDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.create(dto, id);
+  }
+
+  @Get('idea-sandbox/posts')
+  @Public()
+  getIdeaSandboxPosts(@Query() query: QueryIdeaSandboxPostsDto) {
+    // Extract currentTeacherId for upvote checking
+    const { currentTeacherId, ...filters } = query;
+
+    return this.ideaSandboxService.findAll(filters, currentTeacherId);
+  }
+
+  @Get('idea-sandbox/posts/:id')
+  @Public()
+  getIdeaSandboxPost(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('currentTeacherId') currentTeacherId?: string,
+  ) {
+    const tid = currentTeacherId ? parseInt(currentTeacherId, 10) : undefined;
+    return this.ideaSandboxService.findOne(id, tid);
+  }
+
+  @Patch('idea-sandbox/posts/:id')
+  @Public()
+  updateIdeaSandboxPost(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateIdeaSandboxPostDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.update(id, dto, tid);
+  }
+
+  @Delete('idea-sandbox/posts/:id')
+  @Public()
+  deleteIdeaSandboxPost(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.remove(id, tid);
+  }
+
+  @Patch('idea-sandbox/posts/:id/archive')
+  @Public()
+  archiveIdeaSandboxPost(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ArchivePostDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.setArchived(id, dto, tid);
+  }
+
+  // Upvotes
+  @Post('idea-sandbox/posts/:id/upvote')
+  @Public()
+  toggleUpvote(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.toggleUpvote(id, tid);
+  }
+
+  @Get('idea-sandbox/posts/:id/upvotes')
+  @Public()
+  getUpvoters(@Param('id', ParseIntPipe) id: number) {
+    return this.ideaSandboxService.getUpvoters(id);
+  }
+
+  // Comments
+  @Post('idea-sandbox/posts/:id/comments')
+  @Public()
+  addComment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateCommentDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.addComment(id, dto, tid);
+  }
+
+  @Get('idea-sandbox/posts/:id/comments')
+  @Public()
+  getComments(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const l = limit ? parseInt(limit, 10) : 20;
+    const o = offset ? parseInt(offset, 10) : 0;
+    return this.ideaSandboxService.getComments(id, l, o);
+  }
+
+  @Patch('idea-sandbox/comments/:id')
+  @Public()
+  updateComment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateCommentDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.updateComment(id, dto, tid);
+  }
+
+  @Delete('idea-sandbox/comments/:id')
+  @Public()
+  deleteComment(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.ideaSandboxService.removeComment(id, tid);
   }
 
   // Teacher CRUD - placed after specific routes to avoid route conflicts

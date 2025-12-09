@@ -5,3 +5,6 @@ export * from './teacher-assignment.entity';
 export * from './teacher-class-session.entity';
 export * from './teacher-library-resource.entity';
 export * from './teacher-live-class.entity';
+export * from './teacher-idea-sandbox-post.entity';
+export * from './teacher-idea-sandbox-comment.entity';
+export * from './teacher-idea-sandbox-upvote.entity';

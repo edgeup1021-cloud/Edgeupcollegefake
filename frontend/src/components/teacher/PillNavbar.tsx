@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Library,
   ChevronDown,
+  Lightbulb,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -34,13 +35,19 @@ const classroomItems = [
   { label: "Digital Library", href: "/teacher/classroom/digital-library", icon: Library },
 ];
 
+// Growth Items
+const growthItems = [
+  { label: "Growth Overview", href: "/teacher/growth", icon: TrendingUp },
+  { label: "Idea Sandbox", href: "/teacher/growth/idea-sandbox", icon: Lightbulb },
+];
+
 // Main navigation items
 const navItems = [
   { id: "overview", label: "Overview", href: "/teacher/overview", icon: LayoutGrid },
   { id: "classroom", label: "Classroom", icon: Users, items: classroomItems },
   { id: "curriculum", label: "Curriculum", href: "/teacher/curriculum", icon: BookOpen },
   { id: "students", label: "Students", href: "/teacher/students", icon: GraduationCap },
-  { id: "growth", label: "Growth", href: "/teacher/growth", icon: TrendingUp },
+  { id: "growth", label: "Growth", icon: TrendingUp, items: growthItems },
 ];
 
 export default function PillNavbar() {
