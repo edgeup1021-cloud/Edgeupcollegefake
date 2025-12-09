@@ -160,7 +160,7 @@ export default function StepUniversity({
         </label>
         <textarea
           name="description"
-          value={formData.description}
+          value={formData.description || ''}
           onChange={handleChange}
           rows={4}
           placeholder="Brief description about the university and its curriculum framework..."

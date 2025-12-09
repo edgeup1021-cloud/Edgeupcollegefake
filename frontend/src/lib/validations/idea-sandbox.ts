@@ -8,9 +8,7 @@ export const IDEA_CATEGORIES = [
 ] as const;
 
 export const createIdeaSchema = z.object({
-  type: z.enum(['idea', 'question'], {
-    required_error: "Please select a type",
-  }),
+  type: z.enum(['idea', 'question']),
   title: z
     .string()
     .min(10, "Title must be at least 10 characters")
@@ -18,17 +16,12 @@ export const createIdeaSchema = z.object({
   description: z
     .string()
     .min(50, "Description must be at least 50 characters"),
-  category: z.enum(
-    [
-      'Pedagogical Strategies',
-      'Assessment Methods',
-      'Technology Integration',
-      'Classroom Management',
-    ],
-    {
-      required_error: "Please select a category",
-    }
-  ),
+  category: z.enum([
+    'Pedagogical Strategies',
+    'Assessment Methods',
+    'Technology Integration',
+    'Classroom Management',
+  ]),
   tags: z
     .array(z.string())
     .max(5, "You can select up to 5 tags")

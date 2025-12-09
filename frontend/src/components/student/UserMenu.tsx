@@ -13,6 +13,7 @@ const roleConfig: Record<UserRole, { icon: typeof GraduationCap; label: string }
   student: { icon: GraduationCap, label: "Student" },
   teacher: { icon: Briefcase, label: "Teacher" },
   admin: { icon: Shield, label: "Admin" },
+  superadmin: { icon: Shield, label: "Super Admin" },
 };
 
 export default function UserMenu() {

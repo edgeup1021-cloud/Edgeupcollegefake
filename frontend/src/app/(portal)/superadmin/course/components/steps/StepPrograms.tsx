@@ -198,7 +198,7 @@ export default function StepPrograms({
                 Description
               </label>
               <textarea
-                value={program.description}
+                value={program.description || ''}
                 onChange={(e) =>
                   updateProgram(index, "description", e.target.value)
                 }

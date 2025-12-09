@@ -135,3 +135,13 @@ export enum IdeaSandboxPostStatus {
   ARCHIVED = 'archived',
   FLAGGED = 'flagged',
 }
+
+// Job application status for student_job_applications table
+export enum ApplicationStatus {
+  APPLIED = 'applied',
+  IN_PROGRESS = 'in-progress',
+  OFFER_RECEIVED = 'offer-received',
+  INTERVIEW_SCHEDULED = 'interview-scheduled',
+  REJECTED = 'rejected',
+  NOT_APPLIED = 'not-applied',
+}

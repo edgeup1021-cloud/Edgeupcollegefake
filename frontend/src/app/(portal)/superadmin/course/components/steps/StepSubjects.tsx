@@ -43,7 +43,7 @@ export default function StepSubjects({
               name: s.name,
               code: s.code,
               credits: s.credits,
-              typeId: s.typeId,
+              typeId: s.typeId ?? null,
               description: s.description || ""
             }))
           : [];
@@ -152,9 +152,6 @@ export default function StepSubjects({
           credits: subj.credits,
           typeId: subj.typeId!,
           description: subj.description || null,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         });
       });
     });

@@ -20,7 +20,7 @@ const teacherQuickAccessItems = [
   {
     icon: ClipboardList,
     title: "Tasks & Assignments",
-    href: "/teacher/classroom/tasks-assignments",
+    href: "/teacher/smart-assessment/tasks-assignments",
     description: "Create and manage student assignments",
   },
   {

@@ -113,9 +113,7 @@ export default function StepSubtopics({
         name: subtopic.name,
         orderIndex: subtopic.orderIndex,
         content: subtopic.content || null,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        durationMinutes: null,
       }));
     });
 

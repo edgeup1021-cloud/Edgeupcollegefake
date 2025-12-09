@@ -11,7 +11,7 @@ const formatToken = (token: string): string => {
 export function getSocket(token?: string): Socket {
   // If socket exists and token has changed, disconnect old socket
   if (socket && token) {
-    const currentToken = socket.auth?.token;
+    const currentToken = (socket.auth as { token?: string } | undefined)?.token;
     const newToken = formatToken(token);
     if (currentToken && currentToken !== newToken) {
       console.log('Token changed, reconnecting socket...');
