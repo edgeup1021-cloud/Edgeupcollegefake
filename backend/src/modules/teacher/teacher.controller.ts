@@ -36,6 +36,8 @@ import {
   AddParticipantsDto,
   SendMessageDto,
 } from './dto/messaging';
+import { YouTubeApiService } from './services/youtube-api.service';
+import { QueryDevelopmentProgramsDto } from './dto/query-development-programs.dto';
 
 @Controller('teacher')
 export class TeacherController {
@@ -45,6 +47,7 @@ export class TeacherController {
     private readonly teacherAttendanceService: TeacherAttendanceService,
     private readonly ideaSandboxService: IdeaSandboxService,
     private readonly messagingService: MessagingService,
+    private readonly youtubeApiService: YouTubeApiService,
   ) {}
 
   @Get()
@@ -379,6 +382,25 @@ export class TeacherController {
   ) {
     const tid = teacherId ? parseInt(teacherId, 10) : 1;
     return this.messagingService.deleteConversation(id, tid);
+  // Development Programs - YouTube API integration
+
+  // Personalized recommendations (must be before /search to avoid route conflict)
+  @Get('development-programs/personalized/:teacherId')
+  @Public()
+  async getPersonalizedPrograms(@Param('teacherId', ParseIntPipe) id: number) {
+    return this.youtubeApiService.getPersonalizedCourses(id);
+  }
+
+  @Get('development-programs/search')
+  @Public()
+  async searchDevelopmentPrograms(@Query() query: QueryDevelopmentProgramsDto) {
+    return this.youtubeApiService.searchEducationalVideos(query);
+  }
+
+  @Get('development-programs/channels')
+  @Public()
+  getEducationalChannels() {
+    return this.youtubeApiService.getEducationalChannels();
   }
 
   // Teacher CRUD - placed after specific routes to avoid route conflicts

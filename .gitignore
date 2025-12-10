@@ -50,5 +50,6 @@ coverage/
 
 # Claude Code plans (optional)
 .claude/
+claude.md
 
 .screenshots/

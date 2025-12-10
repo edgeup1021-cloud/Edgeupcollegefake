@@ -28,6 +28,7 @@ import { AssignmentsService } from './services/assignments.service';
 import { TeacherAttendanceService } from './services/teacher-attendance.service';
 import { IdeaSandboxService } from './services/idea-sandbox.service';
 import { MessagingService } from './services/messaging.service';
+import { YouTubeApiService } from './services/youtube-api.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
@@ -61,6 +62,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     TeacherAttendanceService,
     IdeaSandboxService,
     MessagingService,
+    YouTubeApiService,
   ],
   exports: [TeacherService],
 })

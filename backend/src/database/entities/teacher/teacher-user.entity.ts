@@ -26,6 +26,9 @@ export class TeacherUser {
   @Column({ type: 'varchar', length: 100, nullable: true })
   designation: string | null;
 
+  @Column({ name: 'subjects_taught', type: 'varchar', length: 500, nullable: true })
+  subjectsTaught: string | null;
+
   @Column({ name: 'department_id', type: 'bigint', unsigned: true, nullable: true })
   departmentId: number | null;
 

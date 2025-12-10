@@ -50,6 +50,7 @@ const smartAssessmentItems = [
 const growthItems = [
   { label: "Growth Overview", href: "/teacher/growth", icon: TrendingUp },
   { label: "Idea Sandbox", href: "/teacher/growth/idea-sandbox", icon: Lightbulb },
+  { label: "Development Programs", href: "/teacher/growth/development-programs", icon: GraduationCap },
 ];
 
 // Students Items
