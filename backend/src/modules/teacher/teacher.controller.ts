@@ -382,6 +382,8 @@ export class TeacherController {
   ) {
     const tid = teacherId ? parseInt(teacherId, 10) : 1;
     return this.messagingService.deleteConversation(id, tid);
+  }
+
   // Development Programs - YouTube API integration
 
   // Personalized recommendations (must be before /search to avoid route conflict)
