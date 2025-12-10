@@ -219,6 +219,56 @@ export class TeacherService {
     return transformedOfferings;
   }
 
+  async getTeacherStudents(teacherId: number) {
+    // Get all course offerings for this teacher
+    const offerings = await this.courseOfferingRepository.find({
+      where: { teacherId },
+      select: ['id'],
+    });
+
+    if (offerings.length === 0) {
+      return { students: [] };
+    }
+
+    const offeringIds = offerings.map((o) => o.id);
+
+    // Get all active enrollments for these course offerings
+    const enrollments = await this.enrollmentRepository.find({
+      where: {
+        courseOfferingId: In(offeringIds),
+        status: EnrollmentStatus.ACTIVE,
+      },
+      relations: ['student', 'courseOffering'],
+    });
+
+    // Extract unique students (a student might be enrolled in multiple courses)
+    const uniqueStudentsMap = new Map();
+    enrollments.forEach((enrollment) => {
+      const student = enrollment.student;
+      const courseOffering = enrollment.courseOffering;
+
+      // Skip if student or courseOffering is null
+      if (!student || !courseOffering) {
+        return;
+      }
+
+      if (!uniqueStudentsMap.has(student.id)) {
+        uniqueStudentsMap.set(student.id, {
+          id: student.id,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.email,
+          batch: student.batch,
+          section: courseOffering.section,
+        });
+      }
+    });
+
+    const students = Array.from(uniqueStudentsMap.values());
+
+    return { students };
+  }
+
   async createCourseOffering(dto: any, teacherId: number) {
     // 1. Find or create the course
     let course = await this.courseRepository.findOne({

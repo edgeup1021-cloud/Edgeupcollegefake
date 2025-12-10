@@ -52,13 +52,18 @@ const growthItems = [
   { label: "Idea Sandbox", href: "/teacher/growth/idea-sandbox", icon: Lightbulb },
 ];
 
+// Students Items
+const studentsItems = [
+  { label: "Students Overview", href: "/teacher/students", icon: GraduationCap },
+];
+
 // Main navigation items
 const navItems = [
   { id: "overview", label: "Overview", href: "/teacher/overview", icon: LayoutGrid },
   { id: "classroom", label: "Classroom", icon: Users, items: classroomItems },
   { id: "curriculum", label: "Curriculum", icon: BookOpen, items: curriculumItems },
   { id: "smart-assessment", label: "Smart Assessment", icon: FileCheck, items: smartAssessmentItems },
-  { id: "students", label: "Students", href: "/teacher/students", icon: GraduationCap },
+  { id: "students", label: "Students", icon: GraduationCap, items: studentsItems },
   { id: "growth", label: "Growth", icon: TrendingUp, items: growthItems },
 ];
 

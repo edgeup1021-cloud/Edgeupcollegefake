@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { StudentUser } from './student-user.entity';
 import { EnrollmentStatus } from '../../../common/enums/status.enum';
+import { TeacherCourseOffering } from '../teacher/teacher-course-offering.entity';
 
 @Entity('student_enrollments')
 export class StudentEnrollment {
@@ -33,4 +34,8 @@ export class StudentEnrollment {
   @ManyToOne(() => StudentUser)
   @JoinColumn({ name: 'student_id' })
   student: StudentUser;
+
+  @ManyToOne(() => TeacherCourseOffering)
+  @JoinColumn({ name: 'course_offering_id' })
+  courseOffering: TeacherCourseOffering;
 }

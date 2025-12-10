@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 09, 2025 at 05:52 AM
+-- Generation Time: Dec 10, 2025 at 10:36 AM
 -- Server version: 8.0.44-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -20,6 +20,45 @@ SET time_zone = "+00:00";
 --
 -- Database: `edgeup_college`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `conversations`
+--
+
+CREATE TABLE `conversations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `type` enum('one_to_one','course_group','section_group') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `course_offering_id` bigint UNSIGNED DEFAULT NULL,
+  `batch` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `section` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by_id` bigint UNSIGNED NOT NULL,
+  `created_by_type` enum('teacher','student') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_archived` tinyint DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `last_message_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `conversation_participants`
+--
+
+CREATE TABLE `conversation_participants` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `user_type` enum('teacher','student') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','member') COLLATE utf8mb4_unicode_ci DEFAULT 'member',
+  `joined_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_read_at` timestamp NULL DEFAULT NULL,
+  `is_muted` tinyint DEFAULT '0',
+  `is_archived` tinyint DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -55,6 +94,70 @@ INSERT INTO `live_classes` (`id`, `teacher_id`, `title`, `description`, `subject
 (7, 3, 'DSA', 'DSA', 'Biology', 'https://meet.google.com/kub-scyk-uqy', '2025-12-04', '15:51:00', 60, 'CSE - Computer Science and Engineering', '2024', 'A', 'SCHEDULED', NULL, NULL, '2025-12-04 10:20:47', '2025-12-04 10:20:47'),
 (8, 3, 'Formula 1', 'F1 DESC', 'Mathematics', 'https://meet.google.com/kub-scyk-uqy', '2025-12-04', '15:58:00', 60, 'CSE - Computer Science and Engineering', '2024', 'A', 'SCHEDULED', NULL, NULL, '2025-12-04 10:27:00', '2025-12-04 10:27:00'),
 (10, 3, 'test', 'stes', 'Mathematics', 'https://meet.google.com/kub-scyk-uqy?pli=1', '2025-12-05', '12:45:00', 60, 'CSE - Computer Science and Engineering', '2024', 'A', 'SCHEDULED', NULL, NULL, '2025-12-05 07:11:46', '2025-12-05 07:11:46');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `messages`
+--
+
+CREATE TABLE `messages` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `sender_id` bigint UNSIGNED NOT NULL,
+  `sender_type` enum('teacher','student') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message_type` enum('text','file','image') COLLATE utf8mb4_unicode_ci DEFAULT 'text',
+  `priority` enum('normal','important','urgent') COLLATE utf8mb4_unicode_ci DEFAULT 'normal',
+  `parent_message_id` bigint UNSIGNED DEFAULT NULL,
+  `is_edited` tinyint DEFAULT '0',
+  `is_deleted` tinyint DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `message_attachments`
+--
+
+CREATE TABLE `message_attachments` (
+  `id` bigint UNSIGNED NOT NULL,
+  `message_id` bigint UNSIGNED NOT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(1024) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` int NOT NULL,
+  `file_type` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `message_read_receipts`
+--
+
+CREATE TABLE `message_read_receipts` (
+  `id` bigint UNSIGNED NOT NULL,
+  `message_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `user_type` enum('teacher','student') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `read_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `message_tags`
+--
+
+CREATE TABLE `message_tags` (
+  `id` bigint UNSIGNED NOT NULL,
+  `message_id` bigint UNSIGNED NOT NULL,
+  `tag` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -503,6 +606,41 @@ CREATE TABLE `student_grades` (
   `grade_type` enum('Assignment','Assessment','Final') DEFAULT 'Assignment',
   `calculated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_job_applications`
+--
+
+CREATE TABLE `student_job_applications` (
+  `id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `company_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `company_logo` varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `position` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `application_date` date NOT NULL,
+  `status` enum('applied','in-progress','offer-received','interview-scheduled','rejected','not-applied') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'applied',
+  `job_type` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `salary` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `job_url` varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `interview_date` datetime DEFAULT NULL,
+  `offer_deadline` date DEFAULT NULL,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `student_job_applications`
+--
+
+INSERT INTO `student_job_applications` (`id`, `student_id`, `company_name`, `company_logo`, `position`, `application_date`, `status`, `job_type`, `location`, `salary`, `description`, `job_url`, `notes`, `interview_date`, `offer_deadline`, `rejection_reason`, `created_at`, `updated_at`) VALUES
+(1, 8, 'Google', NULL, 'Software Engineer', '2025-12-09', 'applied', 'Job', 'Chennai , India', '8000', 'A very good description', 'https://google.com', 'Who are you and what are you?', NULL, NULL, NULL, '2025-12-09 10:21:20', '2025-12-09 11:35:21'),
+(2, 8, 'Amazon', NULL, 'Devops', '2025-12-09', 'applied', 'Internship', 'Bangalore, India', '60,000', 'AWS Desc', 'https://amazon.in', 'AWS Notes', NULL, NULL, NULL, '2025-12-09 11:33:35', '2025-12-09 11:35:19');
 
 -- --------------------------------------------------------
 
@@ -2090,6 +2228,50 @@ INSERT INTO `teacher_class_sessions` (`id`, `course_offering_id`, `session_date`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `teacher_conversations`
+--
+
+CREATE TABLE `teacher_conversations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `teacher_id` bigint UNSIGNED NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_message_at` timestamp NULL DEFAULT NULL,
+  `is_archived` tinyint NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `teacher_conversations`
+--
+
+INSERT INTO `teacher_conversations` (`id`, `teacher_id`, `title`, `last_message_at`, `is_archived`, `created_at`, `updated_at`) VALUES
+(6, 3, 'Conversation with Mohamed Sameer', '2025-12-10 10:17:44', 0, '2025-12-10 09:59:59', '2025-12-10 10:17:43');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `teacher_conversation_participants`
+--
+
+CREATE TABLE `teacher_conversation_participants` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `joined_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `teacher_conversation_participants`
+--
+
+INSERT INTO `teacher_conversation_participants` (`id`, `conversation_id`, `student_id`, `joined_at`, `created_at`) VALUES
+(6, 6, 8, '2025-12-10 09:59:59', '2025-12-10 09:59:59');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `teacher_courses`
 --
 
@@ -2296,6 +2478,51 @@ INSERT INTO `teacher_library_resources` (`id`, `uploaded_by`, `title`, `descript
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `teacher_messages`
+--
+
+CREATE TABLE `teacher_messages` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `sender_type` enum('teacher','student') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sender_teacher_id` bigint UNSIGNED DEFAULT NULL,
+  `sender_student_id` bigint UNSIGNED DEFAULT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_read` tinyint NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `teacher_messages`
+--
+
+INSERT INTO `teacher_messages` (`id`, `conversation_id`, `sender_type`, `sender_teacher_id`, `sender_student_id`, `content`, `is_read`, `created_at`) VALUES
+(14, 6, 'student', NULL, 8, 'Hello sir , how are you?', 1, '2025-12-10 10:00:07'),
+(15, 6, 'teacher', 3, NULL, 'i am fine man , how are you ?', 1, '2025-12-10 10:00:20'),
+(16, 6, 'student', NULL, 8, 'i am good , how are you sir', 1, '2025-12-10 10:04:31'),
+(17, 6, 'student', NULL, 8, 'hello?', 1, '2025-12-10 10:04:50'),
+(18, 6, 'teacher', 3, NULL, 'yes', 1, '2025-12-10 10:04:56'),
+(19, 6, 'teacher', 3, NULL, 'ok good ?', 1, '2025-12-10 10:05:10'),
+(20, 6, 'student', NULL, 8, 'hmm', 1, '2025-12-10 10:05:19'),
+(21, 6, 'teacher', 3, NULL, 'y', 1, '2025-12-10 10:06:31'),
+(22, 6, 'student', NULL, 8, 'u', 1, '2025-12-10 10:06:34'),
+(23, 6, 'student', NULL, 8, 'ok sir ', 1, '2025-12-10 10:06:51'),
+(24, 6, 'teacher', 3, NULL, 'ok aakif', 1, '2025-12-10 10:06:56'),
+(25, 6, 'student', NULL, 8, 'hmm', 1, '2025-12-10 10:07:56'),
+(26, 6, 'student', NULL, 8, 'hello', 1, '2025-12-10 10:09:29'),
+(27, 6, 'teacher', 3, NULL, 'ok', 1, '2025-12-10 10:09:37'),
+(28, 6, 'student', NULL, 8, 'okokok', 1, '2025-12-10 10:11:19'),
+(29, 6, 'student', NULL, 8, 'now ', 1, '2025-12-10 10:11:30'),
+(30, 6, 'student', NULL, 8, 'hmmm', 1, '2025-12-10 10:13:11'),
+(31, 6, 'teacher', 3, NULL, 'okok', 1, '2025-12-10 10:13:18'),
+(32, 6, 'teacher', 3, NULL, 'okay', 1, '2025-12-10 10:14:39'),
+(33, 6, 'student', NULL, 8, 'who are you??', 1, '2025-12-10 10:17:27'),
+(34, 6, 'student', NULL, 8, '?', 1, '2025-12-10 10:17:35'),
+(35, 6, 'teacher', 3, NULL, 'i am ghost', 1, '2025-12-10 10:17:43');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `teacher_notifications`
 --
 
@@ -2414,6 +2641,27 @@ INSERT INTO `teacher_users` (`id`, `first_name`, `last_name`, `email`, `phone`, 
 --
 
 --
+-- Indexes for table `conversations`
+--
+ALTER TABLE `conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_course_offering` (`course_offering_id`),
+  ADD KEY `idx_batch_section` (`batch`,`section`),
+  ADD KEY `idx_last_message` (`last_message_at`),
+  ADD KEY `idx_creator` (`created_by_id`,`created_by_type`);
+
+--
+-- Indexes for table `conversation_participants`
+--
+ALTER TABLE `conversation_participants`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_participant` (`conversation_id`,`user_id`,`user_type`),
+  ADD KEY `idx_conversation` (`conversation_id`),
+  ADD KEY `idx_user` (`user_id`,`user_type`),
+  ADD KEY `idx_last_read` (`last_read_at`);
+
+--
 -- Indexes for table `live_classes`
 --
 ALTER TABLE `live_classes`
@@ -2422,6 +2670,42 @@ ALTER TABLE `live_classes`
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_scheduled_date` (`scheduled_date`),
   ADD KEY `idx_program_batch_section` (`program`,`batch`,`section`);
+
+--
+-- Indexes for table `messages`
+--
+ALTER TABLE `messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_conversation_created` (`conversation_id`,`created_at`),
+  ADD KEY `idx_sender` (`sender_id`,`sender_type`),
+  ADD KEY `idx_priority` (`priority`),
+  ADD KEY `idx_parent` (`parent_message_id`);
+ALTER TABLE `messages` ADD FULLTEXT KEY `idx_content` (`content`);
+
+--
+-- Indexes for table `message_attachments`
+--
+ALTER TABLE `message_attachments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_message` (`message_id`);
+
+--
+-- Indexes for table `message_read_receipts`
+--
+ALTER TABLE `message_read_receipts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_read` (`message_id`,`user_id`,`user_type`),
+  ADD KEY `idx_message` (`message_id`),
+  ADD KEY `idx_user` (`user_id`,`user_type`),
+  ADD KEY `idx_read_at` (`read_at`);
+
+--
+-- Indexes for table `message_tags`
+--
+ALTER TABLE `message_tags`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_message` (`message_id`),
+  ADD KEY `idx_tag` (`tag`);
 
 --
 -- Indexes for table `mgmt_academic_terms`
@@ -2608,6 +2892,15 @@ ALTER TABLE `student_grades`
   ADD KEY `idx_assessment` (`assessment_id`);
 
 --
+-- Indexes for table `student_job_applications`
+--
+ALTER TABLE `student_job_applications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_student_id` (`student_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_application_date` (`application_date`);
+
+--
 -- Indexes for table `student_leave_requests`
 --
 ALTER TABLE `student_leave_requests`
@@ -2783,6 +3076,23 @@ ALTER TABLE `teacher_class_sessions`
   ADD KEY `idx_date` (`session_date`);
 
 --
+-- Indexes for table `teacher_conversations`
+--
+ALTER TABLE `teacher_conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_teacher_conversations_teacher_id` (`teacher_id`),
+  ADD KEY `idx_teacher_conversations_last_message_at` (`last_message_at`);
+
+--
+-- Indexes for table `teacher_conversation_participants`
+--
+ALTER TABLE `teacher_conversation_participants`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_conversation_participant` (`conversation_id`,`student_id`),
+  ADD KEY `idx_conversation_participants_conversation_id` (`conversation_id`),
+  ADD KEY `idx_conversation_participants_student_id` (`student_id`);
+
+--
 -- Indexes for table `teacher_courses`
 --
 ALTER TABLE `teacher_courses`
@@ -2859,6 +3169,16 @@ ALTER TABLE `teacher_library_resources`
 ALTER TABLE `teacher_library_resources` ADD FULLTEXT KEY `idx_fulltext_search` (`title`,`description`,`tags`);
 
 --
+-- Indexes for table `teacher_messages`
+--
+ALTER TABLE `teacher_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_teacher_messages_conversation_id` (`conversation_id`),
+  ADD KEY `idx_teacher_messages_created_at` (`created_at`),
+  ADD KEY `idx_teacher_messages_sender_teacher` (`sender_teacher_id`),
+  ADD KEY `idx_teacher_messages_sender_student` (`sender_student_id`);
+
+--
 -- Indexes for table `teacher_notifications`
 --
 ALTER TABLE `teacher_notifications`
@@ -2914,10 +3234,46 @@ ALTER TABLE `teacher_users`
 --
 
 --
+-- AUTO_INCREMENT for table `conversations`
+--
+ALTER TABLE `conversations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `conversation_participants`
+--
+ALTER TABLE `conversation_participants`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `live_classes`
 --
 ALTER TABLE `live_classes`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `messages`
+--
+ALTER TABLE `messages`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `message_attachments`
+--
+ALTER TABLE `message_attachments`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `message_read_receipts`
+--
+ALTER TABLE `message_read_receipts`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `message_tags`
+--
+ALTER TABLE `message_tags`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `mgmt_academic_terms`
@@ -3058,6 +3414,12 @@ ALTER TABLE `student_grades`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `student_job_applications`
+--
+ALTER TABLE `student_job_applications`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `student_leave_requests`
 --
 ALTER TABLE `student_leave_requests`
@@ -3178,6 +3540,18 @@ ALTER TABLE `teacher_class_sessions`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=599;
 
 --
+-- AUTO_INCREMENT for table `teacher_conversations`
+--
+ALTER TABLE `teacher_conversations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `teacher_conversation_participants`
+--
+ALTER TABLE `teacher_conversation_participants`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `teacher_courses`
 --
 ALTER TABLE `teacher_courses`
@@ -3226,6 +3600,12 @@ ALTER TABLE `teacher_library_resources`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
+-- AUTO_INCREMENT for table `teacher_messages`
+--
+ALTER TABLE `teacher_messages`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+
+--
 -- AUTO_INCREMENT for table `teacher_notifications`
 --
 ALTER TABLE `teacher_notifications`
@@ -3272,16 +3652,53 @@ ALTER TABLE `teacher_users`
 --
 
 --
+-- Constraints for table `conversation_participants`
+--
+ALTER TABLE `conversation_participants`
+  ADD CONSTRAINT `fk_conv_participant_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `live_classes`
 --
 ALTER TABLE `live_classes`
   ADD CONSTRAINT `fk_live_class_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `messages`
+--
+ALTER TABLE `messages`
+  ADD CONSTRAINT `fk_message_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_message_parent` FOREIGN KEY (`parent_message_id`) REFERENCES `messages` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `message_attachments`
+--
+ALTER TABLE `message_attachments`
+  ADD CONSTRAINT `fk_attachment_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `message_read_receipts`
+--
+ALTER TABLE `message_read_receipts`
+  ADD CONSTRAINT `fk_read_receipt_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `message_tags`
+--
+ALTER TABLE `message_tags`
+  ADD CONSTRAINT `fk_tag_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `student_calendar_events`
 --
 ALTER TABLE `student_calendar_events`
   ADD CONSTRAINT `fk_calendar_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_job_applications`
+--
+ALTER TABLE `student_job_applications`
+  ADD CONSTRAINT `fk_student_job_application_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `student_leave_requests`
@@ -3348,6 +3765,19 @@ ALTER TABLE `study_group_teacher_moderators`
   ADD CONSTRAINT `fk_study_teacher_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `teacher_conversations`
+--
+ALTER TABLE `teacher_conversations`
+  ADD CONSTRAINT `fk_teacher_conversations_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `teacher_conversation_participants`
+--
+ALTER TABLE `teacher_conversation_participants`
+  ADD CONSTRAINT `fk_conversation_participants_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `teacher_conversations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_conversation_participants_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `teacher_idea_sandbox_comments`
 --
 ALTER TABLE `teacher_idea_sandbox_comments`
@@ -3372,6 +3802,14 @@ ALTER TABLE `teacher_idea_sandbox_upvotes`
 --
 ALTER TABLE `teacher_library_resources`
   ADD CONSTRAINT `fk_library_teacher` FOREIGN KEY (`uploaded_by`) REFERENCES `teacher_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `teacher_messages`
+--
+ALTER TABLE `teacher_messages`
+  ADD CONSTRAINT `fk_teacher_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `teacher_conversations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_teacher_messages_student` FOREIGN KEY (`sender_student_id`) REFERENCES `student_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_teacher_messages_teacher` FOREIGN KEY (`sender_teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
