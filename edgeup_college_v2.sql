@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 10, 2025 at 07:12 AM
+-- Generation Time: Dec 10, 2025 at 09:30 AM
 -- Server version: 8.0.44-0ubuntu0.24.04.2
 -- PHP Version: 8.3.6
 
@@ -1932,6 +1932,36 @@ INSERT INTO `teacher_class_sessions` (`id`, `course_offering_id`, `session_date`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `teacher_conversations`
+--
+
+CREATE TABLE `teacher_conversations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `teacher_id` bigint UNSIGNED NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_message_at` timestamp NULL DEFAULT NULL,
+  `is_archived` tinyint NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `teacher_conversation_participants`
+--
+
+CREATE TABLE `teacher_conversation_participants` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `student_id` bigint UNSIGNED NOT NULL,
+  `joined_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `teacher_courses`
 --
 
@@ -2108,6 +2138,23 @@ INSERT INTO `teacher_library_resources` (`id`, `uploaded_by`, `title`, `descript
 (3, 3, 'Operating Systems Lab Manual', 'Lab manual for OS course', NULL, NULL, 'Lab Manuals', 'https://s3.example.com/os-lab-manual.pdf', 'os-lab-manual.pdf', '1500000', 'application/pdf', NULL, NULL, NULL, NULL, 0, 0, 'Computer Science', 'operating systems, linux, labs', 'ARCHIVED', '2025-12-03 07:23:16', '2025-12-03 07:26:13'),
 (4, 3, 'Operating Systems Lab Manual', 'Lab manual for OS course', NULL, NULL, 'Lab Manuals', 'https://s3.example.com/os-lab-manual.pdf', 'os-lab-manual.pdf', '1500000', 'application/pdf', NULL, NULL, NULL, NULL, 0, 0, 'Computer Science', 'operating systems, linux, labs', 'ACTIVE', '2025-12-03 07:23:29', '2025-12-03 07:23:29'),
 (5, 3, 'test', 'testtesttest', 'test', 'book', 'Lecture Notes', 'https://example.com/thumbnail.jpg', 'thumbnail.jpg', 'test', NULL, NULL, 12, NULL, NULL, 0, 0, NULL, NULL, 'ACTIVE', '2025-12-03 10:41:14', '2025-12-03 10:41:14');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `teacher_messages`
+--
+
+CREATE TABLE `teacher_messages` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `sender_type` enum('teacher','student') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sender_teacher_id` bigint UNSIGNED DEFAULT NULL,
+  `sender_student_id` bigint UNSIGNED DEFAULT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_read` tinyint NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -2637,6 +2684,23 @@ ALTER TABLE `teacher_class_sessions`
   ADD KEY `idx_date` (`session_date`);
 
 --
+-- Indexes for table `teacher_conversations`
+--
+ALTER TABLE `teacher_conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_teacher_conversations_teacher_id` (`teacher_id`),
+  ADD KEY `idx_teacher_conversations_last_message_at` (`last_message_at`);
+
+--
+-- Indexes for table `teacher_conversation_participants`
+--
+ALTER TABLE `teacher_conversation_participants`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_conversation_participant` (`conversation_id`,`student_id`),
+  ADD KEY `idx_conversation_participants_conversation_id` (`conversation_id`),
+  ADD KEY `idx_conversation_participants_student_id` (`student_id`);
+
+--
 -- Indexes for table `teacher_courses`
 --
 ALTER TABLE `teacher_courses`
@@ -2713,6 +2777,16 @@ ALTER TABLE `teacher_library_resources`
 ALTER TABLE `teacher_library_resources` ADD FULLTEXT KEY `idx_fulltext_search` (`title`,`description`,`tags`);
 
 --
+-- Indexes for table `teacher_messages`
+--
+ALTER TABLE `teacher_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_teacher_messages_conversation_id` (`conversation_id`),
+  ADD KEY `idx_teacher_messages_created_at` (`created_at`),
+  ADD KEY `idx_teacher_messages_sender_teacher` (`sender_teacher_id`),
+  ADD KEY `idx_teacher_messages_sender_student` (`sender_student_id`);
+
+--
 -- Indexes for table `teacher_notifications`
 --
 ALTER TABLE `teacher_notifications`
@@ -2777,19 +2851,37 @@ ALTER TABLE `live_classes`
 -- AUTO_INCREMENT for table `student_discussion_comments`
 --
 ALTER TABLE `student_discussion_comments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_discussion_posts`
 --
 ALTER TABLE `student_discussion_posts`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_discussion_upvotes`
 --
 ALTER TABLE `student_discussion_upvotes`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `teacher_conversations`
+--
+ALTER TABLE `teacher_conversations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `teacher_conversation_participants`
+--
+ALTER TABLE `teacher_conversation_participants`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `teacher_messages`
+--
+ALTER TABLE `teacher_messages`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
@@ -2814,6 +2906,27 @@ ALTER TABLE `student_discussion_posts`
 ALTER TABLE `student_discussion_upvotes`
   ADD CONSTRAINT `fk_discussion_upvote_post` FOREIGN KEY (`post_id`) REFERENCES `student_discussion_posts` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_discussion_upvote_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `teacher_conversations`
+--
+ALTER TABLE `teacher_conversations`
+  ADD CONSTRAINT `fk_teacher_conversations_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `teacher_conversation_participants`
+--
+ALTER TABLE `teacher_conversation_participants`
+  ADD CONSTRAINT `fk_conversation_participants_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `teacher_conversations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_conversation_participants_student` FOREIGN KEY (`student_id`) REFERENCES `student_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `teacher_messages`
+--
+ALTER TABLE `teacher_messages`
+  ADD CONSTRAINT `fk_teacher_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `teacher_conversations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_teacher_messages_student` FOREIGN KEY (`sender_student_id`) REFERENCES `student_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_teacher_messages_teacher` FOREIGN KEY (`sender_teacher_id`) REFERENCES `teacher_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

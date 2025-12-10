@@ -30,6 +30,8 @@ import {
   CreateCommentDto,
   ArchivePostDto,
 } from './dto/idea-sandbox';
+import { YouTubeApiService } from './services/youtube-api.service';
+import { QueryDevelopmentProgramsDto } from './dto/query-development-programs.dto';
 
 @Controller('teacher')
 export class TeacherController {
@@ -38,6 +40,7 @@ export class TeacherController {
     private readonly assignmentsService: AssignmentsService,
     private readonly teacherAttendanceService: TeacherAttendanceService,
     private readonly ideaSandboxService: IdeaSandboxService,
+    private readonly youtubeApiService: YouTubeApiService,
   ) {}
 
   @Get()
@@ -304,6 +307,19 @@ export class TeacherController {
   ) {
     const tid = teacherId ? parseInt(teacherId, 10) : 1;
     return this.ideaSandboxService.removeComment(id, tid);
+  }
+
+  // Development Programs - YouTube API integration
+  @Get('development-programs/search')
+  @Public()
+  async searchDevelopmentPrograms(@Query() query: QueryDevelopmentProgramsDto) {
+    return this.youtubeApiService.searchEducationalVideos(query);
+  }
+
+  @Get('development-programs/channels')
+  @Public()
+  getEducationalChannels() {
+    return this.youtubeApiService.getEducationalChannels();
   }
 
   // Teacher CRUD - placed after specific routes to avoid route conflicts

@@ -24,6 +24,7 @@ import { CalendarModule } from '../student/calendar/calendar.module';
 import { AssignmentsService } from './services/assignments.service';
 import { TeacherAttendanceService } from './services/teacher-attendance.service';
 import { IdeaSandboxService } from './services/idea-sandbox.service';
+import { YouTubeApiService } from './services/youtube-api.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
@@ -53,6 +54,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     AssignmentsService,
     TeacherAttendanceService,
     IdeaSandboxService,
+    YouTubeApiService,
   ],
   exports: [TeacherService],
 })

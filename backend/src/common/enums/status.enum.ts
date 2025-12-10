@@ -172,3 +172,28 @@ export enum DiscussionPostStatus {
   ARCHIVED = 'archived',
   FLAGGED = 'flagged',
 }
+
+// Development Programs - Course sources
+export enum CourseSource {
+  UDEMY = 'Udemy',
+  COURSERA = 'Coursera',
+  YOUTUBE = 'YouTube',
+  KHAN_ACADEMY = 'Khan Academy',
+  COMPANY = 'Company',
+  OTHER = 'Other',
+}
+
+// Development Programs - Course levels
+export enum CourseLevel {
+  BEGINNER = 'Beginner',
+  INTERMEDIATE = 'Intermediate',
+  ADVANCED = 'Advanced',
+  ALL_LEVELS = 'All Levels',
+}
+
+// Development Programs - Course status
+export enum CourseStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ARCHIVED = 'archived',
+}
