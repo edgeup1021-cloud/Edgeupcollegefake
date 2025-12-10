@@ -39,3 +39,13 @@ export async function searchCourses(
 export async function getEducationalChannels(): Promise<EducationalChannel[]> {
   return api.get<EducationalChannel[]>(`${BASE_PATH}/channels`);
 }
+
+/**
+ * Get personalized course recommendations for a teacher
+ * Uses teacher's subjects and department for smart recommendations
+ */
+export async function getPersonalizedCourses(
+  teacherId: number
+): Promise<DevelopmentCourse[]> {
+  return api.get<DevelopmentCourse[]>(`${BASE_PATH}/personalized/${teacherId}`);
+}

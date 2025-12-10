@@ -310,6 +310,14 @@ export class TeacherController {
   }
 
   // Development Programs - YouTube API integration
+
+  // Personalized recommendations (must be before /search to avoid route conflict)
+  @Get('development-programs/personalized/:teacherId')
+  @Public()
+  async getPersonalizedPrograms(@Param('teacherId', ParseIntPipe) id: number) {
+    return this.youtubeApiService.getPersonalizedCourses(id);
+  }
+
   @Get('development-programs/search')
   @Public()
   async searchDevelopmentPrograms(@Query() query: QueryDevelopmentProgramsDto) {

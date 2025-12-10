@@ -1,6 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CourseSource, CourseLevel } from '../../../common/enums/status.enum';
+import { TeacherUser } from '../../../database/entities/teacher/teacher-user.entity';
+import { Department } from '../../../database/entities/management/department.entity';
 
 export interface YouTubeCourse {
   id: string;
@@ -34,12 +38,17 @@ export class YouTubeApiService {
   private readonly educationalChannels = {
     'Khan Academy': 'UC4a-Gbdw7vOaccHmFo40b9g',
     'MIT OpenCourseWare': 'UCEBb1b_L6zDS3xTUrIALZOw',
-    'Crash Course': 'UCX6OQ3DkcsbYNE6H8uQQuVA',
     'TED-Ed': 'UCsooa4yRKGN_zEE8iknghZA',
-    'Coursera': 'UC5BDTbTeYTXYt4aOVC_kW-w',
+    'Coursera': 'UCZ50rYSkYQG31YDEJm9Di_g',
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(TeacherUser)
+    private teacherRepo: Repository<TeacherUser>,
+    @InjectRepository(Department)
+    private departmentRepo: Repository<Department>,
+  ) {
     this.apiKey = this.configService.get<string>('YOUTUBE_API_KEY') || '';
 
     if (!this.apiKey) {
@@ -61,25 +70,42 @@ export class YouTubeApiService {
         type: 'video',
         maxResults: String(params.maxResults || 20),
         order: 'relevance',
-        videoDuration: 'medium', // 4-20 minutes
         videoDefinition: 'high',
         key: this.apiKey,
       });
 
-      // Add query if provided
-      if (params.query) {
-        searchParams.append('q', params.query);
-      }
-
       // Add channel filter if provided
       if (params.channelId) {
         searchParams.append('channelId', params.channelId);
+        // Add educational query if no query provided
+        if (!params.query) {
+          searchParams.append('q', 'tutorial lesson course');
+        } else {
+          searchParams.append('q', params.query);
+        }
       } else if (params.category) {
         // Use category to select channel
         const channelId = this.educationalChannels[params.category as keyof typeof this.educationalChannels];
         if (channelId) {
           searchParams.append('channelId', channelId);
+
+          // Add channel-specific educational queries if no query provided
+          if (!params.query) {
+            const channelQueries: Record<string, string> = {
+              'Khan Academy': 'tutorial lesson',
+              'MIT OpenCourseWare': 'lecture course',
+              'TED-Ed': 'education lesson',
+              'Coursera': 'course tutorial',
+            };
+            const query = channelQueries[params.category] || 'tutorial lesson';
+            searchParams.append('q', query);
+          } else {
+            searchParams.append('q', params.query);
+          }
         }
+      } else if (params.query) {
+        // No channel filter, just query
+        searchParams.append('q', params.query);
       }
 
       const searchResponse = await fetch(`${this.baseUrl}/search?${searchParams}`);
@@ -209,11 +235,11 @@ export class YouTubeApiService {
     if (channelTitle.toLowerCase().includes('mit')) {
       return 'Computer Science';
     }
-    if (channelTitle.toLowerCase().includes('crash course')) {
-      return 'General Education';
-    }
     if (channelTitle.toLowerCase().includes('ted')) {
       return 'Educational Talks';
+    }
+    if (channelTitle.toLowerCase().includes('coursera')) {
+      return 'Professional Courses';
     }
     return 'Education';
   }
@@ -226,5 +252,63 @@ export class YouTubeApiService {
       name,
       channelId,
     }));
+  }
+
+  /**
+   * Get personalized course recommendations for a teacher
+   * Uses a 3-tier priority system:
+   * 1. subjects_taught (most specific)
+   * 2. department (medium specific)
+   * 3. generic fallback (no personalization data)
+   */
+  async getPersonalizedCourses(teacherId: number): Promise<YouTubeCourse[]> {
+    try {
+      // Get teacher
+      const teacher = await this.teacherRepo.findOne({
+        where: { id: teacherId },
+      });
+
+      if (!teacher) {
+        throw new NotFoundException('Teacher not found');
+      }
+
+      // Build smart query based on available data
+      let query = '';
+
+      // Priority 1: Use subjects they teach (most specific)
+      if (teacher.subjectsTaught && teacher.subjectsTaught.trim()) {
+        query = `${teacher.subjectsTaught} tutorial`;
+        this.logger.log(`Personalized by subjects for teacher ${teacherId}: "${query}"`);
+      }
+      // Priority 2: Use department (medium specificity)
+      else if (teacher.departmentId) {
+        const department = await this.departmentRepo.findOne({
+          where: { id: teacher.departmentId },
+        });
+        if (department?.name) {
+          query = `${department.name} teaching tutorial`;
+          this.logger.log(`Personalized by department for teacher ${teacherId}: "${query}"`);
+        }
+      }
+
+      // Priority 3: Fallback to generic (no personalization data)
+      if (!query) {
+        query = 'education tutorial';
+        this.logger.log(`Generic search for teacher ${teacherId} (no personalization data)`);
+      }
+
+      // Search YouTube with personalized query
+      return this.searchEducationalVideos({
+        query,
+        maxResults: 20
+      });
+    } catch (error) {
+      this.logger.error(`Failed to get personalized courses: ${error.message}`, error.stack);
+      // Fallback to generic search
+      return this.searchEducationalVideos({
+        query: 'education tutorial',
+        maxResults: 20
+      });
+    }
   }
 }
