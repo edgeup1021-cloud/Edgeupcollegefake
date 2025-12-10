@@ -1,7 +1,14 @@
 import { Module, Global } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, getDataSourceToken } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import { getSuperadminDatabaseConfig } from '../config/superadmin.database.config';
+
+const superadminDataSourceProvider = {
+  provide: 'SUPERADMIN_DATA_SOURCE',
+  useFactory: (dataSource: DataSource) => dataSource,
+  inject: [getDataSourceToken('superadmin')],
+};
 
 @Global()
 @Module({
@@ -14,6 +21,7 @@ import { getSuperadminDatabaseConfig } from '../config/superadmin.database.confi
       useFactory: getSuperadminDatabaseConfig,
     }),
   ],
-  exports: [TypeOrmModule],
+  providers: [superadminDataSourceProvider],
+  exports: [TypeOrmModule, superadminDataSourceProvider],
 })
 export class SuperadminDatabaseModule {}

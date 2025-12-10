@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import { getDatabaseConfig } from '../config/database.config';
 
 // Student entities
@@ -63,6 +64,12 @@ const entities = [
   Financial,
 ];
 
+const dataSourceProvider = {
+  provide: 'DATA_SOURCE',
+  useFactory: (dataSource: DataSource) => dataSource,
+  inject: [DataSource],
+};
+
 @Global()
 @Module({
   imports: [
@@ -74,6 +81,7 @@ const entities = [
     }),
     TypeOrmModule.forFeature(entities),
   ],
-  exports: [TypeOrmModule],
+  providers: [dataSourceProvider],
+  exports: [TypeOrmModule, dataSourceProvider],
 })
 export class DatabaseModule { }

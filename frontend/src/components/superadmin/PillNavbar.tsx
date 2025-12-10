@@ -9,7 +9,7 @@ import logo from "@/assets/logo.png";
 import {
   LayoutGrid,
   BookOpen,
-  Shield,
+  Users,
   Building2,
   ScrollText,
   Search,
@@ -17,16 +17,23 @@ import {
   Moon,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
 import UserMenu from "./UserMenu";
 
+// Curriculum Items
+const curriculumItems = [
+  { label: "Course", href: "/superadmin/curriculum/course", icon: BookOpen },
+  { label: "Subjects", href: "/superadmin/curriculum/subjects", icon: BookOpen },
+];
+
 // Main navigation items
 const navItems = [
   { id: "overview", label: "Overview", href: "/superadmin/overview", icon: LayoutGrid },
-  { id: "course", label: "Course", href: "/superadmin/course", icon: BookOpen },
-  { id: "role", label: "Role", href: "/superadmin/role", icon: Shield },
+  { id: "curriculum", label: "Curriculum", icon: BookOpen, items: curriculumItems },
+  { id: "role", label: "Institutional Heads", href: "/superadmin/role", icon: Users },
   { id: "institute", label: "Institute", href: "/superadmin/institute", icon: Building2 },
   { id: "logs", label: "Admin Logs", href: "/superadmin/admin-logs", icon: ScrollText },
 ];
@@ -36,15 +43,28 @@ export default function PillNavbar() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navContainerRef.current && !navContainerRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const getActiveNavId = () => {
     if (pathname === "/superadmin/overview") return "overview";
-    if (pathname.startsWith("/superadmin/course")) return "course";
+    if (pathname.startsWith("/superadmin/curriculum")) return "curriculum";
     if (pathname.startsWith("/superadmin/role")) return "role";
     if (pathname.startsWith("/superadmin/institute")) return "institute";
     if (pathname.startsWith("/superadmin/admin-logs")) return "logs";
@@ -75,36 +95,110 @@ export default function PillNavbar() {
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeNavId === item.id;
+                  const hasDropdown = item.items && item.items.length > 0;
 
                   return (
                     <div key={item.id} className="relative">
-                      <Link
-                        href={item.href}
-                        className={`
-                          relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-                          transition-colors duration-200 z-10
-                          ${
-                            isActive
-                              ? "text-brand-primary dark:text-brand-primary"
-                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                          }
-                        `}
-                      >
-                        {isActive && (
-                          <motion.div
-                            layoutId="pill-background"
-                            className="absolute inset-0 bg-white dark:bg-gray-700 rounded-full shadow-sm"
-                            initial={false}
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 30,
-                            }}
-                          />
-                        )}
-                        <Icon className="w-4 h-4 relative z-10" />
-                        <span className="relative z-10">{item.label}</span>
-                      </Link>
+                      {hasDropdown ? (
+                        <>
+                          <button
+                            onClick={() =>
+                              setActiveDropdown(
+                                activeDropdown === item.id ? null : item.id
+                              )
+                            }
+                            className={`
+                              relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                              transition-colors duration-200 z-10
+                              ${
+                                isActive
+                                  ? "text-brand-primary dark:text-brand-primary"
+                                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                              }
+                            `}
+                          >
+                            {isActive && (
+                              <motion.div
+                                layoutId="pill-background"
+                                className="absolute inset-0 bg-white dark:bg-gray-700 rounded-full shadow-sm"
+                                initial={false}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 500,
+                                  damping: 30,
+                                }}
+                              />
+                            )}
+                            <Icon className="w-4 h-4 relative z-10" />
+                            <span className="relative z-10">{item.label}</span>
+                            <ChevronDown
+                              className={`w-3 h-3 relative z-10 transition-transform ${
+                                activeDropdown === item.id ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          <AnimatePresence>
+                            {activeDropdown === item.id && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
+                              >
+                                <div className="p-2">
+                                  {item.items?.map((subItem) => {
+                                    const SubIcon = subItem.icon;
+                                    return (
+                                      <Link
+                                        key={subItem.href}
+                                        href={subItem.href}
+                                        onClick={() => setActiveDropdown(null)}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                      >
+                                        <SubIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                        <span className="text-gray-700 dark:text-gray-200">
+                                          {subItem.label}
+                                        </span>
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </>
+                      ) : (
+                        <Link
+                          href={item.href!}
+                          className={`
+                            relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                            transition-colors duration-200 z-10
+                            ${
+                              isActive
+                                ? "text-brand-primary dark:text-brand-primary"
+                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                            }
+                          `}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="pill-background"
+                              className="absolute inset-0 bg-white dark:bg-gray-700 rounded-full shadow-sm"
+                              initial={false}
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 30,
+                              }}
+                            />
+                          )}
+                          <Icon className="w-4 h-4 relative z-10" />
+                          <span className="relative z-10">{item.label}</span>
+                        </Link>
+                      )}
                     </div>
                   );
                 })}
@@ -186,22 +280,45 @@ export default function PillNavbar() {
                   const isActive = activeNavId === item.id;
 
                   return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`
-                        flex items-center gap-3 px-4 py-3 rounded-full text-sm font-medium transition-all
-                        ${
-                          isActive
-                            ? "bg-brand-light dark:bg-brand-primary/20 text-brand-primary"
-                            : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }
-                      `}
-                    >
-                      <Icon className="w-5 h-5" />
-                      {item.label}
-                    </Link>
+                    <div key={item.id}>
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`
+                            flex items-center gap-3 px-4 py-3 rounded-full text-sm font-medium transition-all
+                            ${
+                              isActive
+                                ? "bg-brand-light dark:bg-brand-primary/20 text-brand-primary"
+                                : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            }
+                          `}
+                        >
+                          <Icon className="w-5 h-5" />
+                          {item.label}
+                        </Link>
+                      ) : (
+                        <>
+                          <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
+                            {item.label}
+                          </div>
+                          {item.items?.map((subItem) => {
+                            const SubIcon = subItem.icon;
+                            return (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="flex items-center gap-3 px-4 py-2.5 ml-4 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                              >
+                                <SubIcon className="w-4 h-4" />
+                                {subItem.label}
+                              </Link>
+                            );
+                          })}
+                        </>
+                      )}
+                    </div>
                   );
                 })}
               </div>

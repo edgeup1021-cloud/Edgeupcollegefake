@@ -17,22 +17,54 @@ import {
   Menu,
   X,
   ChevronDown,
+  TrendingUp,
+  CheckCircle,
+  BarChart3,
+  Briefcase,
+  Users,
+  Award,
+  UserCheck,
+  Package,
+  GraduationCap,
+  AlertCircle,
+  Shield,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
 import UserMenu from "./UserMenu";
 
-// Analytics Items
-const analyticsItems = [
-  { label: "Predictive Intelligence", href: "/management/predictive-intelligence", icon: Brain },
-  { label: "Risk Mitigation", href: "/management/risk-mitigation", icon: AlertTriangle },
+// Institutional Health Items
+const institutionalHealthItems = [
+  { label: "Academic Performance", href: "/management/institutional-health/academic-performance", icon: TrendingUp },
+  { label: "Compliance Tracker", href: "/management/institutional-health/compliance-tracker", icon: CheckCircle },
+  { label: "Campus Comparison", href: "/management/institutional-health/campus-comparison", icon: BarChart3 },
+  { label: "Financial Health", href: "/management/institutional-health/financial-health", icon: DollarSign },
+  { label: "Career Readiness", href: "/management/institutional-health/career-readiness", icon: Briefcase },
+];
+
+// Predictive Intelligence Items
+const predictiveIntelligenceItems = [
+  { label: "Enrollment Prediction", href: "/management/predictive-intelligence/enrollment-prediction", icon: Users },
+  { label: "Result Prediction", href: "/management/predictive-intelligence/result-prediction", icon: Award },
+  { label: "Student Retention", href: "/management/predictive-intelligence/student-retention", icon: UserCheck },
+  { label: "Placement Prediction", href: "/management/predictive-intelligence/placement-prediction", icon: Briefcase },
+  { label: "Resource Management", href: "/management/predictive-intelligence/resource-management", icon: Package },
+  { label: "Academic Achievement", href: "/management/predictive-intelligence/academic-achievement", icon: GraduationCap },
+];
+
+// Risk Mitigation Items
+const riskMitigationItems = [
+  { label: "Incident Tracking", href: "/management/risk-mitigation/incident-tracking", icon: AlertCircle },
+  { label: "Risk Dashboard", href: "/management/risk-mitigation/risk-dashboard", icon: Shield },
 ];
 
 // Main navigation items
 const navItems = [
-  { id: "health", label: "Institutional Health", href: "/management/institutional-health", icon: LayoutGrid },
-  { id: "analytics", label: "Analytics", icon: Brain, items: analyticsItems },
-  { id: "finance", label: "Finance", href: "/management/financial-management", icon: DollarSign },
+  { id: "overview", label: "Overview", href: "/management/overview", icon: LayoutGrid },
+  { id: "health", label: "Institutional Health", icon: LayoutGrid, items: institutionalHealthItems },
+  { id: "intelligence", label: "Predictive Intelligence", icon: Brain, items: predictiveIntelligenceItems },
+  { id: "risk", label: "Risk Mitigation", icon: AlertTriangle, items: riskMitigationItems },
+  { id: "finance", label: "Financial Management", href: "/management/financial-management", icon: DollarSign },
 ];
 
 export default function PillNavbar() {
@@ -60,9 +92,10 @@ export default function PillNavbar() {
   }, []);
 
   const getActiveNavId = () => {
-    if (pathname === "/management/institutional-health") return "health";
-    if (pathname.startsWith("/management/predictive-intelligence") ||
-        pathname.startsWith("/management/risk-mitigation")) return "analytics";
+    if (pathname === "/management/overview") return "overview";
+    if (pathname.startsWith("/management/institutional-health")) return "health";
+    if (pathname.startsWith("/management/predictive-intelligence")) return "intelligence";
+    if (pathname.startsWith("/management/risk-mitigation")) return "risk";
     if (pathname.startsWith("/management/financial-management")) return "finance";
     return null;
   };
@@ -75,7 +108,7 @@ export default function PillNavbar() {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo */}
-            <Link href="/management/institutional-health" className="flex items-center">
+            <Link href="/management/overview" className="flex items-center">
               <Image
                 src={logo}
                 alt="EdgeUp"

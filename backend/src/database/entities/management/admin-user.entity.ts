@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { AdminRole } from '../../../common/enums/status.enum';
 
-@Entity('mgmt_admin_users')
+@Entity('admin_users')
 export class AdminUser {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: number;

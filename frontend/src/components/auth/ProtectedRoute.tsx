@@ -21,8 +21,19 @@ export default function ProtectedRoute({
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        // Redirect to login with return URL
-        router.push(`/login?returnUrl=${encodeURIComponent(pathname)}`);
+        // Detect portal from pathname and redirect to appropriate login
+        let loginPath = "/student/login";
+        if (pathname.startsWith("/management")) {
+          loginPath = "/management/login";
+        } else if (pathname.startsWith("/teacher")) {
+          loginPath = "/teacher/login";
+        } else if (pathname.startsWith("/superadmin")) {
+          loginPath = "/superadmin/login";
+        } else if (pathname.startsWith("/student")) {
+          loginPath = "/student/login";
+        }
+
+        router.push(`${loginPath}?returnUrl=${encodeURIComponent(pathname)}`);
         return;
       }
 
@@ -32,7 +43,7 @@ export default function ProtectedRoute({
         const roleRoutes: Record<string, string> = {
           student: "/student/overview",
           teacher: "/teacher/overview",
-          admin: "/management/institutional-health",
+          admin: "/management/overview",
           superadmin: "/superadmin/overview",
         };
         router.push(roleRoutes[user.role] || "/");

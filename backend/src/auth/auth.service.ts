@@ -79,13 +79,22 @@ export class AuthService {
       const admin = await this.adminRepository.findOne({
         where: { email },
       });
+      console.log('[DEBUG] Admin search for email:', email);
+      console.log('[DEBUG] Admin found:', admin ? 'YES' : 'NO');
+      if (admin) {
+        console.log('[DEBUG] Admin has passwordHash:', admin.passwordHash ? 'YES' : 'NO');
+        console.log('[DEBUG] Password hash preview:', admin.passwordHash?.substring(0, 20));
+        console.log('[DEBUG] Admin role from DB:', admin.role);
+      }
       if (admin && admin.passwordHash) {
         const isValid = await this.passwordService.compare(
           password,
           admin.passwordHash,
         );
+        console.log('[DEBUG] Password valid:', isValid);
         if (isValid) {
           user = admin;
+          user.specificRole = admin.role; // Store the specific admin role
           userType = UserType.ADMIN;
           role = UserRole.ADMIN;
         }
@@ -111,12 +120,23 @@ export class AuthService {
     }
 
     if (user) {
+      // Handle fullName for admin users (they don't have firstName/lastName fields)
+      let firstName = user.firstName;
+      let lastName = user.lastName;
+
+      if (!firstName && user.fullName) {
+        const nameParts = user.fullName.split(' ');
+        firstName = nameParts[0];
+        lastName = nameParts.slice(1).join(' ') || '';
+      }
+
       return {
         id: user.id,
         email: user.email,
-        firstName: user.firstName || user.fullName?.split(' ')[0],
-        lastName: user.lastName || user.fullName?.split(' ').slice(1).join(' '),
+        firstName: firstName || '',
+        lastName: lastName || '',
         role,
+        specificRole: user.specificRole || user.role, // Include specific role for admins
         userType,
       };
     }
@@ -146,6 +166,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        specificRole: user.specificRole, // Include specific role for display
         userType: user.userType,
         portalType: loginDto.portalType,
       },

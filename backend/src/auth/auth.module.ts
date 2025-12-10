@@ -18,7 +18,7 @@ import { getJwtConfig } from '../config/jwt.config';
   imports: [
     TypeOrmModule.forFeature([StudentUser, TeacherUser, AdminUser]),
     TypeOrmModule.forFeature([SuperadminUser], 'superadmin'),
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({}),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -37,4 +37,4 @@ import { LiveClassesModule } from './modules/live-classes/live-classes.module';
     CareerModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

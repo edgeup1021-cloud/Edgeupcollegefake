@@ -1,9 +1,7 @@
 export { SuperadminUser } from './superadmin-user.entity';
+export { Course } from './course.entity';
+export { Subject } from './subject.entity';
+export { Topic } from './topic.entity';
+export { Subtopic } from './subtopic.entity';
+export { InstitutionalHead } from './institutional-head.entity';
 export { University } from './university.entity';
-export { Program } from './program.entity';
-export { ProgramDepartment } from './program-department.entity';
-export { ProgramSemester } from './program-semester.entity';
-export { CourseType } from './course-type.entity';
-export { CourseSubject } from './course-subject.entity';
-export { CourseTopic } from './course-topic.entity';
-export { CourseSubtopic } from './course-subtopic.entity';

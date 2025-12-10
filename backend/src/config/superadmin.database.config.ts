@@ -2,14 +2,12 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
   SuperadminUser,
+  Course,
+  Subject,
+  Topic,
+  Subtopic,
+  InstitutionalHead,
   University,
-  Program,
-  ProgramDepartment,
-  ProgramSemester,
-  CourseType,
-  CourseSubject,
-  CourseTopic,
-  CourseSubtopic,
 } from '../database/entities/superadmin';
 
 export const getSuperadminDatabaseConfig = (
@@ -22,17 +20,7 @@ export const getSuperadminDatabaseConfig = (
     username: configService.get<string>('SUPERADMIN_DB_USERNAME', 'root'),
     password: configService.get<string>('SUPERADMIN_DB_PASSWORD', ''),
     database: configService.get<string>('SUPERADMIN_DB_DATABASE', 'edgeup_super_admin'),
-    entities: [
-      SuperadminUser,
-      University,
-      Program,
-      ProgramDepartment,
-      ProgramSemester,
-      CourseType,
-      CourseSubject,
-      CourseTopic,
-      CourseSubtopic,
-    ],
+    entities: [SuperadminUser, Course, Subject, Topic, Subtopic, InstitutionalHead, University],
     synchronize: false,
     logging: true,
   };
