@@ -11,6 +11,9 @@ import {
   TeacherIdeaSandboxPost,
   TeacherIdeaSandboxComment,
   TeacherIdeaSandboxUpvote,
+  TeacherConversation,
+  TeacherConversationParticipant,
+  TeacherMessage,
 } from '../../database/entities/teacher';
 import {
   StudentEnrollment,
@@ -24,6 +27,7 @@ import { CalendarModule } from '../student/calendar/calendar.module';
 import { AssignmentsService } from './services/assignments.service';
 import { TeacherAttendanceService } from './services/teacher-attendance.service';
 import { IdeaSandboxService } from './services/idea-sandbox.service';
+import { MessagingService } from './services/messaging.service';
 import { YouTubeApiService } from './services/youtube-api.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
@@ -38,6 +42,9 @@ import { AttendanceModule } from '../attendance/attendance.module';
       TeacherIdeaSandboxPost,
       TeacherIdeaSandboxComment,
       TeacherIdeaSandboxUpvote,
+      TeacherConversation,
+      TeacherConversationParticipant,
+      TeacherMessage,
       StudentEnrollment,
       StudentAssignmentSubmission,
       StudentUser,
@@ -54,6 +61,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     AssignmentsService,
     TeacherAttendanceService,
     IdeaSandboxService,
+    MessagingService,
     YouTubeApiService,
   ],
   exports: [TeacherService],

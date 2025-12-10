@@ -30,6 +30,12 @@ import {
   CreateCommentDto,
   ArchivePostDto,
 } from './dto/idea-sandbox';
+import { MessagingService } from './services/messaging.service';
+import {
+  CreateConversationDto,
+  AddParticipantsDto,
+  SendMessageDto,
+} from './dto/messaging';
 import { YouTubeApiService } from './services/youtube-api.service';
 import { QueryDevelopmentProgramsDto } from './dto/query-development-programs.dto';
 
@@ -40,6 +46,7 @@ export class TeacherController {
     private readonly assignmentsService: AssignmentsService,
     private readonly teacherAttendanceService: TeacherAttendanceService,
     private readonly ideaSandboxService: IdeaSandboxService,
+    private readonly messagingService: MessagingService,
     private readonly youtubeApiService: YouTubeApiService,
   ) {}
 
@@ -85,6 +92,13 @@ export class TeacherController {
   getCourseOfferings(@Query('teacherId') teacherId?: string) {
     const id = teacherId ? parseInt(teacherId, 10) : 1;
     return this.teacherService.getTeacherCourses(id);
+  }
+
+  @Get('students')
+  @Public()
+  getStudents(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherService.getTeacherStudents(id);
   }
 
   // Assignment CRUD
@@ -309,6 +323,65 @@ export class TeacherController {
     return this.ideaSandboxService.removeComment(id, tid);
   }
 
+  // ==================== Messaging Routes ====================
+
+  @Post('conversations')
+  @Public()
+  createConversation(
+    @Body() dto: CreateConversationDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.createConversation(dto, id);
+  }
+
+  @Get('conversations')
+  @Public()
+  getConversations(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.getConversations(id);
+  }
+
+  @Get('conversations/:id')
+  @Public()
+  getConversation(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.getConversationById(id, tid);
+  }
+
+  @Post('conversations/:id/messages')
+  @Public()
+  sendMessage(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SendMessageDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.sendMessage(id, dto, tid);
+  }
+
+  @Post('conversations/:id/participants')
+  @Public()
+  addParticipants(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AddParticipantsDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.addParticipants(id, dto, tid);
+  }
+
+  @Delete('conversations/:id')
+  @Public()
+  deleteConversation(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.deleteConversation(id, tid);
   // Development Programs - YouTube API integration
 
   // Personalized recommendations (must be before /search to avoid route conflict)

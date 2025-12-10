@@ -8,3 +8,6 @@ export * from './teacher-live-class.entity';
 export * from './teacher-idea-sandbox-post.entity';
 export * from './teacher-idea-sandbox-comment.entity';
 export * from './teacher-idea-sandbox-upvote.entity';
+export * from './teacher-conversation.entity';
+export * from './teacher-conversation-participant.entity';
+export * from './teacher-message.entity';

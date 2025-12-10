@@ -70,6 +70,7 @@ const jobMatcherItems = [
 // Wellness Items
 const wellnessItems = [
   { label: "Wellness Dashboard", href: "/student/wellness/dashboard", icon: Heart },
+  { label: "Teacher Messages", href: "/student/wellness/messages", icon: MessageSquare },
   { label: "Self Assessment", href: "/student/wellness/self-assessment", icon: Brain },
   { label: "Report and Support", href: "/student/wellness/support", icon: FileText },
 ];

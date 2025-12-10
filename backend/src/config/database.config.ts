@@ -17,6 +17,7 @@ export const getDatabaseConfig = (
       __dirname + '/../database/entities/management/*.entity{.ts,.js}',
       __dirname + '/../database/entities/student/*.entity{.ts,.js}',
       __dirname + '/../database/entities/teacher/*.entity{.ts,.js}',
+      __dirname + '/../database/entities/study-groups/*.entity{.ts,.js}',
     ],
     synchronize: false, // Disabled - use manual SQL for schema changes
     logging: false, // Set to true or ['error', 'warn'] to enable query logging
