@@ -27,6 +27,7 @@ import {
   Users,
   GraduationCap,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
 
 import { useTheme } from "../providers/ThemeProvider";
@@ -39,7 +40,8 @@ const studyCenterItems = [
   { label: "Live Classes", href: "/student/study-center/live-classes", icon: Users },
   { label: "Task and Assignment", href: "/student/study-center/assignments", icon: FileText },
   { label: "Digital Library", href: "/student/study-center/digitallibrary", icon: BookOpen },
-  { label: "Study Group", href: "/student/study-center/study-group", icon: Users }
+  { label: "Study Group", href: "/student/study-center/study-group", icon: Users },
+  { label: "Discussion Forum", href: "/student/study-center/discussion", icon: MessageSquare }
 ];
 
 // Smart Assistant Items

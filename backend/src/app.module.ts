@@ -15,6 +15,7 @@ import { LibraryModule } from './modules/library/library.module';
 import { LiveClassesModule } from './modules/live-classes/live-classes.module';
 import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
 import { CareerModule } from './modules/career/career.module';
+import { DiscussionForumModule } from './modules/discussion-forum/discussion-forum.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CareerModule } from './modules/career/career.module';
     LiveClassesModule,
     StudyGroupsModule,
     CareerModule,
+    DiscussionForumModule,
   ],
 })
 export class AppModule { }
