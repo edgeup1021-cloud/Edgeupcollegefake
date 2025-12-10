@@ -114,3 +114,34 @@ export enum LibraryResourceCategory {
   STUDY_GUIDES = 'Study Guides',
   OTHER = 'Other',
 }
+
+// Idea Sandbox post types
+export enum IdeaSandboxPostType {
+  IDEA = 'idea',
+  QUESTION = 'question',
+}
+
+// Idea Sandbox categories
+export enum IdeaSandboxCategory {
+  PEDAGOGICAL_STRATEGIES = 'Pedagogical Strategies',
+  ASSESSMENT_METHODS = 'Assessment Methods',
+  TECHNOLOGY_INTEGRATION = 'Technology Integration',
+  CLASSROOM_MANAGEMENT = 'Classroom Management',
+}
+
+// Idea Sandbox post status
+export enum IdeaSandboxPostStatus {
+  ACTIVE = 'active',
+  ARCHIVED = 'archived',
+  FLAGGED = 'flagged',
+}
+
+// Job application status for student_job_applications table
+export enum ApplicationStatus {
+  APPLIED = 'applied',
+  IN_PROGRESS = 'in-progress',
+  OFFER_RECEIVED = 'offer-received',
+  INTERVIEW_SCHEDULED = 'interview-scheduled',
+  REJECTED = 'rejected',
+  NOT_APPLIED = 'not-applied',
+}

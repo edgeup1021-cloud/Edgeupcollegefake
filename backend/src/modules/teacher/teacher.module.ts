@@ -8,6 +8,9 @@ import {
   TeacherCourseOffering,
   TeacherAssignment,
   TeacherClassSession,
+  TeacherIdeaSandboxPost,
+  TeacherIdeaSandboxComment,
+  TeacherIdeaSandboxUpvote,
 } from '../../database/entities/teacher';
 import {
   StudentEnrollment,
@@ -20,6 +23,7 @@ import { Department } from '../../database/entities/management';
 import { CalendarModule } from '../student/calendar/calendar.module';
 import { AssignmentsService } from './services/assignments.service';
 import { TeacherAttendanceService } from './services/teacher-attendance.service';
+import { IdeaSandboxService } from './services/idea-sandbox.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
@@ -30,6 +34,9 @@ import { AttendanceModule } from '../attendance/attendance.module';
       TeacherCourseOffering,
       TeacherAssignment,
       TeacherClassSession,
+      TeacherIdeaSandboxPost,
+      TeacherIdeaSandboxComment,
+      TeacherIdeaSandboxUpvote,
       StudentEnrollment,
       StudentAssignmentSubmission,
       StudentUser,
@@ -41,7 +48,12 @@ import { AttendanceModule } from '../attendance/attendance.module';
     AttendanceModule,
   ],
   controllers: [TeacherController],
-  providers: [TeacherService, AssignmentsService, TeacherAttendanceService],
+  providers: [
+    TeacherService,
+    AssignmentsService,
+    TeacherAttendanceService,
+    IdeaSandboxService,
+  ],
   exports: [TeacherService],
 })
 export class TeacherModule {}

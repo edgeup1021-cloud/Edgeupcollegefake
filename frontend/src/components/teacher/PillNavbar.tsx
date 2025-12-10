@@ -21,6 +21,8 @@ import {
   ClipboardList,
   Library,
   ChevronDown,
+  Lightbulb,
+  FileCheck,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -30,17 +32,34 @@ import UserMenu from "./UserMenu";
 const classroomItems = [
   { label: "Classroom Operations", href: "/teacher/classroom", icon: ClipboardCheck },
   { label: "Live Classes", href: "/teacher/classroom/live-classes", icon: Users },
-  { label: "Tasks & Assignments", href: "/teacher/classroom/tasks-assignments", icon: ClipboardList },
-  { label: "Digital Library", href: "/teacher/classroom/digital-library", icon: Library },
+];
+
+// Curriculum Items
+const curriculumItems = [
+  { label: "Curriculum Overview", href: "/teacher/curriculum", icon: BookOpen },
+  { label: "Digital Library", href: "/teacher/curriculum/digital-library", icon: Library },
+];
+
+// Smart Assessment Items
+const smartAssessmentItems = [
+  { label: "Assessment Overview", href: "/teacher/smart-assessment", icon: FileCheck },
+  { label: "Tasks & Assignments", href: "/teacher/smart-assessment/tasks-assignments", icon: ClipboardList },
+];
+
+// Growth Items
+const growthItems = [
+  { label: "Growth Overview", href: "/teacher/growth", icon: TrendingUp },
+  { label: "Idea Sandbox", href: "/teacher/growth/idea-sandbox", icon: Lightbulb },
 ];
 
 // Main navigation items
 const navItems = [
   { id: "overview", label: "Overview", href: "/teacher/overview", icon: LayoutGrid },
   { id: "classroom", label: "Classroom", icon: Users, items: classroomItems },
-  { id: "curriculum", label: "Curriculum", href: "/teacher/curriculum", icon: BookOpen },
+  { id: "curriculum", label: "Curriculum", icon: BookOpen, items: curriculumItems },
+  { id: "smart-assessment", label: "Smart Assessment", icon: FileCheck, items: smartAssessmentItems },
   { id: "students", label: "Students", href: "/teacher/students", icon: GraduationCap },
-  { id: "growth", label: "Growth", href: "/teacher/growth", icon: TrendingUp },
+  { id: "growth", label: "Growth", icon: TrendingUp, items: growthItems },
 ];
 
 export default function PillNavbar() {
@@ -71,6 +90,7 @@ export default function PillNavbar() {
     if (pathname === "/teacher/overview") return "overview";
     if (pathname.startsWith("/teacher/classroom")) return "classroom";
     if (pathname.startsWith("/teacher/curriculum")) return "curriculum";
+    if (pathname.startsWith("/teacher/smart-assessment")) return "smart-assessment";
     if (pathname.startsWith("/teacher/students")) return "students";
     if (pathname.startsWith("/teacher/growth")) return "growth";
     return null;

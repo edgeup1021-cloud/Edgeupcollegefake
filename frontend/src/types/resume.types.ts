@@ -145,6 +145,15 @@ export interface ATSScore {
   details?: ResumeAnalysisDetails;
 }
 
+export interface ResumeAnalysisResult {
+  success: boolean;
+  data?: ATSScore & {
+    score: number;
+    reason: string;
+  };
+  error?: string;
+}
+
 export const defaultResumeData: ResumeData = {
   personalInfo: {
     fullName: '',

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getDatabaseConfig } from '../config/database.config';
@@ -78,8 +78,10 @@ const entities = [
   Financial,
 ];
 
+@Global()
 @Module({
   imports: [
+    // Primary database connection (edgeup_college)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -2,6 +2,7 @@ export enum PortalType {
   STUDENT = 'student',
   TEACHER = 'teacher',
   MANAGEMENT = 'management',
+  SUPERADMIN = 'superadmin',
 }
 
 export interface JwtPayload {

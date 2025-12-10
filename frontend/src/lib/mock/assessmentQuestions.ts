@@ -180,6 +180,7 @@ export function generateRecommendations(scores: {
   stress: number;
   lifestyle: number;
   academic: number;
+  overall: number;
 }): string[] {
   const recommendations: string[] = [];
 

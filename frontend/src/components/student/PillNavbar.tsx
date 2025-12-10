@@ -54,17 +54,13 @@ const smartAssistantItems = [
 const careerItems = [
   { label: "Resume Builder", href: "/student/career/resume-builder", icon: FileText },
   { label: "Interview Prep", href: "/student/career/interview-prep", icon: Briefcase },
-  { label: "Opportunities", href: "/student/career/opportunities", icon: Target },
-  { label: "My Applications", href: "/student/career/appss", icon: FileText },
   { label: "Skill Analysis", href: "/student/career/skills", icon: BarChart3 },
-  { label: "Mentors", href: "/student/career/mentors", icon: Award },
-  { label: "Alumni Network", href: "/student/career/alumni", icon: Users },
+  { label: "Aluminis & Mentors", href: "/student/career/mentors", icon: Award },
   { label: "PASCO Profile", href: "/student/career/pasco", icon: Award },
 ];
 
 // Job Matcher Items
 const jobMatcherItems = [
-  { label: "Career Assessments", href: "/student/job-matcher/assessments", icon: BarChart3 },
   { label: "Job Analyser", href: "/student/job-matcher/opportunities", icon: Target },
   { label: "Career Paths", href: "/student/job-matcher/paths", icon: Briefcase },
 ];
@@ -73,7 +69,6 @@ const jobMatcherItems = [
 const wellnessItems = [
   { label: "Wellness Dashboard", href: "/student/wellness/dashboard", icon: Heart },
   { label: "Self Assessment", href: "/student/wellness/self-assessment", icon: Brain },
-  { label: "Mood Booster", href: "/student/wellness/mood-booster", icon: Heart },
   { label: "Report and Support", href: "/student/wellness/support", icon: FileText },
 ];
 

@@ -31,6 +31,7 @@ import {
   MagicWand,
   Target,
   Lightning,
+  type Icon,
 } from "@phosphor-icons/react";
 import type {
   ResumeData,
@@ -49,7 +50,7 @@ import { defaultResumeData, sectionLabels, templateLabels } from "@/types/resume
 import { magicalAPIService } from "@/services/magical-api.service";
 import resumeService from "@/services/resume.service";
 
-const sectionIcons: Record<ResumeSection, React.ElementType> = {
+const sectionIcons: Record<ResumeSection, Icon> = {
   personal: User,
   summary: FileText,
   education: GraduationCap,

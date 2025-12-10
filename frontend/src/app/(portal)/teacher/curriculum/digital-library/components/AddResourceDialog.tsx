@@ -67,7 +67,6 @@ export function AddResourceDialog({ open, onOpenChange, onSuccess }: AddResource
 
       await addTeacherResource(user.id, {
         ...data,
-        fileName,
         category: data.category as ResourceCategory,
         thumbnailUrl: data.thumbnailUrl || undefined,
         pages: data.pages || undefined,
