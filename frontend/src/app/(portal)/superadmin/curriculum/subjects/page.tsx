@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Plus, Loader2, Edit, Trash2, Search, ChevronRight } from "lucide-react";
+import { BookOpen, Plus, Loader2, Edit, Trash2, Search, ChevronRight, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import CreateSubjectDrawer from "./components/CreateSubjectDrawer";
 import EditSubjectDrawer from "./components/EditSubjectDrawer";
+import BulkUploadDrawer from "./components/BulkUploadDrawer";
 import DeleteConfirmDialog from "@/components/ui/delete-confirm-dialog";
 import Toast, { ToastType } from "@/components/ui/toast";
 
@@ -31,6 +32,7 @@ export default function SubjectsPage() {
   // Drawer states
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isBulkUploadDrawerOpen, setIsBulkUploadDrawerOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
 
   // Delete dialog state
@@ -167,13 +169,22 @@ export default function SubjectsPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleCreateSubject}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Create Subject
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsBulkUploadDrawerOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Bulk Upload
+            </button>
+            <button
+              onClick={handleCreateSubject}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Create Subject
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -318,6 +329,18 @@ export default function SubjectsPage() {
         onSuccess={handleEditSuccess}
         onError={(message) => showToast(message, "error")}
         subject={selectedSubject}
+      />
+
+      {/* Bulk Upload Drawer */}
+      <BulkUploadDrawer
+        isOpen={isBulkUploadDrawerOpen}
+        onClose={() => setIsBulkUploadDrawerOpen(false)}
+        courseId={1}
+        onSuccess={() => {
+          setIsBulkUploadDrawerOpen(false);
+          fetchSubjects();
+          showToast("Bulk upload completed successfully!", "success");
+        }}
       />
 
       {/* Delete Confirmation Dialog */}

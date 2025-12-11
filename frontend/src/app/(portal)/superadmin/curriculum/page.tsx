@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, Loader2, Edit, Trash2, Search, ChevronRight, ArrowLeft } from "lucide-react";
+import { BookOpen, Plus, Loader2, Edit, Trash2, Search, ChevronRight, ArrowLeft, Upload } from "lucide-react";
 import CreateCourseDrawer from "./course/components/CreateCourseDrawer";
 import EditCourseDrawer from "./course/components/EditCourseDrawer";
 import CreateSubjectDrawer from "./subjects/components/CreateSubjectDrawer";
 import EditSubjectDrawer from "./subjects/components/EditSubjectDrawer";
+import BulkUploadDrawer from "./subjects/components/BulkUploadDrawer";
 import DeleteConfirmDialog from "@/components/ui/delete-confirm-dialog";
 import Toast, { ToastType } from "@/components/ui/toast";
 
@@ -54,7 +55,9 @@ export default function CurriculumPage() {
   // Drawer states for subjects
   const [isCreateSubjectDrawerOpen, setIsCreateSubjectDrawerOpen] = useState(false);
   const [isEditSubjectDrawerOpen, setIsEditSubjectDrawerOpen] = useState(false);
+  const [isBulkUploadDrawerOpen, setIsBulkUploadDrawerOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedCourseIdForBulkUpload, setSelectedCourseIdForBulkUpload] = useState<number | null>(null);
 
   // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -381,6 +384,16 @@ export default function CurriculumPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
                             <button
+                              onClick={() => {
+                                setSelectedCourseIdForBulkUpload(course.id);
+                                setIsBulkUploadDrawerOpen(true);
+                              }}
+                              className="p-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                              title="Bulk Upload Curriculum"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => handleEditCourse(course.id)}
                               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                               title="Edit"
@@ -524,6 +537,26 @@ export default function CurriculumPage() {
             subject={selectedSubject}
           />
         </>
+      )}
+
+      {/* Bulk Upload Drawer */}
+      {selectedCourseIdForBulkUpload && (
+        <BulkUploadDrawer
+          isOpen={isBulkUploadDrawerOpen}
+          onClose={() => {
+            setIsBulkUploadDrawerOpen(false);
+            setSelectedCourseIdForBulkUpload(null);
+          }}
+          courseId={selectedCourseIdForBulkUpload}
+          onSuccess={() => {
+            setIsBulkUploadDrawerOpen(false);
+            setSelectedCourseIdForBulkUpload(null);
+            if (selectedCourse && selectedCourse.id === selectedCourseIdForBulkUpload) {
+              fetchSubjects(selectedCourse.id);
+            }
+            showToast("Bulk upload completed successfully!", "success");
+          }}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}

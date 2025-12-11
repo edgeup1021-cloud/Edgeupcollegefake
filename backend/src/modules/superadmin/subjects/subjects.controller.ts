@@ -9,7 +9,11 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { SubjectsService } from './subjects.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
@@ -117,5 +121,25 @@ export class SubjectsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeSubtopic(@Param('subtopicId', ParseIntPipe) subtopicId: number) {
     await this.subjectsService.removeSubtopic(subtopicId);
+  }
+
+  // ========== BULK UPLOAD ENDPOINT ==========
+
+  @Public()
+  @Post('bulk-upload/:courseId')
+  @UseInterceptors(FileInterceptor('file'))
+  async bulkUpload(
+    @Param('courseId', ParseIntPipe) courseId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    if (!file.originalname.match(/\.(xlsx|xls)$/)) {
+      throw new BadRequestException('Only Excel files (.xlsx, .xls) are allowed');
+    }
+
+    return this.subjectsService.bulkUploadFromExcel(courseId, file.buffer);
   }
 }
