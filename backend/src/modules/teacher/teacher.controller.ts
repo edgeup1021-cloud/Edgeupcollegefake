@@ -45,6 +45,12 @@ import {
   BulkAssignMenteesDto,
 } from './dto/mentorship';
 import { MentorshipStatus } from '../../database/entities/teacher/teacher-mentorship.entity';
+import { PublicationsService } from './services/publications.service';
+import {
+  CreatePublicationDto,
+  UpdatePublicationDto,
+  QueryPublicationsDto,
+} from './dto/publications';
 
 @Controller('teacher')
 export class TeacherController {
@@ -56,6 +62,7 @@ export class TeacherController {
     private readonly messagingService: MessagingService,
     private readonly youtubeApiService: YouTubeApiService,
     private readonly mentorshipService: MentorshipService,
+    private readonly publicationsService: PublicationsService,
   ) {}
 
   @Get()
@@ -180,6 +187,64 @@ export class TeacherController {
   }
 
   // ==================== End Mentorship Routes ====================
+
+  // ==================== Publications Routes ====================
+
+  @Post('publications')
+  @Public()
+  createPublication(
+    @Body() dto: CreatePublicationDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.create(dto, id);
+  }
+
+  @Get('publications')
+  @Public()
+  getPublications(@Query() query: QueryPublicationsDto) {
+    return this.publicationsService.findAll(query);
+  }
+
+  @Get('publications/stats')
+  @Public()
+  getPublicationStats(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.getStatistics(id);
+  }
+
+  @Get('publications/:id')
+  @Public()
+  getPublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : undefined;
+    return this.publicationsService.findOne(id, tid);
+  }
+
+  @Patch('publications/:id')
+  @Public()
+  updatePublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePublicationDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.update(id, dto, tid);
+  }
+
+  @Delete('publications/:id')
+  @Public()
+  deletePublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.remove(id, tid);
+  }
+
+  // ==================== End Publications Routes ====================
 
   // Assignment CRUD
   @Post('assignments')

@@ -43,6 +43,7 @@ import {
   TeacherClassSession,
 } from './entities/teacher';
 import { TeacherMentorship } from './entities/teacher/teacher-mentorship.entity';
+import { TeacherPublication } from './entities/teacher/teacher-publication.entity';
 
 // Management entities
 import {
@@ -89,6 +90,7 @@ const entities = [
   TeacherAssignment,
   TeacherClassSession,
   TeacherMentorship,
+  TeacherPublication,
   // Management
   AdminUser,
   Campus,

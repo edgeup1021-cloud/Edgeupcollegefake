@@ -24,6 +24,7 @@ import {
   Lightbulb,
   FileCheck,
   UserCog,
+  FileText,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -37,7 +38,6 @@ const classroomItems = [
 
 // Curriculum Items
 const curriculumItems = [
-  { label: "Curriculum Overview", href: "/teacher/curriculum", icon: BookOpen },
   { label: "Digital Library", href: "/teacher/curriculum/digital-library", icon: Library },
 ];
 
@@ -49,14 +49,14 @@ const smartAssessmentItems = [
 
 // Growth Items
 const growthItems = [
-  { label: "Growth Overview", href: "/teacher/growth", icon: TrendingUp },
   { label: "Idea Sandbox", href: "/teacher/growth/idea-sandbox", icon: Lightbulb },
   { label: "Development Programs", href: "/teacher/growth/development-programs", icon: GraduationCap },
+  { label: "Research & Publications", href: "/teacher/growth/research-publications", icon: FileText },
 ];
 
 // Students Items
 const studentsItems = [
-  { label: "Students Overview", href: "/teacher/students", icon: GraduationCap },
+  { label: "Students Chat", href: "/teacher/students", icon: GraduationCap },
   { label: "My Mentees", href: "/teacher/mentees", icon: UserCog },
 ];
 

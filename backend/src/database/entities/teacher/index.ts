@@ -11,3 +11,5 @@ export * from './teacher-idea-sandbox-upvote.entity';
 export * from './teacher-conversation.entity';
 export * from './teacher-conversation-participant.entity';
 export * from './teacher-message.entity';
+export * from './teacher-mentorship.entity';
+export * from './teacher-publication.entity';

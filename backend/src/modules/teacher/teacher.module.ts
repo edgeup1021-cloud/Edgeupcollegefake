@@ -16,6 +16,7 @@ import {
   TeacherMessage,
 } from '../../database/entities/teacher';
 import { TeacherMentorship } from '../../database/entities/teacher/teacher-mentorship.entity';
+import { TeacherPublication } from '../../database/entities/teacher/teacher-publication.entity';
 import {
   StudentEnrollment,
   StudentAssignmentSubmission,
@@ -35,6 +36,7 @@ import { IdeaSandboxService } from './services/idea-sandbox.service';
 import { MessagingService } from './services/messaging.service';
 import { YouTubeApiService } from './services/youtube-api.service';
 import { MentorshipService } from './services/mentorship.service';
+import { PublicationsService } from './services/publications.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
@@ -52,6 +54,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
       TeacherConversationParticipant,
       TeacherMessage,
       TeacherMentorship,
+      TeacherPublication,
       StudentEnrollment,
       StudentAssignmentSubmission,
       StudentUser,
@@ -77,6 +80,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     MessagingService,
     YouTubeApiService,
     MentorshipService,
+    PublicationsService,
   ],
   exports: [TeacherService],
 })
