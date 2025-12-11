@@ -23,6 +23,8 @@ import { SubmissionsService } from './services/submissions.service';
 import { SubmitAssignmentDto } from './dto/submission';
 import { StudentMessagingService } from './services/student-messaging.service';
 import { SendMessageDto } from '../teacher/dto/messaging/send-message.dto';
+import { SemesterResultService } from './services/semester-result.service';
+import { CreateSemesterResultDto, UpdateSemesterResultDto } from './dto/semester-result';
 
 @Controller('student')
 export class StudentController {
@@ -30,6 +32,7 @@ export class StudentController {
     private readonly studentService: StudentService,
     private readonly submissionsService: SubmissionsService,
     private readonly studentMessagingService: StudentMessagingService,
+    private readonly semesterResultService: SemesterResultService,
   ) {}
 
   // GET /api/student - List all students
@@ -47,12 +50,55 @@ export class StudentController {
     return this.studentService.getOverview();
   }
 
+  // ==================== Semester Result Routes ====================
+  // IMPORTANT: These routes MUST be before generic :id routes
+
+  // POST /api/student/semester-results - Create semester result (for admins)
+  @Post('semester-results')
+  @Public()
+  createSemesterResult(@Body() dto: CreateSemesterResultDto) {
+    return this.semesterResultService.createSemesterResult(dto);
+  }
+
+  // GET /api/student/semester-results/:id - Get single semester result
+  @Get('semester-results/:id')
+  @Public()
+  getSemesterResult(@Param('id', ParseIntPipe) id: number) {
+    return this.semesterResultService.getSemesterResult(id);
+  }
+
+  // PATCH /api/student/semester-results/:id - Update semester result
+  @Patch('semester-results/:id')
+  @Public()
+  updateSemesterResult(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSemesterResultDto,
+  ) {
+    return this.semesterResultService.updateSemesterResult(id, dto);
+  }
+
+  // ==================== End Semester Result Routes ====================
+
   // Messaging endpoints - MUST be before generic :id routes
   // GET /api/student/:id/teachers - Get all teachers for student
   @Get(':id/teachers')
   @Public()
   getTeachers(@Param('id', ParseIntPipe) studentId: number) {
     return this.studentMessagingService.getStudentTeachers(studentId);
+  }
+
+  // GET /api/student/:studentId/semester-results - Get all semester results for student
+  @Get(':studentId/semester-results')
+  @Public()
+  getStudentSemesterResults(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.semesterResultService.getSemesterResults(studentId);
+  }
+
+  // GET /api/student/:studentId/cgpa-history - Get CGPA history
+  @Get(':studentId/cgpa-history')
+  @Public()
+  getCGPAHistory(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.semesterResultService.getCGPAHistory(studentId);
   }
 
   // GET /api/student/:id/conversations - Get all conversations for student

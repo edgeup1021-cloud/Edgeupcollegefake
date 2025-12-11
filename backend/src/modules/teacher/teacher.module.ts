@@ -15,20 +15,26 @@ import {
   TeacherConversationParticipant,
   TeacherMessage,
 } from '../../database/entities/teacher';
+import { TeacherMentorship } from '../../database/entities/teacher/teacher-mentorship.entity';
 import {
   StudentEnrollment,
   StudentAssignmentSubmission,
   StudentUser,
   StudentSchedule,
   StudentAttendance,
+  Exam,
+  ExamSubject,
 } from '../../database/entities/student';
-import { Department } from '../../database/entities/management';
+import { StudentGrade } from '../../database/entities/student/student-grade.entity';
+import { StudentAssessment } from '../../database/entities/student/student-assessment.entity';
+import { Department, Subject, GradeScale } from '../../database/entities/management';
 import { CalendarModule } from '../student/calendar/calendar.module';
 import { AssignmentsService } from './services/assignments.service';
 import { TeacherAttendanceService } from './services/teacher-attendance.service';
 import { IdeaSandboxService } from './services/idea-sandbox.service';
 import { MessagingService } from './services/messaging.service';
 import { YouTubeApiService } from './services/youtube-api.service';
+import { MentorshipService } from './services/mentorship.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
@@ -45,12 +51,19 @@ import { AttendanceModule } from '../attendance/attendance.module';
       TeacherConversation,
       TeacherConversationParticipant,
       TeacherMessage,
+      TeacherMentorship,
       StudentEnrollment,
       StudentAssignmentSubmission,
       StudentUser,
       StudentSchedule,
       StudentAttendance,
+      StudentGrade,
+      StudentAssessment,
       Department,
+      Subject,
+      GradeScale,
+      Exam,
+      ExamSubject,
     ]),
     CalendarModule,
     AttendanceModule,
@@ -63,6 +76,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     IdeaSandboxService,
     MessagingService,
     YouTubeApiService,
+    MentorshipService,
   ],
   exports: [TeacherService],
 })

@@ -38,6 +38,13 @@ import {
 } from './dto/messaging';
 import { YouTubeApiService } from './services/youtube-api.service';
 import { QueryDevelopmentProgramsDto } from './dto/query-development-programs.dto';
+import { MentorshipService } from './services/mentorship.service';
+import {
+  CreateMentorshipDto,
+  UpdateMentorshipDto,
+  BulkAssignMenteesDto,
+} from './dto/mentorship';
+import { MentorshipStatus } from '../../database/entities/teacher/teacher-mentorship.entity';
 
 @Controller('teacher')
 export class TeacherController {
@@ -48,6 +55,7 @@ export class TeacherController {
     private readonly ideaSandboxService: IdeaSandboxService,
     private readonly messagingService: MessagingService,
     private readonly youtubeApiService: YouTubeApiService,
+    private readonly mentorshipService: MentorshipService,
   ) {}
 
   @Get()
@@ -100,6 +108,78 @@ export class TeacherController {
     const id = teacherId ? parseInt(teacherId, 10) : 1;
     return this.teacherService.getTeacherStudents(id);
   }
+
+  // ==================== Mentorship Routes ====================
+
+  @Get('mentees')
+  @Public()
+  getMentees(
+    @Query('teacherId') teacherId?: string,
+    @Query('status') status?: MentorshipStatus,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.getMentees(id, status);
+  }
+
+  @Get('mentees/available')
+  @Public()
+  getAvailableStudents(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.getAvailableStudents(id);
+  }
+
+  @Post('mentees')
+  @Public()
+  assignMentee(
+    @Body() dto: CreateMentorshipDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.assignMentee(dto, id);
+  }
+
+  @Post('mentees/bulk-assign')
+  @Public()
+  bulkAssignMentees(
+    @Body() dto: BulkAssignMenteesDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.bulkAssignMentees(dto, id);
+  }
+
+  @Get('mentees/:id')
+  @Public()
+  getMenteeDetails(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.getMenteeDetails(id, tid);
+  }
+
+  @Patch('mentees/:id')
+  @Public()
+  updateMentorship(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMentorshipDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.updateMentorship(id, dto, tid);
+  }
+
+  @Delete('mentees/:id')
+  @Public()
+  removeMentee(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.removeMentee(id, tid);
+  }
+
+  // ==================== End Mentorship Routes ====================
 
   // Assignment CRUD
   @Post('assignments')

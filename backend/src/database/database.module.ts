@@ -20,7 +20,11 @@ import {
   StudentDiscussionPost,
   StudentDiscussionComment,
   StudentDiscussionUpvote,
+  Exam,
+  ExamSubject,
 } from './entities/student';
+import { StudentSemesterResult } from './entities/student/student-semester-result.entity';
+import { StudentRevaluationRequest } from './entities/student/student-revaluation-request.entity';
 
 // Study group entities
 import {
@@ -38,6 +42,7 @@ import {
   TeacherAssignment,
   TeacherClassSession,
 } from './entities/teacher';
+import { TeacherMentorship } from './entities/teacher/teacher-mentorship.entity';
 
 // Management entities
 import {
@@ -46,6 +51,9 @@ import {
   Department,
   Program,
   Financial,
+  Subject,
+  SemesterCourse,
+  GradeScale,
 } from './entities/management';
 
 const entities = [
@@ -65,6 +73,10 @@ const entities = [
   StudentDiscussionPost,
   StudentDiscussionComment,
   StudentDiscussionUpvote,
+  StudentSemesterResult,
+  StudentRevaluationRequest,
+  Exam,
+  ExamSubject,
   // Study groups
   StudyGroup,
   StudyGroupMember,
@@ -76,12 +88,16 @@ const entities = [
   TeacherCourseOffering,
   TeacherAssignment,
   TeacherClassSession,
+  TeacherMentorship,
   // Management
   AdminUser,
   Campus,
   Department,
   Program,
   Financial,
+  Subject,
+  SemesterCourse,
+  GradeScale,
 ];
 
 @Global()

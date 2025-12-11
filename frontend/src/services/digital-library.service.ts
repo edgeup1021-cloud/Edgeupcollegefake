@@ -237,7 +237,7 @@ export async function getLibraryStatistics(studentId: number): Promise<LibrarySt
     };
   }
 
-  return api.get(`/library/student/${studentId}/statistics`);
+  return api.get(`/digital-library/student/${studentId}/statistics`);
 }
 
 /**
@@ -302,7 +302,7 @@ export async function browseResources(filters?: LibraryFilters): Promise<Resourc
   if (filters?.sortBy) params.append("sortBy", filters.sortBy);
   if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
 
-  return api.get(`/library/student/resources?${params.toString()}`);
+  return api.get(`/digital-library/student/resources?${params.toString()}`);
 }
 
 /**
@@ -314,7 +314,7 @@ export async function getBookmarkedResources(studentId: number): Promise<Bookmar
     return [...mockBookmarks].reverse();
   }
 
-  return api.get(`/library/student/${studentId}/bookmarks`);
+  return api.get(`/digital-library/student/${studentId}/bookmarks`);
 }
 
 /**
@@ -334,7 +334,7 @@ export async function addBookmark(studentId: number, resourceId: number): Promis
     return;
   }
 
-  return api.post(`/library/student/${studentId}/bookmarks/${resourceId}`, {});
+  return api.post(`/digital-library/student/${studentId}/bookmarks/${resourceId}`, {});
 }
 
 /**
@@ -347,7 +347,7 @@ export async function removeBookmark(studentId: number, resourceId: number): Pro
     return;
   }
 
-  return api.delete(`/library/student/${studentId}/bookmarks/${resourceId}`);
+  return api.delete(`/digital-library/student/${studentId}/bookmarks/${resourceId}`);
 }
 
 /**
@@ -359,7 +359,7 @@ export async function getDownloadedResources(studentId: number): Promise<Downloa
     return [...mockDownloads].reverse();
   }
 
-  return api.get(`/library/student/${studentId}/downloads`);
+  return api.get(`/digital-library/student/${studentId}/downloads`);
 }
 
 /**
@@ -381,7 +381,7 @@ export async function downloadResource(studentId: number, resourceId: number): P
     return;
   }
 
-  return api.post(`/library/student/${studentId}/downloads/${resourceId}`, {});
+  return api.post(`/digital-library/student/${studentId}/downloads/${resourceId}`, {});
 }
 
 /**
@@ -393,7 +393,7 @@ export async function getRecentlyAccessedResources(studentId: number): Promise<R
     return [...mockRecentlyAccessed];
   }
 
-  return api.get(`/library/student/${studentId}/recent`);
+  return api.get(`/digital-library/student/${studentId}/recent`);
 }
 
 /**
@@ -418,5 +418,5 @@ export async function markResourceAccessed(studentId: number, resourceId: number
     return;
   }
 
-  return api.post(`/library/student/${studentId}/access/${resourceId}`, {});
+  return api.post(`/digital-library/student/${studentId}/access/${resourceId}`, {});
 }

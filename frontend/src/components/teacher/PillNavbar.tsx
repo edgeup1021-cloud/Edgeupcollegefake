@@ -23,6 +23,7 @@ import {
   ChevronDown,
   Lightbulb,
   FileCheck,
+  UserCog,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -56,6 +57,7 @@ const growthItems = [
 // Students Items
 const studentsItems = [
   { label: "Students Overview", href: "/teacher/students", icon: GraduationCap },
+  { label: "My Mentees", href: "/teacher/mentees", icon: UserCog },
 ];
 
 // Main navigation items
@@ -98,6 +100,7 @@ export default function PillNavbar() {
     if (pathname.startsWith("/teacher/curriculum")) return "curriculum";
     if (pathname.startsWith("/teacher/smart-assessment")) return "smart-assessment";
     if (pathname.startsWith("/teacher/students")) return "students";
+    if (pathname.startsWith("/teacher/mentees")) return "students";
     if (pathname.startsWith("/teacher/growth")) return "growth";
     return null;
   };

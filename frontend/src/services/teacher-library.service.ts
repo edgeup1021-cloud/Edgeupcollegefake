@@ -30,7 +30,7 @@ export async function getTeacherResources(teacherId: number): Promise<Resource[]
     return [...mockTeacherResources].reverse(); // Most recent first
   }
 
-  return api.get(`/library/teacher/resources?uploadedBy=${teacherId}`);
+  return api.get(`/digital-library/teacher/resources?uploadedBy=${teacherId}`);
 }
 
 /**
@@ -56,7 +56,7 @@ export async function addTeacherResource(
     return newResource;
   }
 
-  return api.post(`/library/teacher/upload?teacherId=${teacherId}`, data);
+  return api.post(`/digital-library/teacher/upload?teacherId=${teacherId}`, data);
 }
 
 /**
@@ -72,7 +72,7 @@ export async function deleteTeacherResource(
     return;
   }
 
-  return api.delete(`/library/teacher/resources/${resourceId}?teacherId=${teacherId}`);
+  return api.delete(`/digital-library/teacher/resources/${resourceId}?teacherId=${teacherId}`);
 }
 
 /**
@@ -97,5 +97,5 @@ export async function updateTeacherResource(
     throw new Error('Resource not found');
   }
 
-  return api.patch(`/library/teacher/resources/${resourceId}?teacherId=${teacherId}`, data);
+  return api.patch(`/digital-library/teacher/resources/${resourceId}?teacherId=${teacherId}`, data);
 }

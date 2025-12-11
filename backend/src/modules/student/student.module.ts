@@ -15,6 +15,7 @@ import {
   StudentActivityLog,
   StudentAssignmentSubmission,
 } from '../../database/entities/student';
+import { StudentSemesterResult } from '../../database/entities/student/student-semester-result.entity';
 import {
   TeacherUser,
   TeacherCourse,
@@ -28,6 +29,7 @@ import {
 import { Campus } from '../../database/entities/management';
 import { SubmissionsService } from './services/submissions.service';
 import { StudentMessagingService } from './services/student-messaging.service';
+import { SemesterResultService } from './services/semester-result.service';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { StudentMessagingService } from './services/student-messaging.service';
       StudentActivityLog,
       StudentAssignmentSubmission,
       StudentEnrollment,
+      StudentSemesterResult,
       // Teacher entities (for dashboard queries and messaging)
       TeacherUser,
       TeacherCourse,
@@ -59,7 +62,7 @@ import { StudentMessagingService } from './services/student-messaging.service';
     ]),
   ],
   controllers: [StudentController],
-  providers: [StudentService, SubmissionsService, StudentMessagingService],
+  providers: [StudentService, SubmissionsService, StudentMessagingService, SemesterResultService],
   exports: [StudentService],
 })
 export class StudentModule {}
