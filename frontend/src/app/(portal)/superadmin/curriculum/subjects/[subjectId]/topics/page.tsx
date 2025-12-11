@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { BookOpen, Plus, Loader2, ArrowLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { BookOpen, Plus, Loader2, ArrowLeft, ChevronRight, Edit, Trash2, Search } from "lucide-react";
 import CreateTopicDrawer from "../../components/CreateTopicDrawer";
+import EditTopicDrawer from "../../components/EditTopicDrawer";
 import DeleteConfirmDialog from "@/components/ui/delete-confirm-dialog";
 import Toast, { ToastType } from "@/components/ui/toast";
 
@@ -34,9 +35,12 @@ export default function TopicsPage() {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Drawer states
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -82,7 +86,7 @@ export default function TopicsPage() {
   }, [subjectId]);
 
   const handleBack = () => {
-    router.push("/superadmin/curriculum/subjects");
+    router.push("/superadmin/curriculum");
   };
 
   const handleViewSubtopics = (topicId: number) => {
@@ -94,8 +98,11 @@ export default function TopicsPage() {
   };
 
   const handleEditTopic = (id: number) => {
-    // TODO: Implement edit topic functionality
-    console.log("Edit topic:", id);
+    const topic = topics.find((t) => t.id === id);
+    if (topic) {
+      setSelectedTopic(topic);
+      setIsEditDrawerOpen(true);
+    }
   };
 
   const handleDeleteTopic = (id: number) => {
@@ -139,6 +146,20 @@ export default function TopicsPage() {
     fetchData();
   };
 
+  const handleEditSuccess = () => {
+    showToast("Topic updated successfully", "success");
+    fetchData();
+  };
+
+  // Filter topics based on search query
+  const filteredTopics = topics.filter((topic) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      topic.name.toLowerCase().includes(searchLower) ||
+      (topic.description?.toLowerCase().includes(searchLower) || false)
+    );
+  });
+
   return (
     <>
       <div className="space-y-6">
@@ -149,7 +170,7 @@ export default function TopicsPage() {
             className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-brand-primary dark:hover:text-brand-primary transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Subjects
+            Back to Curriculum
           </button>
 
           <div className="flex items-center justify-between">
@@ -177,83 +198,108 @@ export default function TopicsPage() {
           </div>
         </div>
 
-        {/* Content */}
-        <div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search topics..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+          />
+        </div>
+
+        {/* Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           {loading ? (
             // Loading State
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
             </div>
-          ) : topics.length === 0 ? (
+          ) : filteredTopics.length === 0 ? (
             // Empty State
             <div className="py-16 text-center">
               <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No topics yet
+                {searchQuery ? "No topics found" : "No topics yet"}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Get started by creating your first topic
+                {searchQuery
+                  ? "Try adjusting your search query"
+                  : "Get started by creating your first topic"}
               </p>
-              <button
-                onClick={handleCreateTopic}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Create Topic
-              </button>
+              {!searchQuery && (
+                <button
+                  onClick={handleCreateTopic}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Topic
+                </button>
+              )}
             </div>
           ) : (
-            // Topics List
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {topics.map((topic) => (
-                <div
-                  key={topic.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-4"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    {/* Topic Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                        {topic.name}
-                      </h3>
-                      {topic.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                          {topic.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleViewSubtopics(topic.id)}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-light dark:bg-brand-primary/20 text-brand-primary hover:bg-brand-primary/10 dark:hover:bg-brand-primary/30 transition-colors text-xs font-medium whitespace-nowrap"
-                      >
-                        View Subtopics
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => handleEditTopic(topic.id)}
-                        className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteTopic(topic.id)}
-                        className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            // Table View
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Topic Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredTopics.map((topic) => (
+                    <tr
+                      key={topic.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleViewSubtopics(topic.id)}
+                          className="flex items-center gap-2 text-sm font-medium text-brand-primary hover:text-brand-primary/80 transition-colors"
+                        >
+                          {topic.name}
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 dark:text-white line-clamp-2">
+                          {topic.description || "-"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditTopic(topic.id)}
+                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTopic(topic.id)}
+                            className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-          </div>
         </div>
       </div>
 
@@ -265,6 +311,16 @@ export default function TopicsPage() {
         onError={(message) => showToast(message, "error")}
         subjectId={subjectId}
         subjectName={subject?.name}
+      />
+
+      {/* Edit Drawer */}
+      <EditTopicDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        onSuccess={handleEditSuccess}
+        onError={(message) => showToast(message, "error")}
+        topic={selectedTopic}
+        subjectId={subjectId}
       />
 
       {/* Delete Confirmation Dialog */}

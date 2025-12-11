@@ -56,16 +56,42 @@ export class ManagementService {
   }
 
   async getDashboardStats(adminUserId: number) {
-    // First, get the institution to know which campus/institution we're dealing with
+    // First, get the admin user profile from college database
+    const adminUser = await this.collegeDataSource.query(
+      'SELECT * FROM admin_users WHERE id = ? LIMIT 1',
+      [adminUserId],
+    );
+
+    if (!adminUser || adminUser.length === 0) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    // Get the institution
     const institution = await this.getAdminInstitution(adminUserId);
+
+    // Get institutional head info for designation
+    const institutionalHead = await this.superadminDataSource.query(
+      'SELECT * FROM institutional_heads WHERE admin_user_id = ? LIMIT 1',
+      [adminUserId],
+    );
 
     // TODO: Add queries to get actual stats based on the institution
     // For now, return basic structure with zeros
     return {
-      totalStudents: 0,
-      totalTeachers: 0,
-      attendanceRate: 0,
-      activeClasses: 0,
+      profile: {
+        name: adminUser[0].full_name || adminUser[0].username,
+        email: adminUser[0].email,
+        designation: institutionalHead && institutionalHead.length > 0
+          ? institutionalHead[0].position
+          : 'Administrator',
+        profileImage: adminUser[0].profile_image || null,
+      },
+      stats: {
+        totalStudents: 0,
+        totalTeachers: 0,
+        attendanceRate: 0,
+        activeClasses: 0,
+      },
       institution: {
         id: institution.id,
         name: institution.name,

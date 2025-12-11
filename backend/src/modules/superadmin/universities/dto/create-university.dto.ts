@@ -6,8 +6,31 @@ import {
   IsInt,
   MaxLength,
   ValidateIf,
+  ValidateNested,
+  IsEmail,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { InstitutionType, CollegeType } from '../../../../database/entities/superadmin/university.entity';
+
+export class CreateInstitutionalHeadDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  name: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  phone: string;
+
+  @IsString()
+  @IsOptional()
+  address?: string;
+}
 
 export class CreateUniversityDto {
   @IsString()
@@ -25,9 +48,9 @@ export class CreateUniversityDto {
   collegeType?: CollegeType | null;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(50)
-  code: string;
+  code?: string;
 
   @IsString()
   @IsOptional()
@@ -41,4 +64,9 @@ export class CreateUniversityDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ValidateNested()
+  @Type(() => CreateInstitutionalHeadDto)
+  @IsOptional()
+  institutionalHead?: CreateInstitutionalHeadDto;
 }

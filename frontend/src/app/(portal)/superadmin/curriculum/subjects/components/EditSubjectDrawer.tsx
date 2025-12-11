@@ -10,6 +10,7 @@ interface Subject {
   code: string;
   description: string | null;
   isActive: boolean;
+  courseId: number;
 }
 
 interface EditSubjectDrawerProps {
@@ -70,9 +71,11 @@ export default function EditSubjectDrawer({
         .toUpperCase() || 'SUB001';
 
       const payload = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
         code: code,
         isActive: subject.isActive !== undefined ? subject.isActive : true, // Keep existing status
+        courseId: subject.courseId, // Maintain course relationship
       };
 
       const response = await fetch(`http://localhost:3001/api/curriculum/subjects/${subject.id}`, {

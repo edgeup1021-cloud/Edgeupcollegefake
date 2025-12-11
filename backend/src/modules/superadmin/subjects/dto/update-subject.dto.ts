@@ -1,6 +1,10 @@
-import { IsString, IsOptional, IsBoolean, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsInt, MaxLength } from 'class-validator';
 
 export class UpdateSubjectDto {
+  @IsInt()
+  @IsOptional()
+  courseId?: number;
+
   @IsString()
   @IsOptional()
   @MaxLength(255)

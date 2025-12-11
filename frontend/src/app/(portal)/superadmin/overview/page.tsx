@@ -5,20 +5,7 @@ import WelcomeCard from "@/components/common/cards/WelcomeCard";
 import StatCard from "@/components/common/cards/StatCard";
 import QuickAccessCard from "@/components/common/cards/QuickAccessCard";
 import { useAuth } from "@/hooks/useAuth";
-
-// Temporary mock data - will be replaced with API call
-const userData = {
-  name: "System Administrator",
-  course: "Super Administrator",
-  college: "EdgeUp College System",
-};
-
-const stats = {
-  totalStudents: { label: "Total Students", value: 0, total: 0 },
-  totalTeachers: { label: "Total Teachers", value: 0, total: 0 },
-  totalInstitutes: { label: "Total Institutes", value: 0, total: 0 },
-  totalCourses: { label: "Total Courses", value: 0, total: 0 },
-};
+import { useSuperadminDashboard } from "@/hooks/superadmin";
 
 const quickAccessItems = [
   {
@@ -28,16 +15,10 @@ const quickAccessItems = [
     description: "Manage courses and curriculum",
   },
   {
-    icon: Users,
-    title: "Role Management",
-    href: "/superadmin/role",
-    description: "Configure user roles and permissions",
-  },
-  {
     icon: Building2,
     title: "Institute Management",
     href: "/superadmin/institute",
-    description: "Manage institutions and campuses",
+    description: "Manage institutions and institutional heads",
   },
   {
     icon: GraduationCap,
@@ -49,8 +30,9 @@ const quickAccessItems = [
 
 export default function SuperadminOverviewPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { overview, loading: dashboardLoading } = useSuperadminDashboard();
 
-  if (authLoading) {
+  if (authLoading || dashboardLoading) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -70,11 +52,38 @@ export default function SuperadminOverviewPage() {
     );
   }
 
-  const displayUserData = user ? {
-    name: `${user.firstName} ${user.lastName}`,
-    course: "Super Administrator",
+  const displayUserData = {
+    name: overview?.profile
+      ? `${overview.profile.firstName} ${overview.profile.lastName}`
+      : user
+      ? `${user.firstName} ${user.lastName}`
+      : "System Administrator",
+    course: overview?.profile?.department || "Super Administrator",
     college: "EdgeUp College System",
-  } : userData;
+  };
+
+  const stats = {
+    totalStudents: {
+      label: overview?.stats?.totalStudents?.label || "Total Students",
+      value: overview?.stats?.totalStudents?.value || 0,
+      total: overview?.stats?.totalStudents?.total || 0,
+    },
+    totalTeachers: {
+      label: overview?.stats?.totalTeachers?.label || "Total Teachers",
+      value: overview?.stats?.totalTeachers?.value || 0,
+      total: overview?.stats?.totalTeachers?.total || 0,
+    },
+    totalInstitutes: {
+      label: overview?.stats?.totalInstitutes?.label || "Total Institutes",
+      value: overview?.stats?.totalInstitutes?.value || 0,
+      total: overview?.stats?.totalInstitutes?.total || 0,
+    },
+    totalCourses: {
+      label: overview?.stats?.totalCourses?.label || "Total Courses",
+      value: overview?.stats?.totalCourses?.value || 0,
+      total: overview?.stats?.totalCourses?.total || 0,
+    },
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

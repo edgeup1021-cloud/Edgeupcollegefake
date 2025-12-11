@@ -10,6 +10,8 @@ import type {
   Department,
   ManagementOverview,
   FinancialSummary,
+  ManagementDashboard,
+  Institution,
 } from '../types/management.types';
 
 export { ApiClientError as ManagementApiError };
@@ -19,6 +21,20 @@ export { ApiClientError as ManagementApiError };
  */
 export async function getManagementOverview(): Promise<ManagementOverview> {
   return api.get<ManagementOverview>('/management/overview');
+}
+
+/**
+ * Get management dashboard data including profile, stats, and institution
+ */
+export async function getManagementDashboard(): Promise<ManagementDashboard> {
+  return api.get<ManagementDashboard>('/management/dashboard');
+}
+
+/**
+ * Get institution details for the logged-in admin
+ */
+export async function getAdminInstitution(): Promise<Institution> {
+  return api.get<Institution>('/management/institution');
 }
 
 /**

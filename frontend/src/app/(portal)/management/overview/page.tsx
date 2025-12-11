@@ -5,92 +5,13 @@ import WelcomeCard from "@/components/common/cards/WelcomeCard";
 import StatCard from "@/components/common/cards/StatCard";
 import QuickAccessCard from "@/components/common/cards/QuickAccessCard";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
-
-interface DashboardStats {
-  totalStudents: number;
-  totalTeachers: number;
-  attendanceRate: number;
-  activeClasses: number;
-}
-
-interface Institution {
-  id: number;
-  name: string;
-  code: string;
-  institutionType: string;
-  collegeType: string;
-  location: string;
-  establishedYear: number;
-}
+import { useManagementDashboard } from "@/hooks/management";
 
 export default function ManagementOverviewPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalStudents: 0,
-    totalTeachers: 0,
-    attendanceRate: 0,
-    activeClasses: 0,
-  });
-  const [institution, setInstitution] = useState<Institution | null>(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
-  const [isLoadingInstitution, setIsLoadingInstitution] = useState(true);
+  const { dashboard, loading: dashboardLoading, error: dashboardError } = useManagementDashboard();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoadingStats(true);
-        setIsLoadingInstitution(true);
-
-        const token = localStorage.getItem('token');
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        };
-
-        // Fetch institution data
-        try {
-          const institutionResponse = await fetch('http://localhost:3001/api/management/institution', { headers });
-          if (institutionResponse.ok) {
-            const institutionData = await institutionResponse.json();
-            setInstitution(institutionData);
-          }
-        } catch (error) {
-          console.error("Error fetching institution:", error);
-        } finally {
-          setIsLoadingInstitution(false);
-        }
-
-        // Fetch dashboard stats
-        try {
-          const statsResponse = await fetch('http://localhost:3001/api/management/dashboard', { headers });
-          if (statsResponse.ok) {
-            const statsData = await statsResponse.json();
-            setStats({
-              totalStudents: statsData.totalStudents || 0,
-              totalTeachers: statsData.totalTeachers || 0,
-              attendanceRate: statsData.attendanceRate || 0,
-              activeClasses: statsData.activeClasses || 0,
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching dashboard stats:", error);
-        } finally {
-          setIsLoadingStats(false);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setIsLoadingStats(false);
-        setIsLoadingInstitution(false);
-      }
-    };
-
-    if (!authLoading && user) {
-      fetchData();
-    }
-  }, [authLoading, user]);
-
-  if (authLoading) {
+  if (authLoading || dashboardLoading) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -115,11 +36,9 @@ export default function ManagementOverviewPage() {
   }
 
   const displayUserData = {
-    name: `${user.firstName} ${user.lastName}`,
-    course: user.role === 'admin' ? 'Administrator' : user.role,
-    college: isLoadingInstitution
-      ? "Loading..."
-      : institution?.name || "No Institution Assigned",
+    name: dashboard?.profile?.name || user?.fullName || user?.username || "Loading...",
+    course: dashboard?.profile?.designation || (user?.role === 'admin' ? 'Administrator' : user?.role || 'Administrator'),
+    college: dashboard?.institution?.name || "Loading...",
   };
 
   return (
@@ -135,7 +54,7 @@ export default function ManagementOverviewPage() {
       <StatCard
         icon={Users}
         label="Total Students"
-        value={stats.totalStudents}
+        value={dashboard?.stats?.totalStudents ?? 0}
         total={0}
         variant="default"
       />
@@ -144,14 +63,14 @@ export default function ManagementOverviewPage() {
       <StatCard
         icon={GraduationCap}
         label="Total Faculty"
-        value={stats.totalTeachers}
+        value={dashboard?.stats?.totalTeachers ?? 0}
         total={0}
         variant="default"
       />
       <StatCard
         icon={UserCheck}
         label="Attendance Rate"
-        value={stats.attendanceRate}
+        value={dashboard?.stats?.attendanceRate ?? 0}
         total={100}
         unit="%"
         variant="success"
@@ -159,7 +78,7 @@ export default function ManagementOverviewPage() {
       <StatCard
         icon={TrendingUp}
         label="Active Classes"
-        value={stats.activeClasses}
+        value={dashboard?.stats?.activeClasses ?? 0}
         total={0}
         variant="warning"
       />

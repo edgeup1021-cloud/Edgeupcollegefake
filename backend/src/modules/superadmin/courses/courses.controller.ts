@@ -11,13 +11,17 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
+import { SubjectsService } from '../subjects/subjects.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { Public } from '../../../common/decorators/public.decorator';
 
 @Controller('curriculum/courses')
 export class CoursesController {
-  constructor(private readonly coursesService: CoursesService) {}
+  constructor(
+    private readonly coursesService: CoursesService,
+    private readonly subjectsService: SubjectsService,
+  ) {}
 
   @Public()
   @Post()
@@ -51,5 +55,12 @@ export class CoursesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.coursesService.remove(id);
+  }
+
+  // Get subjects for a specific course
+  @Public()
+  @Get(':courseId/subjects')
+  findSubjectsByCourse(@Param('courseId', ParseIntPipe) courseId: number) {
+    return this.subjectsService.findSubjectsByCourse(courseId);
   }
 }

@@ -5,13 +5,19 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Topic } from './topic.entity';
+import { Course } from './course.entity';
 
 @Entity('subjects')
 export class Subject {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: number;
+
+  @Column({ name: 'course_id', type: 'bigint', unsigned: true, nullable: false })
+  courseId: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
@@ -32,6 +38,10 @@ export class Subject {
   updatedAt: Date;
 
   // Relationships
+  @ManyToOne(() => Course, (course) => course.subjects, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'course_id' })
+  course: Course;
+
   @OneToMany(() => Topic, (topic) => topic.subject, { cascade: true })
   topics: Topic[];
 }

@@ -106,7 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const portalRoutes: Record<string, string> = {
           student: "/student/overview",
           teacher: "/teacher/overview",
-          management: "/management/institutional-health",
+          management: "/management/overview",
           superadmin: "/superadmin/overview",
         };
         const redirectPath = portalRoutes[credentials.portalType] || "/";
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const portalRoutes: Record<string, string> = {
           student: "/student/overview",
           teacher: "/teacher/overview",
-          management: "/management/institutional-health",
+          management: "/management/overview",
           superadmin: "/superadmin/overview",
         };
         const redirectPath = portalRoutes[response.user.portalType] || "/";

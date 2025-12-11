@@ -48,7 +48,6 @@ export const ROUTES = {
     ROOT: '/superadmin',
     OVERVIEW: '/superadmin/overview',
     COURSE: '/superadmin/course',
-    ROLE: '/superadmin/role',
     INSTITUTE: '/superadmin/institute',
     ADMIN_LOGS: '/superadmin/admin-logs',
   },

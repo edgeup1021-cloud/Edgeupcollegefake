@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Plus, Loader2 } from "lucide-react";
-import CourseCard from "./components/CourseCard";
-import EmptyState from "./components/EmptyState";
+import { useRouter } from "next/navigation";
+import { BookOpen, Plus, Loader2, Edit, Trash2, Search, ChevronRight } from "lucide-react";
 import CreateCourseDrawer from "./components/CreateCourseDrawer";
 import EditCourseDrawer from "./components/EditCourseDrawer";
 import DeleteConfirmDialog from "@/components/ui/delete-confirm-dialog";
@@ -22,8 +21,10 @@ interface ToastState {
 }
 
 export default function CoursePage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Drawer states
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
@@ -115,6 +116,10 @@ export default function CoursePage() {
     setIsCreateDrawerOpen(true);
   };
 
+  const handleViewSubjects = (courseId: number) => {
+    router.push(`/superadmin/curriculum/courses/${courseId}/subjects`);
+  };
+
   const handleCreateSuccess = () => {
     showToast("Course created successfully", "success");
     fetchCourses(); // Refresh list
@@ -124,6 +129,15 @@ export default function CoursePage() {
     showToast("Course updated successfully", "success");
     fetchCourses(); // Refresh list
   };
+
+  // Filter courses based on search query
+  const filteredCourses = courses.filter((course) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      course.name.toLowerCase().includes(searchLower) ||
+      (course.description?.toLowerCase().includes(searchLower) || false)
+    );
+  });
 
   return (
     <>
@@ -136,7 +150,7 @@ export default function CoursePage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Course Management
+                Courses
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Manage and organize your courses
@@ -153,31 +167,108 @@ export default function CoursePage() {
           </button>
         </div>
 
-        {/* Content */}
-        <div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search courses..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+          />
+        </div>
+
+        {/* Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           {loading ? (
             // Loading State
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
             </div>
-          ) : courses.length === 0 ? (
+          ) : filteredCourses.length === 0 ? (
             // Empty State
-            <EmptyState />
+            <div className="py-16 text-center">
+              <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {searchQuery ? "No courses found" : "No courses yet"}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                {searchQuery
+                  ? "Try adjusting your search query"
+                  : "Get started by creating your first course"}
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={handleCreate}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Course
+                </button>
+              )}
+            </div>
           ) : (
-            // Course List
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {courses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
+            // Table View
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Course Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredCourses.map((course) => (
+                    <tr
+                      key={course.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleViewSubjects(course.id)}
+                          className="flex items-center gap-2 text-sm font-medium text-brand-primary hover:text-brand-primary/80 transition-colors"
+                        >
+                          {course.name}
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 dark:text-white line-clamp-2">
+                          {course.description || "-"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(course.id)}
+                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(course.id)}
+                            className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-          </div>
         </div>
       </div>
 
@@ -204,8 +295,7 @@ export default function CoursePage() {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         title="Delete Course"
-        message="Are you sure you want to delete this course?"
-        itemName={courseToDelete?.name}
+        description={`Are you sure you want to delete "${courseToDelete?.name}"? This action cannot be undone.`}
         isDeleting={isDeleting}
       />
 

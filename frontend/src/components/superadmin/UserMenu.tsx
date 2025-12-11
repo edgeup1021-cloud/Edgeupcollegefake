@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { User, Settings, LogOut, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSuperadminDashboard } from "@/hooks/superadmin";
 
 export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, isLoading, logout } = useAuth();
+  const { overview } = useSuperadminDashboard();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -29,9 +31,16 @@ export default function UserMenu() {
     router.push("/superadmin/login");
   };
 
-  // Get display values
-  const fullName = user ? `${user.firstName} ${user.lastName}` : "Loading...";
-  const profileImage = user?.profileImage;
+  // Get display values with fallback
+  const fullName = overview?.profile
+    ? `${overview.profile.firstName} ${overview.profile.lastName}`
+    : user
+    ? `${user.firstName} ${user.lastName}`
+    : "Loading...";
+
+  const department = overview?.profile?.department || "Super Administrator";
+  const systemName = "EdgeUp College System";
+  const profileImage = overview?.profile?.profileImage || user?.profileImage;
 
   if (isLoading) {
     return (
@@ -84,7 +93,10 @@ export default function UserMenu() {
                   {fullName}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {user?.email}
+                  {department}
+                </div>
+                <div className="text-xs text-amber-600 dark:text-amber-400">
+                  {systemName}
                 </div>
               </div>
             </div>

@@ -91,8 +91,25 @@ export class InstitutionalHeadsService {
       }
     }
 
+    // Update institutional head
     Object.assign(institutionalHead, updateInstitutionalHeadDto);
-    return await this.institutionalHeadRepository.save(institutionalHead);
+    const updatedHead = await this.institutionalHeadRepository.save(institutionalHead);
+
+    // If admin user exists, update their information too
+    if (updatedHead.adminUserId) {
+      await this.collegeDataSource.query(
+        `UPDATE admin_users
+         SET email = ?, full_name = ?, updated_at = NOW()
+         WHERE id = ?`,
+        [
+          updatedHead.email,
+          updatedHead.name,
+          updatedHead.adminUserId,
+        ],
+      );
+    }
+
+    return updatedHead;
   }
 
   async remove(id: number): Promise<void> {

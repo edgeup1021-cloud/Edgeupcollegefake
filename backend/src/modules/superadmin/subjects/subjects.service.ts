@@ -48,6 +48,14 @@ export class SubjectsService {
     });
   }
 
+  async findSubjectsByCourse(courseId: number): Promise<Subject[]> {
+    return await this.subjectRepository.find({
+      where: { courseId },
+      relations: ['topics', 'topics.subtopics'],
+      order: { name: 'ASC' },
+    });
+  }
+
   async findOneSubject(id: number): Promise<Subject> {
     const subject = await this.subjectRepository.findOne({
       where: { id },

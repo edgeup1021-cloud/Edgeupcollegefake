@@ -77,7 +77,7 @@ export class SubjectsController {
   }
 
   @Public()
-  @Put('topics/:topicId')
+  @Put(':subjectId/topics/:topicId')
   updateTopic(
     @Param('topicId', ParseIntPipe) topicId: number,
     @Body() updateTopicDto: UpdateTopicDto,
@@ -104,7 +104,7 @@ export class SubjectsController {
   }
 
   @Public()
-  @Put('subtopics/:subtopicId')
+  @Put('topics/:topicId/subtopics/:subtopicId')
   updateSubtopic(
     @Param('subtopicId', ParseIntPipe) subtopicId: number,
     @Body() updateSubtopicDto: UpdateSubtopicDto,
@@ -113,7 +113,7 @@ export class SubjectsController {
   }
 
   @Public()
-  @Delete('subtopics/:subtopicId')
+  @Delete('topics/:topicId/subtopics/:subtopicId')
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeSubtopic(@Param('subtopicId', ParseIntPipe) subtopicId: number) {
     await this.subjectsService.removeSubtopic(subtopicId);

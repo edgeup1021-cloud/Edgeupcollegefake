@@ -1,84 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "@/components/ui/modal";
 import { Loader2 } from "lucide-react";
 
-interface CreateSubjectDrawerProps {
+interface Topic {
+  id: number;
+  name: string;
+  description: string | null;
+  orderIndex: number;
+}
+
+interface EditTopicDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   onError: (message: string) => void;
-  courseId: number;
+  topic: Topic | null;
+  subjectId: number;
 }
 
-interface SubjectFormData {
+interface TopicFormData {
   name: string;
   description: string;
 }
 
-export default function CreateSubjectDrawer({
+export default function EditTopicDrawer({
   isOpen,
   onClose,
   onSuccess,
   onError,
-  courseId,
-}: CreateSubjectDrawerProps) {
-  const [formData, setFormData] = useState<SubjectFormData>({
+  topic,
+  subjectId,
+}: EditTopicDrawerProps) {
+  const [formData, setFormData] = useState<TopicFormData>({
     name: "",
     description: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Populate form when topic changes
+  useEffect(() => {
+    if (topic) {
+      setFormData({
+        name: topic.name,
+        description: topic.description || "",
+      });
+    }
+  }, [topic]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!topic) return;
+
     // Validation
     if (!formData.name.trim()) {
-      onError("Subject name is required");
+      onError("Topic name is required");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      // Generate code from name (first 6 chars, uppercase, alphanumeric only)
-      const code = formData.name
-        .replace(/[^a-zA-Z0-9]/g, '')
-        .substring(0, 6)
-        .toUpperCase() || 'SUB001';
-
       const payload = {
-        name: formData.name,
-        description: formData.description,
-        code: code,
-        isActive: true, // Default to active
-        courseId: courseId,
+        ...formData,
+        orderIndex: topic.orderIndex, // Keep existing order
       };
 
-      const response = await fetch('http://localhost:3001/api/curriculum/subjects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `http://localhost:3001/api/curriculum/subjects/${subjectId}/topics/${topic.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create subject');
+        throw new Error(error.message || "Failed to update topic");
       }
-
-      // Reset form
-      setFormData({
-        name: "",
-        description: "",
-      });
 
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error("Error creating subject:", error);
-      onError(error.message || "Failed to create subject. Please try again.");
+      console.error("Error updating topic:", error);
+      onError(error.message || "Failed to update topic. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -86,27 +95,25 @@ export default function CreateSubjectDrawer({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setFormData({
-        name: "",
-        description: "",
-      });
       onClose();
     }
   };
 
+  if (!topic) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create New Subject" size="md">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Topic" size="md">
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Subject Name */}
+        {/* Topic Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Subject Name <span className="text-red-500">*</span>
+            Topic Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g., Data Structures and Algorithms"
+            placeholder="e.g., Arrays and Lists"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-primary focus:border-transparent"
             disabled={isSubmitting}
             autoFocus
@@ -121,7 +128,7 @@ export default function CreateSubjectDrawer({
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Brief description of the subject..."
+            placeholder="Brief description of this topic..."
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
             disabled={isSubmitting}
@@ -146,10 +153,10 @@ export default function CreateSubjectDrawer({
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Creating...
+                Updating...
               </>
             ) : (
-              "Create Subject"
+              "Update Topic"
             )}
           </button>
         </div>

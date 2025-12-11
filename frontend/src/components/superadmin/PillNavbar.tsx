@@ -9,7 +9,6 @@ import logo from "@/assets/logo.png";
 import {
   LayoutGrid,
   BookOpen,
-  Users,
   Building2,
   ScrollText,
   Search,
@@ -23,17 +22,10 @@ import {
 import { useTheme } from "@/components/providers/ThemeProvider";
 import UserMenu from "./UserMenu";
 
-// Curriculum Items
-const curriculumItems = [
-  { label: "Course", href: "/superadmin/curriculum/course", icon: BookOpen },
-  { label: "Subjects", href: "/superadmin/curriculum/subjects", icon: BookOpen },
-];
-
 // Main navigation items
 const navItems = [
   { id: "overview", label: "Overview", href: "/superadmin/overview", icon: LayoutGrid },
-  { id: "curriculum", label: "Curriculum", icon: BookOpen, items: curriculumItems },
-  { id: "role", label: "Institutional Heads", href: "/superadmin/role", icon: Users },
+  { id: "curriculum", label: "Curriculum", href: "/superadmin/curriculum", icon: BookOpen },
   { id: "institute", label: "Institute", href: "/superadmin/institute", icon: Building2 },
   { id: "logs", label: "Admin Logs", href: "/superadmin/admin-logs", icon: ScrollText },
 ];
@@ -65,7 +57,6 @@ export default function PillNavbar() {
   const getActiveNavId = () => {
     if (pathname === "/superadmin/overview") return "overview";
     if (pathname.startsWith("/superadmin/curriculum")) return "curriculum";
-    if (pathname.startsWith("/superadmin/role")) return "role";
     if (pathname.startsWith("/superadmin/institute")) return "institute";
     if (pathname.startsWith("/superadmin/admin-logs")) return "logs";
     return null;

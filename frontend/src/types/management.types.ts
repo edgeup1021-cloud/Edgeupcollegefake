@@ -63,3 +63,44 @@ export interface AdminUser {
   lastLogin: string | null;
   createdAt: string;
 }
+
+export interface Institution {
+  id: number;
+  name: string;
+  code: string;
+  institutionType: string;
+  collegeType: string;
+  location: string;
+  establishedYear: number;
+  description?: string;
+  institutionalHead?: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+  };
+}
+
+export interface ManagementDashboardProfile {
+  name: string;
+  email: string;
+  designation?: string;
+  department?: string;
+  profileImage?: string;
+}
+
+export interface ManagementDashboardStats {
+  totalStudents: number;
+  totalTeachers: number;
+  attendanceRate: number;
+  activeClasses: number;
+}
+
+export interface ManagementDashboard {
+  profile?: ManagementDashboardProfile;
+  stats: ManagementDashboardStats;
+  institution: {
+    id: number;
+    name: string;
+  };
+}

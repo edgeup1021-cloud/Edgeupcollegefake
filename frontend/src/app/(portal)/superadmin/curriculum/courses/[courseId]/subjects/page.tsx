@@ -1,24 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BookOpen, Plus, Loader2, Edit, Trash2, Search, ChevronRight, ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { BookOpen, Plus, Loader2, ArrowLeft, Edit, Trash2, Search } from "lucide-react";
-import CreateSubtopicDrawer from "../../../../components/CreateSubtopicDrawer";
-import EditSubtopicDrawer from "../../../../components/EditSubtopicDrawer";
+import CreateSubjectDrawer from "../../../subjects/components/CreateSubjectDrawer";
+import EditSubjectDrawer from "../../../subjects/components/EditSubjectDrawer";
 import DeleteConfirmDialog from "@/components/ui/delete-confirm-dialog";
 import Toast, { ToastType } from "@/components/ui/toast";
 
-interface Subtopic {
+interface Subject {
   id: number;
   name: string;
-  orderIndex: number;
-  content: string | null;
+  code: string;
+  description: string | null;
+  courseId: number;
+  isActive: boolean;
 }
 
-interface Topic {
+interface Course {
   id: number;
   name: string;
-  description: string | null;
 }
 
 interface ToastState {
@@ -27,23 +28,24 @@ interface ToastState {
   type: ToastType;
 }
 
-export default function SubtopicsPage() {
+export default function SubjectsPage() {
   const params = useParams();
   const router = useRouter();
-  const subjectId = Number(params.subjectId);
-  const topicId = Number(params.topicId);
+  const courseId = Number(params.courseId);
 
-  const [topic, setTopic] = useState<Topic | null>(null);
-  const [subtopics, setSubtopics] = useState<Subtopic[]>([]);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Drawer states
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const [selectedSubtopic, setSelectedSubtopic] = useState<Subtopic | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+
+  // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [subtopicToDelete, setSubtopicToDelete] = useState<Subtopic | null>(null);
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Toast state
@@ -61,115 +63,132 @@ export default function SubtopicsPage() {
     setToast({ ...toast, isVisible: false });
   };
 
-  // Fetch topic and subtopics
-  const fetchData = async () => {
+  // Fetch course details
+  const fetchCourse = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(
-        `http://localhost:3001/api/curriculum/subjects/${subjectId}/topics/${topicId}`
-      );
+      const response = await fetch(`http://localhost:3001/api/curriculum/courses/${courseId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch topic");
+        throw new Error("Failed to fetch course");
       }
       const data = await response.json();
-      setTopic(data);
-      setSubtopics(data.subtopics || []);
+      setCourse(data);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      showToast("Failed to fetch subtopics", "error");
+      console.error("Error fetching course:", error);
+      showToast("Failed to fetch course", "error");
+    }
+  };
+
+  // Fetch subjects for this course
+  const fetchSubjects = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:3001/api/curriculum/courses/${courseId}/subjects`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch subjects");
+      }
+      const data = await response.json();
+      setSubjects(data);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      showToast("Failed to fetch subjects", "error");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (subjectId && topicId) {
-      fetchData();
+    if (courseId) {
+      fetchCourse();
+      fetchSubjects();
     }
-  }, [subjectId, topicId]);
+  }, [courseId]);
 
   const handleBack = () => {
+    router.push("/superadmin/curriculum/course");
+  };
+
+  const handleViewTopics = (subjectId: number) => {
     router.push(`/superadmin/curriculum/subjects/${subjectId}/topics`);
   };
 
-  const handleCreateSubtopic = () => {
+  const handleCreateSubject = () => {
     setIsCreateDrawerOpen(true);
   };
 
-  const handleEditSubtopic = (id: number) => {
-    const subtopic = subtopics.find((st) => st.id === id);
-    if (subtopic) {
-      setSelectedSubtopic(subtopic);
+  const handleEditSubject = (id: number) => {
+    const subject = subjects.find((s) => s.id === id);
+    if (subject) {
+      setSelectedSubject(subject);
       setIsEditDrawerOpen(true);
     }
   };
 
-  const handleDeleteSubtopic = (id: number) => {
-    const subtopic = subtopics.find((st) => st.id === id);
-    if (subtopic) {
-      setSubtopicToDelete(subtopic);
+  const handleDeleteSubject = (id: number) => {
+    const subject = subjects.find((s) => s.id === id);
+    if (subject) {
+      setSubjectToDelete(subject);
       setIsDeleteDialogOpen(true);
     }
   };
 
   const confirmDelete = async () => {
-    if (!subtopicToDelete) return;
+    if (!subjectToDelete) return;
 
     try {
       setIsDeleting(true);
       const response = await fetch(
-        `http://localhost:3001/api/curriculum/subjects/topics/${topicId}/subtopics/${subtopicToDelete.id}`,
+        `http://localhost:3001/api/curriculum/subjects/${subjectToDelete.id}`,
         {
           method: "DELETE",
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to delete subtopic");
+        throw new Error("Failed to delete subject");
       }
 
-      showToast("Subtopic deleted successfully", "success");
-      fetchData();
+      showToast("Subject deleted successfully", "success");
+      fetchSubjects();
     } catch (error) {
-      console.error("Error deleting subtopic:", error);
-      showToast("Failed to delete subtopic", "error");
+      console.error("Error deleting subject:", error);
+      showToast("Failed to delete subject", "error");
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
-      setSubtopicToDelete(null);
+      setSubjectToDelete(null);
     }
   };
 
   const handleCreateSuccess = () => {
-    showToast("Subtopic created successfully", "success");
-    fetchData();
+    showToast("Subject created successfully", "success");
+    fetchSubjects();
   };
 
   const handleEditSuccess = () => {
-    showToast("Subtopic updated successfully", "success");
-    fetchData();
+    showToast("Subject updated successfully", "success");
+    fetchSubjects();
   };
 
-  // Filter subtopics based on search query
-  const filteredSubtopics = subtopics.filter((subtopic) => {
+  // Filter subjects based on search query
+  const filteredSubjects = subjects.filter((subject) => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      subtopic.name.toLowerCase().includes(searchLower) ||
-      (subtopic.content?.toLowerCase().includes(searchLower) || false)
+      subject.name.toLowerCase().includes(searchLower) ||
+      (subject.description?.toLowerCase().includes(searchLower) || false)
     );
   });
 
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header with Breadcrumb */}
         <div className="space-y-4">
           <button
             onClick={handleBack}
             className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-brand-primary dark:hover:text-brand-primary transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Topics
+            Back to Courses
           </button>
 
           <div className="flex items-center justify-between">
@@ -179,20 +198,20 @@ export default function SubtopicsPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {topic?.name || "Subtopics"}
+                  {course?.name || "Subjects"}
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Manage subtopics for this topic
+                  Manage subjects for this course
                 </p>
               </div>
             </div>
 
             <button
-              onClick={handleCreateSubtopic}
+              onClick={handleCreateSubject}
               className="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Create Subtopic
+              Create Subject
             </button>
           </div>
         </div>
@@ -202,7 +221,7 @@ export default function SubtopicsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search subtopics..."
+            placeholder="Search subjects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
@@ -216,25 +235,25 @@ export default function SubtopicsPage() {
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
             </div>
-          ) : filteredSubtopics.length === 0 ? (
+          ) : filteredSubjects.length === 0 ? (
             // Empty State
             <div className="py-16 text-center">
               <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {searchQuery ? "No subtopics found" : "No subtopics yet"}
+                {searchQuery ? "No subjects found" : "No subjects yet"}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                 {searchQuery
                   ? "Try adjusting your search query"
-                  : "Get started by creating your first subtopic"}
+                  : "Get started by creating your first subject"}
               </p>
               {!searchQuery && (
                 <button
-                  onClick={handleCreateSubtopic}
+                  onClick={handleCreateSubject}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-lg font-medium transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  Create Subtopic
+                  Create Subject
                 </button>
               )}
             </div>
@@ -245,10 +264,10 @@ export default function SubtopicsPage() {
                 <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Subtopic Name
+                      Subject Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Content
+                      Description
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Actions
@@ -256,32 +275,36 @@ export default function SubtopicsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredSubtopics.map((subtopic) => (
+                  {filteredSubjects.map((subject) => (
                     <tr
-                      key={subtopic.id}
+                      key={subject.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {subtopic.name}
-                        </div>
+                        <button
+                          onClick={() => handleViewTopics(subject.id)}
+                          className="flex items-center gap-2 text-sm font-medium text-brand-primary hover:text-brand-primary/80 transition-colors"
+                        >
+                          {subject.name}
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 dark:text-white line-clamp-2">
-                          {subtopic.content || "-"}
+                          {subject.description || "-"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleEditSubtopic(subtopic.id)}
+                            onClick={() => handleEditSubject(subject.id)}
                             className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteSubtopic(subtopic.id)}
+                            onClick={() => handleDeleteSubject(subject.id)}
                             className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                             title="Delete"
                           >
@@ -299,23 +322,21 @@ export default function SubtopicsPage() {
       </div>
 
       {/* Create Drawer */}
-      <CreateSubtopicDrawer
+      <CreateSubjectDrawer
         isOpen={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
         onSuccess={handleCreateSuccess}
         onError={(message) => showToast(message, "error")}
-        topicId={topicId}
-        topicName={topic?.name}
+        courseId={courseId}
       />
 
       {/* Edit Drawer */}
-      <EditSubtopicDrawer
+      <EditSubjectDrawer
         isOpen={isEditDrawerOpen}
         onClose={() => setIsEditDrawerOpen(false)}
         onSuccess={handleEditSuccess}
         onError={(message) => showToast(message, "error")}
-        subtopic={selectedSubtopic}
-        topicId={topicId}
+        subject={selectedSubject}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -323,8 +344,8 @@ export default function SubtopicsPage() {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
-        title="Delete Subtopic"
-        description={`Are you sure you want to delete "${subtopicToDelete?.name}"? This action cannot be undone.`}
+        title="Delete Subject"
+        description={`Are you sure you want to delete "${subjectToDelete?.name}"? This action cannot be undone and will also delete all associated topics and subtopics.`}
         isDeleting={isDeleting}
       />
 

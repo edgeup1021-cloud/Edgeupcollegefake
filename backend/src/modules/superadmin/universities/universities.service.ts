@@ -19,15 +19,6 @@ export class UniversitiesService {
   ) {}
 
   async create(createUniversityDto: CreateUniversityDto): Promise<University> {
-    // Check if code already exists
-    const existing = await this.universityRepository.findOne({
-      where: { code: createUniversityDto.code },
-    });
-
-    if (existing) {
-      throw new ConflictException('A university with this code already exists');
-    }
-
     // Validate college type for colleges
     if (
       createUniversityDto.institutionType === InstitutionType.COLLEGE &&
@@ -43,13 +34,42 @@ export class UniversitiesService {
       createUniversityDto.collegeType = null;
     }
 
+    // Extract institutional head data if provided
+    const { institutionalHead, ...universityData } = createUniversityDto;
+
+    // Create university
     const university = this.universityRepository.create({
-      ...createUniversityDto,
+      ...universityData,
       isActive: true,
       institutionalHeadId: null,
     });
 
-    return await this.universityRepository.save(university);
+    const savedUniversity = await this.universityRepository.save(university);
+
+    // If institutional head data is provided, create head and assign to university
+    if (institutionalHead) {
+      try {
+        // Create institutional head
+        const createdHead = await this.institutionalHeadsService.create(
+          institutionalHead,
+        );
+
+        // Assign head to institution (this creates the admin user)
+        await this.institutionalHeadsService.assignToInstitution(
+          createdHead.id,
+          savedUniversity.id,
+        );
+
+        // Return university with the institutional head relation
+        return await this.findOne(savedUniversity.id);
+      } catch (error) {
+        // If head creation/assignment fails, delete the university to maintain consistency
+        await this.universityRepository.remove(savedUniversity);
+        throw error;
+      }
+    }
+
+    return savedUniversity;
   }
 
   async findAll(): Promise<University[]> {
@@ -107,8 +127,38 @@ export class UniversitiesService {
       updateUniversityDto.collegeType = null;
     }
 
-    Object.assign(university, updateUniversityDto);
-    return await this.universityRepository.save(university);
+    // Extract institutional head data if provided
+    const { institutionalHead, ...universityData } = updateUniversityDto;
+
+    // Update university data
+    Object.assign(university, universityData);
+    const updatedUniversity = await this.universityRepository.save(university);
+
+    // Handle institutional head update/creation
+    if (institutionalHead) {
+      if (university.institutionalHead) {
+        // Update existing institutional head
+        await this.institutionalHeadsService.update(
+          university.institutionalHead.id,
+          institutionalHead,
+        );
+      } else {
+        // Create new institutional head and assign to university
+        const createdHead = await this.institutionalHeadsService.create(
+          institutionalHead,
+        );
+
+        await this.institutionalHeadsService.assignToInstitution(
+          createdHead.id,
+          updatedUniversity.id,
+        );
+      }
+
+      // Return university with updated head relation
+      return await this.findOne(updatedUniversity.id);
+    }
+
+    return updatedUniversity;
   }
 
   async remove(id: number): Promise<void> {
