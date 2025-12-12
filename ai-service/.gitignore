@@ -1,0 +1,14 @@
+.env
+.venv/
+backups
+.env.example
+.env.dev
+.env.prod
+.claude/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python

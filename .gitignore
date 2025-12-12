@@ -53,3 +53,27 @@ coverage/
 claude.md
 
 .screenshots/
+
+# Python
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Python runtime files
+**/celerybeat-schedule*
+*.db
+*.sqlite3
+
+# Downloaded binaries
+*.deb
+*.rpm
+*.tar.gz
+*.zip
