@@ -34,6 +34,11 @@ import {
   TeacherCourseOffering,
   TeacherAssignment,
   TeacherClassSession,
+  CurriculumCourse,
+  CurriculumPlan,
+  CurriculumSession,
+  CurriculumCalendarEvent,
+  CurriculumAdaptation,
 } from './entities/teacher';
 
 // Management entities
@@ -70,6 +75,12 @@ const entities = [
   TeacherCourseOffering,
   TeacherAssignment,
   TeacherClassSession,
+  // Curriculum Planner
+  CurriculumCourse,
+  CurriculumPlan,
+  CurriculumSession,
+  CurriculumCalendarEvent,
+  CurriculumAdaptation,
   // Management
   AdminUser,
   Campus,
