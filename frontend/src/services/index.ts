@@ -24,3 +24,6 @@ export * from './management.service';
 
 // Superadmin Service
 export * from './superadmin.service';
+
+// Curriculum Planner Service
+export * from './curriculum-planner.service';
