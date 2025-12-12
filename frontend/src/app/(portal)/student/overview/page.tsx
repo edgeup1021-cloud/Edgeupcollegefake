@@ -262,55 +262,47 @@ export default function StudentOverviewPage() {
   const deadlineItems = dashboard.deadlines.map(mapDeadlineItem);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Row 1: Welcome Card (span 3) + Attendance Stat (span 1) */}
+    <div className="space-y-4">
+      {/* Welcome Card - Full Width */}
       <WelcomeCard
         name={userData.name}
         course={userData.course}
         college={userData.college}
       />
-      <StatCard
-        icon={CalendarCheck}
-        label="Attendance"
-        value={stats.attendance.value}
-        total={stats.attendance.total}
-        unit={stats.attendance.unit}
-        variant="success"
-      />
 
-      {/* Row 2: Daily Goal + Tests Today + Quick Access (span 2) */}
-      <StatCard
-        icon={Crosshair}
-        label="Daily Goal"
-        value={stats.dailyGoal.value}
-        total={stats.dailyGoal.total}
-        unit={stats.dailyGoal.unit}
-      />
-      <StatCard
-        icon={ClipboardText}
-        label="Tests Today"
-        value={stats.testsToday.value}
-        total={stats.testsToday.total}
-        unit={stats.testsToday.unit}
-        variant="warning"
-      />
-      <div className="col-span-full md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {quickAccessItems.slice(0, 2).map((item) => (
-          <QuickAccessCard
-            key={item.href}
-            icon={item.icon}
-            title={item.title}
-            href={item.href}
-            description={item.description}
-          />
-        ))}
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard
+          icon={CalendarCheck}
+          label="Attendance"
+          value={stats.attendance.value}
+          total={stats.attendance.total}
+          unit={stats.attendance.unit}
+          variant="success"
+        />
+        <StatCard
+          icon={Crosshair}
+          label="Daily Goal"
+          value={stats.dailyGoal.value}
+          total={stats.dailyGoal.total}
+          unit={stats.dailyGoal.unit}
+        />
+        <StatCard
+          icon={ClipboardText}
+          label="Tests Today"
+          value={stats.testsToday.value}
+          total={stats.testsToday.total}
+          unit={stats.testsToday.unit}
+          variant="warning"
+        />
       </div>
 
-      {/* Row 3-4: Schedule (span 2, row span 2) + Quick Access Cards + Deadlines */}
+      {/* Schedule - Full Width */}
       <ScheduleCard date={formattedDate} items={scheduleItems} />
 
-      <div className="col-span-full md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {quickAccessItems.slice(2, 4).map((item) => (
+      {/* Quick Access Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {quickAccessItems.map((item) => (
           <QuickAccessCard
             key={item.href}
             icon={item.icon}
@@ -321,7 +313,7 @@ export default function StudentOverviewPage() {
         ))}
       </div>
 
-      {/* Row 5: Deadlines */}
+      {/* Deadlines - Full Width */}
       <DeadlinesCard items={deadlineItems} />
     </div>
   );

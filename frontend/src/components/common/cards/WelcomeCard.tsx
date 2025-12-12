@@ -20,7 +20,7 @@ export default function WelcomeCard({ name, course, college }: WelcomeCardProps)
   const firstName = name.split(" ")[0];
 
   return (
-    <div className="col-span-full lg:col-span-3 bg-gradient-to-br from-brand-primary via-brand-dark to-brand-accent rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-brand-primary/20">
+    <div className="bg-gradient-to-br from-brand-primary via-brand-dark to-brand-accent rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-brand-primary/20">
       {/* Animated background decorations */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-white/20 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-secondary/30 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
