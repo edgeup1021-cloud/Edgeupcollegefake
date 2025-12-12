@@ -11,12 +11,13 @@ import { SuperadminModule } from './modules/superadmin/superadmin.module';
 import { CalendarModule } from './modules/student/calendar/calendar.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { LeaveModule } from './modules/leave/leave.module';
-import { LibraryModule } from './modules/library/library.module';
+import { LibraryModule } from './modules/digital-library/library.module';
 import { LiveClassesModule } from './modules/live-classes/live-classes.module';
 import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
 import { CareerModule } from './modules/career/career.module';
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { LessonPlannerModule } from './modules/lesson-planner/lesson-planner.module';
+import { DiscussionForumModule } from './modules/discussion-forum/discussion-forum.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { LessonPlannerModule } from './modules/lesson-planner/lesson-planner.mod
     CareerModule,
     CurriculumModule,
     LessonPlannerModule,
+    DiscussionForumModule,
   ],
 })
 export class AppModule { }

@@ -11,7 +11,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { LibraryStudentService } from './services/library-student.service';
 import { QueryLibraryResourcesDto } from './dto';
 
-@Controller('library/student')
+@Controller('digital-library/student')
 export class LibraryStudentController {
   constructor(private readonly libraryStudentService: LibraryStudentService) {}
 

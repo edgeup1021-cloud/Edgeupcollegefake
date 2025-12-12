@@ -25,6 +25,8 @@ import {
   FileCheck,
   CalendarDays,
   BookMarked,
+  UserCog,
+  FileText,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -52,8 +54,15 @@ const smartAssessmentItems = [
 
 // Growth Items
 const growthItems = [
-  { label: "Growth Overview", href: "/teacher/growth", icon: TrendingUp },
   { label: "Idea Sandbox", href: "/teacher/growth/idea-sandbox", icon: Lightbulb },
+  { label: "Development Programs", href: "/teacher/growth/development-programs", icon: GraduationCap },
+  { label: "Research & Publications", href: "/teacher/growth/research-publications", icon: FileText },
+];
+
+// Students Items
+const studentsItems = [
+  { label: "Students Chat", href: "/teacher/students", icon: GraduationCap },
+  { label: "My Mentees", href: "/teacher/mentees", icon: UserCog },
 ];
 
 // Main navigation items
@@ -62,7 +71,7 @@ const navItems = [
   { id: "classroom", label: "Classroom", icon: Users, items: classroomItems },
   { id: "curriculum", label: "Curriculum", icon: BookOpen, items: curriculumItems },
   { id: "smart-assessment", label: "Smart Assessment", icon: FileCheck, items: smartAssessmentItems },
-  { id: "students", label: "Students", href: "/teacher/students", icon: GraduationCap },
+  { id: "students", label: "Students", icon: GraduationCap, items: studentsItems },
   { id: "growth", label: "Growth", icon: TrendingUp, items: growthItems },
 ];
 
@@ -98,6 +107,7 @@ export default function PillNavbar() {
     if (pathname.startsWith("/teacher/curriculum")) return "curriculum";
     if (pathname.startsWith("/teacher/smart-assessment")) return "smart-assessment";
     if (pathname.startsWith("/teacher/students")) return "students";
+    if (pathname.startsWith("/teacher/mentees")) return "students";
     if (pathname.startsWith("/teacher/growth")) return "growth";
     return null;
   };

@@ -145,3 +145,55 @@ export enum ApplicationStatus {
   REJECTED = 'rejected',
   NOT_APPLIED = 'not-applied',
 }
+
+// Discussion Forum post types
+export enum DiscussionPostType {
+  QUESTION = 'question',
+  DISCUSSION = 'discussion',
+}
+
+// Discussion Forum categories
+export enum DiscussionCategory {
+  MATHEMATICS = 'Mathematics',
+  COMPUTER_SCIENCE = 'Computer Science',
+  PHYSICS = 'Physics',
+  CHEMISTRY = 'Chemistry',
+  BIOLOGY = 'Biology',
+  ENGINEERING = 'Engineering',
+  BUSINESS = 'Business',
+  GENERAL_ACADEMIC = 'General Academic',
+  STUDY_TIPS = 'Study Tips',
+  CAREER_GUIDANCE = 'Career Guidance',
+}
+
+// Discussion Forum post status
+export enum DiscussionPostStatus {
+  ACTIVE = 'active',
+  ARCHIVED = 'archived',
+  FLAGGED = 'flagged',
+}
+
+// Development Programs - Course sources
+export enum CourseSource {
+  UDEMY = 'Udemy',
+  COURSERA = 'Coursera',
+  YOUTUBE = 'YouTube',
+  KHAN_ACADEMY = 'Khan Academy',
+  COMPANY = 'Company',
+  OTHER = 'Other',
+}
+
+// Development Programs - Course levels
+export enum CourseLevel {
+  BEGINNER = 'Beginner',
+  INTERMEDIATE = 'Intermediate',
+  ADVANCED = 'Advanced',
+  ALL_LEVELS = 'All Levels',
+}
+
+// Development Programs - Course status
+export enum CourseStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ARCHIVED = 'archived',
+}

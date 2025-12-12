@@ -17,3 +17,8 @@ export * from './student-library-access-log.entity';
 export * from './student-live-class-attendance.entity';
 export * from './student-resume.entity';
 export * from './student-job-application.entity';
+export * from './student-discussion-post.entity';
+export * from './student-discussion-comment.entity';
+export * from './student-discussion-upvote.entity';
+export * from './exam.entity';
+export * from './exam-subject.entity';

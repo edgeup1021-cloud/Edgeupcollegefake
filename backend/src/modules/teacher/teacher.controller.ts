@@ -30,6 +30,27 @@ import {
   CreateCommentDto,
   ArchivePostDto,
 } from './dto/idea-sandbox';
+import { MessagingService } from './services/messaging.service';
+import {
+  CreateConversationDto,
+  AddParticipantsDto,
+  SendMessageDto,
+} from './dto/messaging';
+import { YouTubeApiService } from './services/youtube-api.service';
+import { QueryDevelopmentProgramsDto } from './dto/query-development-programs.dto';
+import { MentorshipService } from './services/mentorship.service';
+import {
+  CreateMentorshipDto,
+  UpdateMentorshipDto,
+  BulkAssignMenteesDto,
+} from './dto/mentorship';
+import { MentorshipStatus } from '../../database/entities/teacher/teacher-mentorship.entity';
+import { PublicationsService } from './services/publications.service';
+import {
+  CreatePublicationDto,
+  UpdatePublicationDto,
+  QueryPublicationsDto,
+} from './dto/publications';
 
 @Controller('teacher')
 export class TeacherController {
@@ -38,6 +59,10 @@ export class TeacherController {
     private readonly assignmentsService: AssignmentsService,
     private readonly teacherAttendanceService: TeacherAttendanceService,
     private readonly ideaSandboxService: IdeaSandboxService,
+    private readonly messagingService: MessagingService,
+    private readonly youtubeApiService: YouTubeApiService,
+    private readonly mentorshipService: MentorshipService,
+    private readonly publicationsService: PublicationsService,
   ) {}
 
   @Get()
@@ -83,6 +108,143 @@ export class TeacherController {
     const id = teacherId ? parseInt(teacherId, 10) : 1;
     return this.teacherService.getTeacherCourses(id);
   }
+
+  @Get('students')
+  @Public()
+  getStudents(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.teacherService.getTeacherStudents(id);
+  }
+
+  // ==================== Mentorship Routes ====================
+
+  @Get('mentees')
+  @Public()
+  getMentees(
+    @Query('teacherId') teacherId?: string,
+    @Query('status') status?: MentorshipStatus,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.getMentees(id, status);
+  }
+
+  @Get('mentees/available')
+  @Public()
+  getAvailableStudents(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.getAvailableStudents(id);
+  }
+
+  @Post('mentees')
+  @Public()
+  assignMentee(
+    @Body() dto: CreateMentorshipDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.assignMentee(dto, id);
+  }
+
+  @Post('mentees/bulk-assign')
+  @Public()
+  bulkAssignMentees(
+    @Body() dto: BulkAssignMenteesDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.bulkAssignMentees(dto, id);
+  }
+
+  @Get('mentees/:id')
+  @Public()
+  getMenteeDetails(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.getMenteeDetails(id, tid);
+  }
+
+  @Patch('mentees/:id')
+  @Public()
+  updateMentorship(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMentorshipDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.updateMentorship(id, dto, tid);
+  }
+
+  @Delete('mentees/:id')
+  @Public()
+  removeMentee(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.mentorshipService.removeMentee(id, tid);
+  }
+
+  // ==================== End Mentorship Routes ====================
+
+  // ==================== Publications Routes ====================
+
+  @Post('publications')
+  @Public()
+  createPublication(
+    @Body() dto: CreatePublicationDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.create(dto, id);
+  }
+
+  @Get('publications')
+  @Public()
+  getPublications(@Query() query: QueryPublicationsDto) {
+    return this.publicationsService.findAll(query);
+  }
+
+  @Get('publications/stats')
+  @Public()
+  getPublicationStats(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.getStatistics(id);
+  }
+
+  @Get('publications/:id')
+  @Public()
+  getPublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : undefined;
+    return this.publicationsService.findOne(id, tid);
+  }
+
+  @Patch('publications/:id')
+  @Public()
+  updatePublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePublicationDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.update(id, dto, tid);
+  }
+
+  @Delete('publications/:id')
+  @Public()
+  deletePublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.publicationsService.remove(id, tid);
+  }
+
+  // ==================== End Publications Routes ====================
 
   // Assignment CRUD
   @Post('assignments')
@@ -304,6 +466,88 @@ export class TeacherController {
   ) {
     const tid = teacherId ? parseInt(teacherId, 10) : 1;
     return this.ideaSandboxService.removeComment(id, tid);
+  }
+
+  // ==================== Messaging Routes ====================
+
+  @Post('conversations')
+  @Public()
+  createConversation(
+    @Body() dto: CreateConversationDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.createConversation(dto, id);
+  }
+
+  @Get('conversations')
+  @Public()
+  getConversations(@Query('teacherId') teacherId?: string) {
+    const id = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.getConversations(id);
+  }
+
+  @Get('conversations/:id')
+  @Public()
+  getConversation(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.getConversationById(id, tid);
+  }
+
+  @Post('conversations/:id/messages')
+  @Public()
+  sendMessage(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SendMessageDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.sendMessage(id, dto, tid);
+  }
+
+  @Post('conversations/:id/participants')
+  @Public()
+  addParticipants(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AddParticipantsDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.addParticipants(id, dto, tid);
+  }
+
+  @Delete('conversations/:id')
+  @Public()
+  deleteConversation(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    const tid = teacherId ? parseInt(teacherId, 10) : 1;
+    return this.messagingService.deleteConversation(id, tid);
+  }
+
+  // Development Programs - YouTube API integration
+
+  // Personalized recommendations (must be before /search to avoid route conflict)
+  @Get('development-programs/personalized/:teacherId')
+  @Public()
+  async getPersonalizedPrograms(@Param('teacherId', ParseIntPipe) id: number) {
+    return this.youtubeApiService.getPersonalizedCourses(id);
+  }
+
+  @Get('development-programs/search')
+  @Public()
+  async searchDevelopmentPrograms(@Query() query: QueryDevelopmentProgramsDto) {
+    return this.youtubeApiService.searchEducationalVideos(query);
+  }
+
+  @Get('development-programs/channels')
+  @Public()
+  getEducationalChannels() {
+    return this.youtubeApiService.getEducationalChannels();
   }
 
   // Teacher CRUD - placed after specific routes to avoid route conflicts

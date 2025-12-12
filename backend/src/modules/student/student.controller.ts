@@ -21,12 +21,18 @@ import { CurrentUser, CurrentUserData } from '../../common/decorators/current-us
 import { UserRole } from '../../common/enums/user-role.enum';
 import { SubmissionsService } from './services/submissions.service';
 import { SubmitAssignmentDto } from './dto/submission';
+import { StudentMessagingService } from './services/student-messaging.service';
+import { SendMessageDto } from '../teacher/dto/messaging/send-message.dto';
+import { SemesterResultService } from './services/semester-result.service';
+import { CreateSemesterResultDto, UpdateSemesterResultDto } from './dto/semester-result';
 
 @Controller('student')
 export class StudentController {
   constructor(
     private readonly studentService: StudentService,
     private readonly submissionsService: SubmissionsService,
+    private readonly studentMessagingService: StudentMessagingService,
+    private readonly semesterResultService: SemesterResultService,
   ) {}
 
   // GET /api/student - List all students
@@ -42,6 +48,133 @@ export class StudentController {
   @Public() // Make public for now, add auth later
   getOverview() {
     return this.studentService.getOverview();
+  }
+
+  // ==================== Semester Result Routes ====================
+  // IMPORTANT: These routes MUST be before generic :id routes
+
+  // POST /api/student/semester-results - Create semester result (for admins)
+  @Post('semester-results')
+  @Public()
+  createSemesterResult(@Body() dto: CreateSemesterResultDto) {
+    return this.semesterResultService.createSemesterResult(dto);
+  }
+
+  // GET /api/student/semester-results/:id - Get single semester result
+  @Get('semester-results/:id')
+  @Public()
+  getSemesterResult(@Param('id', ParseIntPipe) id: number) {
+    return this.semesterResultService.getSemesterResult(id);
+  }
+
+  // PATCH /api/student/semester-results/:id - Update semester result
+  @Patch('semester-results/:id')
+  @Public()
+  updateSemesterResult(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSemesterResultDto,
+  ) {
+    return this.semesterResultService.updateSemesterResult(id, dto);
+  }
+
+  // ==================== End Semester Result Routes ====================
+
+  // Messaging endpoints - MUST be before generic :id routes
+  // GET /api/student/:id/teachers - Get all teachers for student
+  @Get(':id/teachers')
+  @Public()
+  getTeachers(@Param('id', ParseIntPipe) studentId: number) {
+    return this.studentMessagingService.getStudentTeachers(studentId);
+  }
+
+  // GET /api/student/:studentId/semester-results - Get all semester results for student
+  @Get(':studentId/semester-results')
+  @Public()
+  getStudentSemesterResults(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.semesterResultService.getSemesterResults(studentId);
+  }
+
+  // GET /api/student/:studentId/cgpa-history - Get CGPA history
+  @Get(':studentId/cgpa-history')
+  @Public()
+  getCGPAHistory(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.semesterResultService.getCGPAHistory(studentId);
+  }
+
+  // GET /api/student/:id/conversations - Get all conversations for student
+  @Get(':id/conversations')
+  @Public()
+  getConversations(@Param('id', ParseIntPipe) studentId: number) {
+    return this.studentMessagingService.getStudentConversations(studentId);
+  }
+
+  // POST /api/student/:id/conversations - Create a conversation as student
+  @Post(':id/conversations')
+  @Public()
+  createConversation(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Body() dto: { teacherId: number; title?: string },
+  ) {
+    return this.studentMessagingService.createConversationAsStudent(
+      dto.teacherId,
+      studentId,
+      dto.title,
+    );
+  }
+
+  // GET /api/student/:id/conversations/:conversationId - Get conversation details
+  @Get(':id/conversations/:conversationId')
+  @Public()
+  getConversation(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Param('conversationId', ParseIntPipe) conversationId: number,
+  ) {
+    return this.studentMessagingService.getConversationById(
+      conversationId,
+      studentId,
+    );
+  }
+
+  // POST /api/student/:id/conversations/:conversationId/messages - Send message
+  @Post(':id/conversations/:conversationId/messages')
+  @Public()
+  sendMessage(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Param('conversationId', ParseIntPipe) conversationId: number,
+    @Body() dto: SendMessageDto,
+  ) {
+    return this.studentMessagingService.sendMessage(
+      conversationId,
+      dto,
+      studentId,
+    );
+  }
+
+  // GET /api/student/:id/assignments - Get all assignments for student
+  @Get(':id/assignments')
+  @Public()
+  getAssignments(@Param('id', ParseIntPipe) studentId: number) {
+    return this.submissionsService.getStudentAssignments(studentId);
+  }
+
+  // POST /api/student/:id/assignments/submit - Submit assignment
+  @Post(':id/assignments/submit')
+  @Public()
+  submitAssignment(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Body() dto: SubmitAssignmentDto,
+  ) {
+    return this.submissionsService.submitAssignment(dto, studentId);
+  }
+
+  // GET /api/student/:id/assignments/:assignmentId/submission - Get submission details
+  @Get(':id/assignments/:assignmentId/submission')
+  @Public()
+  getSubmission(
+    @Param('id', ParseIntPipe) studentId: number,
+    @Param('assignmentId', ParseIntPipe) assignmentId: number,
+  ) {
+    return this.submissionsService.getSubmission(assignmentId, studentId);
   }
 
   // GET /api/student/:id/dashboard - Get student dashboard data
@@ -91,30 +224,4 @@ export class StudentController {
     return this.studentService.remove(id);
   }
 
-  // GET /api/student/:id/assignments - Get all assignments for student
-  @Get(':id/assignments')
-  @Public()
-  getAssignments(@Param('id', ParseIntPipe) studentId: number) {
-    return this.submissionsService.getStudentAssignments(studentId);
-  }
-
-  // POST /api/student/:id/assignments/submit - Submit assignment
-  @Post(':id/assignments/submit')
-  @Public()
-  submitAssignment(
-    @Param('id', ParseIntPipe) studentId: number,
-    @Body() dto: SubmitAssignmentDto,
-  ) {
-    return this.submissionsService.submitAssignment(dto, studentId);
-  }
-
-  // GET /api/student/:id/assignments/:assignmentId/submission - Get submission details
-  @Get(':id/assignments/:assignmentId/submission')
-  @Public()
-  getSubmission(
-    @Param('id', ParseIntPipe) studentId: number,
-    @Param('assignmentId', ParseIntPipe) assignmentId: number,
-  ) {
-    return this.submissionsService.getSubmission(assignmentId, studentId);
-  }
 }

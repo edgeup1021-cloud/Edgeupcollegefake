@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   GraduationCap,
   CaretDown,
@@ -21,93 +21,12 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import * as semesterResultService from "@/services/semester-result.service";
+import * as authService from "@/services/auth.service";
+import type { SemesterResult } from "@/types/semester-result.types";
 
 // ============ TYPES ============
-interface SubjectResult {
-  id: number;
-  subjectCode: string;
-  subjectName: string;
-  credits: number;
-  internalMarks: number;
-  externalMarks: number;
-  totalMarks: number;
-  maxMarks: number;
-  grade: string;
-  gradePoints: number;
-  status: "pass" | "fail";
-}
-
-interface SemesterResult {
-  id: number;
-  semester: string;
-  session: string;
-  totalCredits: number;
-  earnedCredits: number;
-  sgpa: number;
-  cgpa: number;
-  subjects: SubjectResult[];
-  resultDate: string;
-}
-
-// ============ MOCK DATA ============
-const semesterResults: SemesterResult[] = [
-  {
-    id: 1,
-    semester: "Semester 5",
-    session: "Dec 2025",
-    totalCredits: 18,
-    earnedCredits: 18,
-    sgpa: 8.72,
-    cgpa: 8.45,
-    resultDate: "Dec 28, 2025",
-    subjects: [
-      { id: 1, subjectCode: "CS301", subjectName: "Data Structures & Algorithms", credits: 3, internalMarks: 28, externalMarks: 58, totalMarks: 86, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-      { id: 2, subjectCode: "CS302", subjectName: "Database Management Systems", credits: 3, internalMarks: 25, externalMarks: 52, totalMarks: 77, maxMarks: 100, grade: "B+", gradePoints: 8, status: "pass" },
-      { id: 3, subjectCode: "CS303", subjectName: "Computer Networks", credits: 3, internalMarks: 27, externalMarks: 61, totalMarks: 88, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-      { id: 4, subjectCode: "CS304", subjectName: "Operating Systems", credits: 3, internalMarks: 22, externalMarks: 45, totalMarks: 67, maxMarks: 100, grade: "B", gradePoints: 7, status: "pass" },
-      { id: 5, subjectCode: "CS351", subjectName: "Machine Learning", credits: 3, internalMarks: 29, externalMarks: 65, totalMarks: 94, maxMarks: 100, grade: "A+", gradePoints: 10, status: "pass" },
-      { id: 6, subjectCode: "CS352", subjectName: "Software Engineering", credits: 3, internalMarks: 26, externalMarks: 55, totalMarks: 81, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-    ],
-  },
-  {
-    id: 2,
-    semester: "Semester 4",
-    session: "May 2025",
-    totalCredits: 21,
-    earnedCredits: 21,
-    sgpa: 8.38,
-    cgpa: 8.32,
-    resultDate: "Jun 15, 2025",
-    subjects: [
-      { id: 1, subjectCode: "CS201", subjectName: "Object Oriented Programming", credits: 3, internalMarks: 26, externalMarks: 54, totalMarks: 80, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-      { id: 2, subjectCode: "CS202", subjectName: "Computer Organization", credits: 3, internalMarks: 24, externalMarks: 48, totalMarks: 72, maxMarks: 100, grade: "B+", gradePoints: 8, status: "pass" },
-      { id: 3, subjectCode: "CS203", subjectName: "Discrete Mathematics", credits: 3, internalMarks: 27, externalMarks: 58, totalMarks: 85, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-      { id: 4, subjectCode: "CS204", subjectName: "Theory of Computation", credits: 3, internalMarks: 21, externalMarks: 42, totalMarks: 63, maxMarks: 100, grade: "B", gradePoints: 7, status: "pass" },
-      { id: 5, subjectCode: "CS251", subjectName: "Web Development", credits: 3, internalMarks: 28, externalMarks: 60, totalMarks: 88, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-      { id: 6, subjectCode: "MA201", subjectName: "Probability & Statistics", credits: 3, internalMarks: 25, externalMarks: 52, totalMarks: 77, maxMarks: 100, grade: "B+", gradePoints: 8, status: "pass" },
-      { id: 7, subjectCode: "HS201", subjectName: "Professional Ethics", credits: 3, internalMarks: 26, externalMarks: 56, totalMarks: 82, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-    ],
-  },
-  {
-    id: 3,
-    semester: "Semester 3",
-    session: "Dec 2024",
-    totalCredits: 21,
-    earnedCredits: 18,
-    sgpa: 7.14,
-    cgpa: 8.15,
-    resultDate: "Jan 10, 2025",
-    subjects: [
-      { id: 1, subjectCode: "CS101", subjectName: "Programming in C", credits: 3, internalMarks: 25, externalMarks: 50, totalMarks: 75, maxMarks: 100, grade: "B+", gradePoints: 8, status: "pass" },
-      { id: 2, subjectCode: "CS102", subjectName: "Digital Logic Design", credits: 3, internalMarks: 23, externalMarks: 45, totalMarks: 68, maxMarks: 100, grade: "B", gradePoints: 7, status: "pass" },
-      { id: 3, subjectCode: "CS103", subjectName: "Data Communication", credits: 3, internalMarks: 18, externalMarks: 32, totalMarks: 50, maxMarks: 100, grade: "C", gradePoints: 5, status: "pass" },
-      { id: 4, subjectCode: "MA101", subjectName: "Engineering Mathematics III", credits: 3, internalMarks: 15, externalMarks: 22, totalMarks: 37, maxMarks: 100, grade: "F", gradePoints: 0, status: "fail" },
-      { id: 5, subjectCode: "EC101", subjectName: "Basic Electronics", credits: 3, internalMarks: 24, externalMarks: 48, totalMarks: 72, maxMarks: 100, grade: "B+", gradePoints: 8, status: "pass" },
-      { id: 6, subjectCode: "ME101", subjectName: "Engineering Graphics", credits: 3, internalMarks: 27, externalMarks: 58, totalMarks: 85, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-      { id: 7, subjectCode: "HS101", subjectName: "Technical Communication", credits: 3, internalMarks: 26, externalMarks: 54, totalMarks: 80, maxMarks: 100, grade: "A", gradePoints: 9, status: "pass" },
-    ],
-  },
-];
+// SubjectResult type is imported from semester-result.types.ts
 
 const gradeScale = [
   { grade: "A+", range: "90-100", points: 10 },
@@ -612,10 +531,75 @@ function GradeScaleCard() {
 
 // ============ MAIN COMPONENT ============
 export default function ResultsPage() {
-  const [selectedSemester, setSelectedSemester] = useState(semesterResults[0]);
+  const [semesterResults, setSemesterResults] = useState<SemesterResult[]>([]);
+  const [selectedSemester, setSelectedSemester] = useState<SemesterResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showGPACalculator, setShowGPACalculator] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
-  const [revaluationSubject, setRevaluationSubject] = useState<SubjectResult | null>(null);
+  const [revaluationSubject, setRevaluationSubject] = useState<any>(null);
+  const [studentId, setStudentId] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadStudentProfile();
+  }, []);
+
+  useEffect(() => {
+    if (studentId) {
+      loadSemesterResults();
+    }
+  }, [studentId]);
+
+  const loadStudentProfile = async () => {
+    try {
+      const user = await authService.getProfile();
+      setStudentId(user.id);
+    } catch (error) {
+      console.error("Failed to load student profile:", error);
+      setIsLoading(false);
+    }
+  };
+
+  const loadSemesterResults = async () => {
+    if (!studentId) return;
+
+    setIsLoading(true);
+    try {
+      const data = await semesterResultService.getSemesterResults(studentId);
+      setSemesterResults(data);
+      if (data.length > 0) {
+        setSelectedSemester(data[0]);
+      }
+    } catch (error) {
+      console.error("Failed to load semester results:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">Loading results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedSemester || semesterResults.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)]">
+        <GraduationCap className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          No results available
+        </h3>
+        <p className="text-gray-500 dark:text-gray-400">
+          Your exam results will appear here once they are published.
+        </p>
+      </div>
+    );
+  }
 
   const failedSubjects = selectedSemester.subjects.filter((s) => s.status === "fail").length;
   const passedSubjects = selectedSemester.subjects.filter((s) => s.status === "pass").length;

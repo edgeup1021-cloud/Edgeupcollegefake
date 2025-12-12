@@ -20,3 +20,8 @@ export * from './curriculum-session-resource.entity';
 // Lesson Planner entities
 export * from './standalone-lesson.entity';
 export * from './lesson-resource.entity';
+export * from './teacher-conversation.entity';
+export * from './teacher-conversation-participant.entity';
+export * from './teacher-message.entity';
+export * from './teacher-mentorship.entity';
+export * from './teacher-publication.entity';

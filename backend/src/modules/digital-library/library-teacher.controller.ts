@@ -17,7 +17,7 @@ import {
   QueryLibraryResourcesDto,
 } from './dto';
 
-@Controller('library/teacher')
+@Controller('digital-library/teacher')
 export class LibraryTeacherController {
   constructor(private readonly libraryTeacherService: LibraryTeacherService) {}
 

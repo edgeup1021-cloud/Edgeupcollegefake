@@ -164,30 +164,24 @@ export default function TeacherOverviewPage() {
   const deadlineItems = dashboard.deadlines.map(mapDeadlineItem);
 
   return (
-    <div className="space-y-6">
-      {/* Row 1: Welcome Card + Attendance Rate */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <WelcomeCard
-            name={userData.name}
-            course={userData.course}
-            college={userData.college}
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <StatCard
-            icon={BarChart3}
-            label={dashboard.stats.attendanceRate.label}
-            value={dashboard.stats.attendanceRate.value}
-            total={dashboard.stats.attendanceRate.total}
-            unit={dashboard.stats.attendanceRate.unit}
-            variant="success"
-          />
-        </div>
-      </div>
+    <div className="space-y-4">
+      {/* Welcome Card - Full Width */}
+      <WelcomeCard
+        name={userData.name}
+        course={userData.course}
+        college={userData.college}
+      />
 
-      {/* Row 2: Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={BarChart3}
+          label={dashboard.stats.attendanceRate.label}
+          value={dashboard.stats.attendanceRate.value}
+          total={dashboard.stats.attendanceRate.total}
+          unit={dashboard.stats.attendanceRate.unit}
+          variant="success"
+        />
         <StatCard
           icon={GraduationCap}
           label={dashboard.stats.classesToday.label}
@@ -211,13 +205,11 @@ export default function TeacherOverviewPage() {
         />
       </div>
 
-      {/* Row 3: Schedule */}
-      <div className="grid grid-cols-1">
-        <ScheduleCard date={formattedDate} items={scheduleItems} />
-      </div>
+      {/* Schedule - Full Width */}
+      <ScheduleCard date={formattedDate} items={scheduleItems} />
 
-      {/* Row 4: Quick Access Cards - All 6 in balanced layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Quick Access Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {teacherQuickAccessItems.map((item) => (
           <QuickAccessCard
             key={item.href}
@@ -229,10 +221,8 @@ export default function TeacherOverviewPage() {
         ))}
       </div>
 
-      {/* Row 5: Deadlines */}
-      <div className="grid grid-cols-1">
-        <DeadlinesCard items={deadlineItems} />
-      </div>
+      {/* Deadlines - Full Width */}
+      <DeadlinesCard items={deadlineItems} />
     </div>
   );
 }
