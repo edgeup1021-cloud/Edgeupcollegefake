@@ -6,7 +6,7 @@ export enum PortalType {
 }
 
 export interface JwtPayload {
-  sub: number;
+  sub: number | string; // Can be string when using bigint in database
   email: string;
   role: string;
   userType: string;

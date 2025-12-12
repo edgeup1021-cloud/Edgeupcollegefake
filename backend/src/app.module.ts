@@ -15,6 +15,8 @@ import { LibraryModule } from './modules/digital-library/library.module';
 import { LiveClassesModule } from './modules/live-classes/live-classes.module';
 import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
 import { CareerModule } from './modules/career/career.module';
+import { CurriculumModule } from './modules/curriculum/curriculum.module';
+import { LessonPlannerModule } from './modules/lesson-planner/lesson-planner.module';
 import { DiscussionForumModule } from './modules/discussion-forum/discussion-forum.module';
 
 @Module({
@@ -38,6 +40,8 @@ import { DiscussionForumModule } from './modules/discussion-forum/discussion-for
     LiveClassesModule,
     StudyGroupsModule,
     CareerModule,
+    CurriculumModule,
+    LessonPlannerModule,
     DiscussionForumModule,
   ],
 })

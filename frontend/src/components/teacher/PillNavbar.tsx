@@ -23,6 +23,8 @@ import {
   ChevronDown,
   Lightbulb,
   FileCheck,
+  CalendarDays,
+  BookMarked,
   UserCog,
   FileText,
   Sparkles,
@@ -39,6 +41,9 @@ const classroomItems = [
 
 // Curriculum Items
 const curriculumItems = [
+  { label: "Curriculum Overview", href: "/teacher/curriculum", icon: BookOpen },
+  { label: "Curriculum Planner", href: "/teacher/curriculum-planner", icon: CalendarDays },
+  { label: "Lesson Planner", href: "/teacher/lesson-planner", icon: BookMarked },
   { label: "Digital Library", href: "/teacher/curriculum/digital-library", icon: Library },
 ];
 
@@ -99,6 +104,8 @@ export default function PillNavbar() {
   const getActiveNavId = () => {
     if (pathname === "/teacher/overview") return "overview";
     if (pathname.startsWith("/teacher/classroom")) return "classroom";
+    if (pathname.startsWith("/teacher/curriculum-planner")) return "curriculum";
+    if (pathname.startsWith("/teacher/lesson-planner")) return "curriculum";
     if (pathname.startsWith("/teacher/curriculum")) return "curriculum";
     if (pathname.startsWith("/teacher/smart-assessment")) return "smart-assessment";
     if (pathname.startsWith("/teacher/students")) return "students";

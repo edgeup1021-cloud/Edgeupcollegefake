@@ -26,7 +26,10 @@ export class ApiClientError extends Error {
     public statusCode: number,
     public data: ApiError,
   ) {
-    super(Array.isArray(data.message) ? data.message.join(', ') : data.message);
+    const message = data?.message
+      ? (Array.isArray(data.message) ? data.message.join(', ') : data.message)
+      : `HTTP Error ${statusCode}`;
+    super(message);
     this.name = 'ApiClientError';
   }
 }
@@ -98,7 +101,11 @@ export async function apiFetch<T>(
   }
 
   if (!response.ok) {
-    throw new ApiClientError(response.status, data as ApiError);
+    const errorData: ApiError = data || {
+      statusCode: response.status,
+      message: `HTTP Error ${response.status}: ${response.statusText}`
+    };
+    throw new ApiClientError(response.status, errorData);
   }
 
   return data as T;

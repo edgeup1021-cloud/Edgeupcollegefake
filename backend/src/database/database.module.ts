@@ -41,6 +41,11 @@ import {
   TeacherCourseOffering,
   TeacherAssignment,
   TeacherClassSession,
+  CurriculumCourse,
+  CurriculumPlan,
+  CurriculumSession,
+  CurriculumCalendarEvent,
+  CurriculumAdaptation,
 } from './entities/teacher';
 import { TeacherMentorship } from './entities/teacher/teacher-mentorship.entity';
 import { TeacherPublication } from './entities/teacher/teacher-publication.entity';
@@ -89,6 +94,12 @@ const entities = [
   TeacherCourseOffering,
   TeacherAssignment,
   TeacherClassSession,
+  // Curriculum Planner
+  CurriculumCourse,
+  CurriculumPlan,
+  CurriculumSession,
+  CurriculumCalendarEvent,
+  CurriculumAdaptation,
   TeacherMentorship,
   TeacherPublication,
   // Management

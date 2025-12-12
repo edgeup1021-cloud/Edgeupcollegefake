@@ -96,8 +96,12 @@ export default function ResumeBuilderPage() {
     const loadResumeFromDB = async () => {
       try {
         const savedResume = await resumeService.getResume();
-        if (savedResume) {
-          setResumeData(savedResume.resumeData as ResumeData);
+        if (savedResume && savedResume.resumeData) {
+          // Merge with defaultResumeData to ensure all required fields exist
+          setResumeData({
+            ...defaultResumeData,
+            ...(savedResume.resumeData as ResumeData),
+          });
           setIsSubmitted(savedResume.isSubmitted);
           setSavedResumeId(savedResume.id);
           setSelectedTemplate(savedResume.templateUsed as ResumeTemplate);
@@ -106,7 +110,12 @@ export default function ResumeBuilderPage() {
           const saved = localStorage.getItem("resumeData");
           if (saved) {
             try {
-              setResumeData(JSON.parse(saved));
+              const parsed = JSON.parse(saved);
+              // Merge with defaultResumeData to ensure all required fields exist
+              setResumeData({
+                ...defaultResumeData,
+                ...parsed,
+              });
             } catch (e) {
               console.error("Failed to load saved resume from localStorage", e);
             }
@@ -118,7 +127,12 @@ export default function ResumeBuilderPage() {
         const saved = localStorage.getItem("resumeData");
         if (saved) {
           try {
-            setResumeData(JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            // Merge with defaultResumeData to ensure all required fields exist
+            setResumeData({
+              ...defaultResumeData,
+              ...parsed,
+            });
           } catch (e) {
             console.error("Failed to load saved resume from localStorage", e);
           }
