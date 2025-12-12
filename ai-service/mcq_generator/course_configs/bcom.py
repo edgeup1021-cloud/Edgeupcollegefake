@@ -6,18 +6,18 @@ CONFIG = {
     "education_level": "undergraduate",
     "default_difficulty": "MEDIUM",
 
-    # Subjects available for BCom
+    # Subjects available for BCom (Updated to match actual data)
     "subjects": [
         {
-            "name": "Accounting",
+            "name": "Accounting For Public Sector",
             "topics": [
-                "Financial Statements",
-                "Cost Accounting",
-                "Taxation",
-                "Auditing",
-                "Management Accounting"
+                "Introduction to Public Sector Accounting",
+                "Fund Accounting",
+                "Budgetary Control",
+                "Government Accounting Standards",
+                "Financial Reporting in Public Sector"
             ],
-            "allowed_question_types": ["descriptive"],  # Only descriptive for Accounting
+            "allowed_question_types": ["mcq", "descriptive"],
             "default_question_type": "descriptive",
             "marks_distribution": {
                 "very_short": 2,
@@ -26,27 +26,40 @@ CONFIG = {
             }
         },
         {
-            "name": "Finance",
+            "name": "Financial Accounting",
             "topics": [
-                "Corporate Finance",
-                "Financial Markets",
-                "Investment Analysis",
-                "Portfolio Management",
-                "Risk Management"
+                "Journal Entries",
+                "Ledger",
+                "Trial Balance",
+                "Financial Statements",
+                "Cash Flow Statement"
             ],
-            "allowed_question_types": ["descriptive"],  # Only descriptive for Finance
+            "allowed_question_types": ["mcq", "descriptive"],
             "default_question_type": "descriptive"
         },
         {
-            "name": "Economics",
+            "name": "Cost Accounting",
             "topics": [
-                "Microeconomics",
-                "Macroeconomics",
-                "International Trade",
-                "Development Economics"
+                "Material Costing",
+                "Labour Costing",
+                "Overhead Costing",
+                "Process Costing",
+                "Job Costing"
             ],
-            "allowed_question_types": ["mcq", "descriptive"],  # Both types allowed for Economics
-            "default_question_type": "mcq"
+            "allowed_question_types": ["mcq", "descriptive"],
+            "default_question_type": "descriptive"
+        },
+        {
+            "name": "Business Economics",
+            "topics": [
+                "Demand and Supply",
+                "Market Structure",
+                "Price Theory",
+                "National Income",
+                "Economic Development"
+            ],
+            "allowed_question_types": ["mcq", "descriptive"],
+            "default_question_type": "descriptive"
         }
     ],
 

@@ -51,6 +51,8 @@ import {
   UpdatePublicationDto,
   QueryPublicationsDto,
 } from './dto/publications';
+import { QuestionGeneratorService } from './services/question-generator.service';
+import { GenerateQuestionsDto } from './dto/question-generator';
 
 @Controller('teacher')
 export class TeacherController {
@@ -63,6 +65,7 @@ export class TeacherController {
     private readonly youtubeApiService: YouTubeApiService,
     private readonly mentorshipService: MentorshipService,
     private readonly publicationsService: PublicationsService,
+    private readonly questionGeneratorService: QuestionGeneratorService,
   ) {}
 
   @Get()
@@ -108,6 +111,51 @@ export class TeacherController {
     const id = teacherId ? parseInt(teacherId, 10) : 1;
     return this.teacherService.getTeacherCourses(id);
   }
+
+  // ==================== Question Generator Routes ====================
+
+  @Post('questions/generate')
+  @Public()
+  async generateQuestions(
+    @Body() dto: GenerateQuestionsDto,
+    @Query('teacherId') teacherId?: string,
+  ) {
+    // teacherId passed for future use (not required by AI service in MVP)
+    return this.questionGeneratorService.generateQuestions(dto);
+  }
+
+  @Get('questions/subjects')
+  @Public()
+  async getSubjects(@Query('course') course: string) {
+    return this.questionGeneratorService.getSubjects(course);
+  }
+
+  @Get('questions/topics')
+  @Public()
+  async getTopics(
+    @Query('course') course: string,
+    @Query('subject') subject: string,
+  ) {
+    return this.questionGeneratorService.getTopics(course, subject);
+  }
+
+  @Get('questions/subtopics')
+  @Public()
+  async getSubtopics(
+    @Query('course') course: string,
+    @Query('subject') subject: string,
+    @Query('topic') topic: string,
+  ) {
+    return this.questionGeneratorService.getSubtopics(course, subject, topic);
+  }
+
+  @Get('questions/departments')
+  @Public()
+  async getDepartments(@Query('course') course: string) {
+    return this.questionGeneratorService.getDepartments(course);
+  }
+
+  // ==================== End Question Generator Routes ====================
 
   @Get('students')
   @Public()

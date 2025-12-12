@@ -177,6 +177,13 @@ class CollegeQuestionGeneratorService:
                 else:
                     raise ValueError(f"Invalid question_type: {question_type}")
 
+                # Add question_type field to each question so frontend can display correctly
+                if questions:
+                    for question in questions:
+                        question['question_type'] = question_type
+                        if question_type == 'descriptive' and descriptive_type:
+                            question['descriptive_type'] = descriptive_type
+
                 if not questions:
                     raise ValueError("No questions generated")
 

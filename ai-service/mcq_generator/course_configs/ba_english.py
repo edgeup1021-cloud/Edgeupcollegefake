@@ -6,10 +6,10 @@ CONFIG = {
     "education_level": "undergraduate",
     "default_difficulty": "MEDIUM",
 
-    # Subjects available for BA English
+    # Subjects available for BA English (Updated to match actual data)
     "subjects": [
         {
-            "name": "Literature",
+            "name": "English Literature",
             "topics": [
                 "Shakespeare",
                 "Romantic Poetry",
@@ -18,8 +18,8 @@ CONFIG = {
                 "American Literature",
                 "Indian Writing in English"
             ],
-            "allowed_question_types": ["mcq", "descriptive"],  # Both types allowed for Literature
-            "default_question_type": "descriptive",  # Prefer descriptive for literary analysis
+            "allowed_question_types": ["mcq", "descriptive"],
+            "default_question_type": "descriptive",
             "marks_distribution": {
                 "very_short": 2,
                 "short": 5,
@@ -27,27 +27,41 @@ CONFIG = {
             }
         },
         {
-            "name": "Grammar",
+            "name": "British Literature",
             "topics": [
-                "Syntax",
-                "Semantics",
-                "Morphology",
-                "Phonetics",
-                "Pragmatics"
+                "Medieval Literature",
+                "Renaissance",
+                "Restoration and 18th Century",
+                "Romantic Period",
+                "Victorian Age",
+                "Modern Period"
             ],
-            "allowed_question_types": ["mcq", "descriptive"],  # Both types allowed
-            "default_question_type": "mcq"  # MCQs better for grammar rules
+            "allowed_question_types": ["mcq", "descriptive"],
+            "default_question_type": "descriptive"
+        },
+        {
+            "name": "American Literature",
+            "topics": [
+                "Colonial Period",
+                "American Renaissance",
+                "Realism and Naturalism",
+                "Modernism",
+                "Contemporary Literature"
+            ],
+            "allowed_question_types": ["mcq", "descriptive"],
+            "default_question_type": "descriptive"
         },
         {
             "name": "Linguistics",
             "topics": [
-                "Sociolinguistics",
-                "Psycholinguistics",
-                "Historical Linguistics",
-                "Applied Linguistics"
+                "Phonetics and Phonology",
+                "Morphology",
+                "Syntax",
+                "Semantics",
+                "Pragmatics"
             ],
-            "allowed_question_types": ["mcq", "descriptive"],  # Both types allowed
-            "default_question_type": "mcq"  # MCQs for concepts
+            "allowed_question_types": ["mcq", "descriptive"],
+            "default_question_type": "mcq"
         }
     ],
 
