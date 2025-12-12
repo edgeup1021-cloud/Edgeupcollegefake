@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 12, 2025 at 04:54 AM
+-- Generation Time: Dec 12, 2025 at 10:45 AM
 -- Server version: 8.0.44-0ubuntu0.24.04.2
 -- PHP Version: 8.3.6
 
@@ -154,6 +154,146 @@ CREATE TABLE `auth_user_user_permissions` (
   `user_id` int NOT NULL,
   `permission_id` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `curriculum_adaptations`
+--
+
+CREATE TABLE `curriculum_adaptations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `curriculum_plan_id` bigint UNSIGNED NOT NULL,
+  `trigger_type` enum('LOW_QUIZ_SCORES','STUDENT_FEEDBACK','PACING_ISSUE','TEACHER_REQUEST','ATTENDANCE_DROP') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `trigger_data` json NOT NULL COMMENT 'Data that triggered the adaptation',
+  `suggestion` json NOT NULL COMMENT 'AI-suggested changes',
+  `reasoning` text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'AI explanation for suggestions',
+  `status` enum('PENDING','ACCEPTED','REJECTED','PARTIALLY_ACCEPTED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PENDING',
+  `responded_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `curriculum_calendar_events`
+--
+
+CREATE TABLE `curriculum_calendar_events` (
+  `id` bigint UNSIGNED NOT NULL,
+  `curriculum_plan_id` bigint UNSIGNED NOT NULL,
+  `session_id` bigint UNSIGNED DEFAULT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `event_type` enum('SESSION','QUIZ','ASSIGNMENT_DUE','MIDTERM','FINAL_EXAM','PROJECT_DUE','BUFFER','REVIEW_SESSION') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `start_date_time` datetime NOT NULL,
+  `end_date_time` datetime NOT NULL,
+  `synced` tinyint(1) NOT NULL DEFAULT '0',
+  `external_event_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID from external calendar if synced',
+  `week_number` int DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `curriculum_courses`
+--
+
+CREATE TABLE `curriculum_courses` (
+  `id` bigint UNSIGNED NOT NULL,
+  `teacher_id` bigint UNSIGNED NOT NULL,
+  `course_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `course_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `department` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `total_weeks` int NOT NULL,
+  `hours_per_week` float NOT NULL,
+  `session_duration` int NOT NULL COMMENT 'Duration in minutes',
+  `sessions_per_week` int NOT NULL,
+  `session_type` enum('LECTURE','LAB','TUTORIAL','SEMINAR','HYBRID','WORKSHOP') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'LECTURE',
+  `class_size` int NOT NULL,
+  `class_vibe` enum('HIGH_ENGAGEMENT','MIXED','LOW_ENGAGEMENT','ADVANCED','STRUGGLING') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'MIXED',
+  `student_level` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Undergraduate',
+  `outcomes` json NOT NULL COMMENT 'Array of learning outcomes',
+  `primary_challenge` enum('STUDENTS_DISENGAGED','TOO_MUCH_CONTENT','WEAK_FUNDAMENTALS','MIXED_SKILL_LEVELS','TIME_MANAGEMENT','ASSESSMENT_ALIGNMENT','PRACTICAL_APPLICATION') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `additional_notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `curriculum_plans`
+--
+
+CREATE TABLE `curriculum_plans` (
+  `id` bigint UNSIGNED NOT NULL,
+  `course_id` bigint UNSIGNED NOT NULL,
+  `version` int NOT NULL DEFAULT '1',
+  `status` enum('DRAFT','ACTIVE','ARCHIVED','COMPLETED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'DRAFT',
+  `macroplan` json NOT NULL COMMENT 'Full AI-generated macro plan',
+  `teacher_overrides` json DEFAULT NULL COMMENT 'Teacher modifications to the plan',
+  `generated_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `curriculum_sessions`
+--
+
+CREATE TABLE `curriculum_sessions` (
+  `id` bigint UNSIGNED NOT NULL,
+  `curriculum_plan_id` bigint UNSIGNED NOT NULL,
+  `week_number` int NOT NULL,
+  `session_number` int NOT NULL,
+  `blueprint` json NOT NULL COMMENT 'Full session blueprint with sections, scripts, etc.',
+  `toolkit` json DEFAULT NULL COMMENT 'Engagement toolkit (generated on-demand)',
+  `status` enum('GENERATED','REVIEWED','SCHEDULED','TAUGHT','NEEDS_REVISION') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'GENERATED',
+  `teacher_overrides` json DEFAULT NULL,
+  `generated_at` datetime NOT NULL,
+  `taught_at` datetime DEFAULT NULL,
+  `student_feedback` json DEFAULT NULL COMMENT 'Aggregated student feedback',
+  `checkpoint_results` json DEFAULT NULL COMMENT 'Quiz/poll results',
+  `teacher_notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `curriculum_session_resources`
+--
+
+CREATE TABLE `curriculum_session_resources` (
+  `id` bigint UNSIGNED NOT NULL,
+  `session_id` bigint UNSIGNED NOT NULL,
+  `resource_type` enum('YOUTUBE_VIDEO','ARTICLE','PDF','PRESENTATION','INTERACTIVE_TOOL','WEBSITE') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `url` varchar(2048) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `thumbnail_url` varchar(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `source_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'e.g., Khan Academy, MIT OCW, YouTube Channel Name',
+  `duration` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'For videos: e.g., "12:34"',
+  `relevance_score` float DEFAULT NULL COMMENT 'AI-calculated relevance 0-1',
+  `ai_reasoning` text COLLATE utf8mb4_unicode_ci COMMENT 'Why AI suggested this resource',
+  `section_type` enum('hook','core','activity','application','checkpoint','close') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Which section this resource is best for',
+  `is_free` tinyint(1) NOT NULL DEFAULT '1',
+  `teacher_rating` tinyint DEFAULT NULL COMMENT '1-5 rating by teacher',
+  `teacher_notes` text COLLATE utf8mb4_unicode_ci,
+  `is_hidden` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Teacher can hide irrelevant resources',
+  `search_query_used` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Original search query',
+  `fetched_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -486,6 +626,34 @@ INSERT INTO `grade_scales` (`id`, `scale_name`, `min_percentage`, `max_percentag
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `lesson_resources`
+--
+
+CREATE TABLE `lesson_resources` (
+  `id` bigint UNSIGNED NOT NULL,
+  `lesson_id` bigint UNSIGNED NOT NULL,
+  `resource_type` enum('YOUTUBE_VIDEO','ARTICLE','PDF','PRESENTATION','INTERACTIVE_TOOL','WEBSITE') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `url` varchar(2048) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `thumbnail_url` varchar(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `source_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'e.g., Khan Academy, YouTube Channel Name',
+  `duration` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'For videos: e.g., "12:34"',
+  `relevance_score` float DEFAULT NULL COMMENT 'AI-calculated relevance 0-1',
+  `ai_reasoning` text COLLATE utf8mb4_unicode_ci COMMENT 'Why AI suggested this resource',
+  `section_type` enum('hook','core','activity','application','checkpoint','close') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Which section this resource is best for',
+  `is_free` tinyint(1) NOT NULL DEFAULT '1',
+  `teacher_rating` tinyint DEFAULT NULL COMMENT '1-5 rating by teacher',
+  `teacher_notes` text COLLATE utf8mb4_unicode_ci,
+  `is_hidden` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Teacher can hide irrelevant resources',
+  `fetched_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `live_classes`
 --
 
@@ -578,6 +746,7 @@ CREATE TABLE `live_descriptive_questions` (
 
 INSERT INTO `live_descriptive_questions` (`id`, `question`, `image`, `correct_percentage`, `difficult_level`, `status`, `question_generate_type`, `question_status`, `remarks`, `explanation`, `url`, `question_type`, `additional_tags`, `keywords`, `created_at`, `updated_at`, `deleted_at`, `university`, `course`, `department`, `semester`, `paper_type`, `source_pdf`, `page_range`, `comprehension_id`, `question_generation_request_id`, `subject_name`, `topic_name`, `subtopic_name`) VALUES
 ('00aa075c-2c3b-4d30-aa67-df60f7fdf85c', 'Discuss the implications of inappropriately capitalizing repair costs as renewals in the financial statements of an electricity company. What specific financial statement line items would be affected and how?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"capitalization\", \"repair costs\", \"financial statements\", \"balance sheet\", \"income statement\", \"ROA\"]', '2025-12-11 10:58:38.801516', '2025-12-11 10:58:38.801519', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, '01464564-37dc-46d6-8d29-e35ca9f1ad41', NULL, NULL, NULL),
+('0ef39fec-f603-4f30-a8cf-1a0a8b30115b', 'Based on the comparative study of G.U. Pope and Rajaji\'s translations of Thirukkural, discuss the strengths and weaknesses of each approach (word-to-word vs. sense-to-sense) in conveying the original meaning and cultural context. Provide specific examples from their translations to illustrate your points.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"word-to-word\", \"sense-to-sense\", \"accuracy\", \"readability\", \"cultural context\"]', '2025-12-12 06:33:56.697136', '2025-12-12 06:33:56.697145', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, '1f7c6e11-1808-4d1d-a1fb-426dfb815917', 'CORE ELECTIVE – I: INTRODUCTION TO TRANSLATION STUDIES', 'comparative analysis', 'acomparative study of two translations of thirukkural by gupopeandrajaji'),
 ('0f457914-652b-446c-9968-850ccef6099d', 'Compare and contrast the translation strategies employed by G.U. Pope and Rajaji in rendering the Thirukkural. Focus on their approaches to conveying cultural nuances and philosophical concepts within the text.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Pope\", \"Rajaji\", \"translation strategies\", \"literal\", \"interpretive\", \"cultural nuances\", \"philosophical concepts\"]', '2025-12-11 15:06:37.108658', '2025-12-11 15:06:37.108667', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, 'ccb4cd07-ef87-45cf-a52d-b60cf03ca064', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
 ('1594557e-7b2e-476e-8e69-31fda22f3ae4', 'Discuss the significance of maintaining a \'Contingency Reserve\' in electricity companies and how discarded assets are accounted for according to regulatory guidelines. Explain how the \'Capital Base\' is affected if the Contingency Reserve is insufficient to cover the written-down cost of discarded assets.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Contingency Reserve\", \"discarded assets\", \"Capital Base\", \"electricity companies\", \"reasonable return\", \"written-down value\", \"regulatory guidelines\"]', '2025-12-11 11:03:10.694868', '2025-12-11 11:03:10.694871', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, 'd0bbb333-9587-42c1-b410-f390a90f4468', NULL, NULL, NULL),
 ('1e0f1e6d-538f-47a4-83b9-a2028c9021aa', 'Compare and contrast the translation approaches employed by G.U. Pope and Rajaji in their respective translations of Thirukkural, focusing on their treatment of lexical choices. Provide specific examples to illustrate the differences in their approaches.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"G.U. Pope\", \"Rajaji\", \"lexical choice\", \"word-to-word\", \"sense-to-sense\"]', '2025-12-11 12:36:13.071872', '2025-12-11 12:36:13.071875', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, 'e95c0be0-8dce-4faf-9c41-18a73f040e7e', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
@@ -587,14 +756,21 @@ INSERT INTO `live_descriptive_questions` (`id`, `question`, `image`, `correct_pe
 ('3cd51b6c-37ec-41cf-9ab4-5071a8ae19e1', 'Discuss how G.U. Pope\'s and Rajaji\'s backgrounds and intended audiences influenced their respective translations of the Thirukkural. Provide specific examples of how these influences are evident in their choices of language and style.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Pope\", \"Rajaji\", \"background\", \"intended audience\", \"language\", \"style\", \"influence\"]', '2025-12-11 15:06:37.255659', '2025-12-11 15:06:37.255665', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, 'ccb4cd07-ef87-45cf-a52d-b60cf03ca064', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
 ('3f52a1b9-2e17-49cc-8e44-91167aba561e', 'Discuss how the historical and cultural contexts of G.U. Pope and Rajaji influenced their respective translations of the Thirukkural. In what ways did their backgrounds shape their understanding and presentation of the text?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"historical context\", \"cultural context\", \"G.U. Pope\", \"Rajaji\", \"interpretation\", \"influence\", \"translation\"]', '2025-12-11 15:52:47.370748', '2025-12-11 15:52:47.370754', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, '7bea4730-65b7-42a1-9c15-a5f103817764', 'CORE ELECTIVE – I: INTRODUCTION TO TRANSLATION STUDIES', 'comparativeanalysis', 'acomparativestudyoftwotranslationsofthirukkuralbygupopeandrajaji'),
 ('5bf8134c-036f-4a00-ab7b-5f1d648949e8', 'Explain the accounting treatment of repairs and renewals in electricity companies, highlighting the distinction between revenue and capital expenditure. Give brief examples to illustrate each.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"revenue expenditure\", \"capital expenditure\", \"asset life\", \"electricity companies\", \"maintenance\", \"upgrades\"]', '2025-12-11 11:01:09.128656', '2025-12-11 11:01:09.128665', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, '02361c76-1f0f-4272-b113-40122392b2bc', NULL, NULL, NULL),
+('66564c66-40db-47f1-87a4-ef5f5c144a60', 'Briefly explain the key tenets of Transcendentalism and how they influenced American literature during the American Renaissance.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Transcendentalism\", \"intuition\", \"individualism\", \"Emerson\", \"Thoreau\", \"nature\", \"self-reliance\"]', '2025-12-12 09:44:56.378319', '2025-12-12 09:44:56.378325', NULL, 'Bharathiyar University', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, 'a84362e1-28c0-4053-9d25-16b316470300', 'American Literature', 'American Renaissance', ''),
 ('954b7108-0305-4676-bf62-9c990b84e2b6', 'Discuss the effectiveness of Pope and Rajaji\'s translations of Thirukkural in conveying cultural nuances to a Western audience. How do their translation choices either preserve or alter the original cultural context?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"cultural nuances\", \"Western audience\", \"Pope\", \"Rajaji\", \"fidelity\", \"accessibility\"]', '2025-12-11 12:36:13.084487', '2025-12-11 12:36:13.084489', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, 'e95c0be0-8dce-4faf-9c41-18a73f040e7e', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
 ('a04f30da-ce0d-4f1d-a4de-07d12219a76b', 'Briefly compare and contrast the approaches taken by G.U. Pope and Rajaji in translating the Thirukkural. What are the key differences in their interpretations and linguistic choices, and how do these differences reflect their individual perspectives and goals?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"G.U. Pope\", \"Rajaji\", \"Thirukkural\", \"literal\", \"accessibility\", \"interpretation\", \"cultural relevance\"]', '2025-12-11 15:52:47.209623', '2025-12-11 15:52:47.209634', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, '7bea4730-65b7-42a1-9c15-a5f103817764', 'CORE ELECTIVE – I: INTRODUCTION TO TRANSLATION STUDIES', 'comparativeanalysis', 'acomparativestudyoftwotranslationsofthirukkuralbygupopeandrajaji'),
 ('a45f9145-e615-4c81-970e-4cd0e25a8d81', 'An electricity company replaced a transformer in one of its substations. The new transformer is more energy-efficient than the old one. Discuss the accounting treatment for this replacement, considering it as either a repair or renewal, and justify your decision.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"transformer\", \"replacement\", \"renewal\", \"capitalization\", \"efficiency\"]', '2025-12-11 10:52:09.433887', '2025-12-11 10:52:09.433889', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, '1e7e14fe-d54c-4afa-a5f9-44f09e33980c', NULL, NULL, NULL),
+('a82e9856-7d15-4fc4-952e-12d1e61779c8', 'Name one play that is considered a \'problem play\' by Shakespeare.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"problem play\", \"Measure for Measure\", \"All\'s Well\", \"Troilus and Cressida\", \"moral issues\"]', '2025-12-12 09:37:32.624186', '2025-12-12 09:37:32.624192', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, '23e70291-8792-4cbc-8a6e-8cba39b715b1', 'English Literature', 'Shakespeare', ''),
 ('ac6b29fc-ac2b-4e2c-9b87-9e35e24753b4', 'Based on the text, compare and contrast G.U. Pope\'s and Rajaji\'s approaches to translating Thirukkural, highlighting their differing focuses (word-to-word vs. sense-to-sense). Provide an example from the text to illustrate these differences.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Pope\", \"Rajaji\", \"translation\", \"word-to-word\", \"sense-to-sense\", \"lexical choice\", \"Thirukkural\"]', '2025-12-11 12:03:57.248402', '2025-12-11 12:03:57.248405', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, 'ce1773d2-a835-470e-acd3-a0d7174ea87e', NULL, NULL, NULL),
 ('b889b638-a50d-4fa5-b694-df9f5a6cfbc3', 'Discuss how G.U. Pope and Rajaji\'s differing backgrounds and target audiences might have influenced their translation choices when rendering the Thirukkural into English. Provide specific examples of how these influences are reflected in their word choice and overall tone.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Pope\", \"Rajaji\", \"background\", \"audience\", \"influence\", \"tone\", \"word choice\"]', '2025-12-11 15:45:44.232046', '2025-12-11 15:45:44.232053', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, '7a703164-36cc-4268-be29-607a0c3ee5d9', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Transations of Thirukkural by GU Pope and Rajaji'),
 ('c1aaf44c-2498-4968-af02-d71cf4e565c8', 'Discuss the importance of consistently applying accounting policies related to repairs and renewals in electricity companies. What are the potential consequences of inconsistent application?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"consistency\", \"accounting policies\", \"repairs\", \"renewals\", \"comparability\", \"financial statements\", \"distort\"]', '2025-12-11 11:01:09.150810', '2025-12-11 11:01:09.150813', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, '02361c76-1f0f-4272-b113-40122392b2bc', NULL, NULL, NULL),
+('c65564c5-ac6a-4476-ab58-ad784b8d3a74', 'What is the Globe Theatre most famous for?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Globe Theatre\", \"Shakespeare\", \"plays\", \"performance\", \"London\"]', '2025-12-12 09:37:31.981793', '2025-12-12 09:37:31.981802', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, '23e70291-8792-4cbc-8a6e-8cba39b715b1', 'English Literature', 'Shakespeare', ''),
+('cbcfb24b-d1a4-4e70-8784-74c0ec109395', 'Explain how lexical choices and the use of collocation differ between G.U. Pope and Rajaji\'s translations of Thirukkural. How do these choices reflect their individual translation styles and impact the overall interpretation of the text? Cite examples from the provided text to support your analysis.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"lexical choice\", \"collocation\", \"translation style\", \"interpretation\", \"idiom choice\"]', '2025-12-12 06:33:56.839883', '2025-12-12 06:33:56.839897', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, '1f7c6e11-1808-4d1d-a1fb-426dfb815917', 'CORE ELECTIVE – I: INTRODUCTION TO TRANSLATION STUDIES', 'comparative analysis', 'acomparative study of two translations of thirukkural by gupopeandrajaji'),
 ('d84f4540-e37e-4f18-b0ae-be8c9a019405', 'Explain the translation techniques \'omission\' and \'collocation\' as discussed in relation to the Thirukkural translations by G.U. Pope and Rajaji. Provide a specific instance from the text where either translator employs one of these techniques, and discuss its effect on the meaning.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"omission\", \"collocation\", \"Pope\", \"Rajaji\", \"translation techniques\", \"Thirukkural\", \"meaning\"]', '2025-12-11 12:03:57.272239', '2025-12-11 12:03:57.272242', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, 'ce1773d2-a835-470e-acd3-a0d7174ea87e', NULL, NULL, NULL),
 ('db84fac8-f3fc-4a43-9ee9-a5bedf9090c6', 'Explain how electricity companies typically account for repairs and renewals of their distribution infrastructure under relevant accounting standards. How does the treatment differ based on whether the expenditure is considered a \'repair\' versus a \'renewal\'?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"repairs\", \"renewals\", \"expensed\", \"capitalized\", \"useful life\"]', '2025-12-11 10:52:09.416285', '2025-12-11 10:52:09.416290', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, '1e7e14fe-d54c-4afa-a5f9-44f09e33980c', NULL, NULL, NULL),
+('e50c2aec-928c-430f-bd88-336cba470780', 'Identify two common themes in Shakespeare\'s comedies.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"comedies\", \"themes\", \"mistaken identity\", \"love triangles\", \"wordplay\"]', '2025-12-12 09:37:32.064746', '2025-12-12 09:37:32.064751', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, '23e70291-8792-4cbc-8a6e-8cba39b715b1', 'English Literature', 'Shakespeare', ''),
+('e572b381-97e0-42d0-8d1a-99117fb8fbf2', 'Name three tragedies written by William Shakespeare.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"tragedies\", \"Hamlet\", \"Othello\", \"King Lear\", \"Macbeth\"]', '2025-12-12 09:37:31.891937', '2025-12-12 09:37:31.891945', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, '23e70291-8792-4cbc-8a6e-8cba39b715b1', 'English Literature', 'Shakespeare', ''),
+('e8f96990-a4d5-46ad-a8de-2da7a437bd0f', 'What is a Shakespearean sonnet comprised of?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"sonnet\", \"14 lines\", \"iambic pentameter\", \"rhyme scheme\", \"couplet\"]', '2025-12-12 09:37:32.480096', '2025-12-12 09:37:32.480103', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, '23e70291-8792-4cbc-8a6e-8cba39b715b1', 'English Literature', 'Shakespeare', ''),
 ('eb186ea7-faeb-4533-8f84-3feaa961ef0c', 'Compare and contrast the translation styles of G.U. Pope and Rajaji in their respective translations of the Thirukkural, highlighting specific examples where their approaches diverge. What are the strengths and weaknesses of each approach in conveying the essence of the original Tamil text to an English-speaking audience?', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"Pope\", \"Rajaji\", \"translation styles\", \"literal\", \"accessible\", \"strengths\", \"weaknesses\"]', '2025-12-11 15:45:44.049619', '2025-12-11 15:45:44.049630', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, '7a703164-36cc-4268-be29-607a0c3ee5d9', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Transations of Thirukkural by GU Pope and Rajaji'),
 ('eb73609a-3e08-4588-a610-39d236300723', 'Explain the accounting treatment for repairs and renewals in electricity companies, differentiating between revenue and capital expenditure. Provide examples of each type of expenditure within the context of an electricity company and justify their classification.', NULL, 60, 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, 'desc', NULL, '[\"repairs\", \"renewals\", \"revenue expenditure\", \"capital expenditure\", \"electricity companies\", \"accounting treatment\", \"depreciation\"]', '2025-12-11 11:03:10.677228', '2025-12-11 11:03:10.677231', NULL, 'Bharathiyar University', 'bcom', 'Accounting and Finance', 5, 'Core', NULL, NULL, NULL, 'd0bbb333-9587-42c1-b410-f390a90f4468', NULL, NULL, NULL);
 
@@ -647,8 +823,30 @@ CREATE TABLE `live_mcq_questions` (
 INSERT INTO `live_mcq_questions` (`id`, `question`, `image`, `statements`, `options`, `correct_option`, `difficult_level`, `status`, `question_generate_type`, `question_status`, `remarks`, `explanation`, `url`, `instructions`, `question_type`, `additional_tags`, `created_at`, `updated_at`, `deleted_at`, `university`, `course`, `department`, `semester`, `paper_type`, `source_pdf`, `page_range`, `comprehension_id`, `exam_sections_id`, `last_rejected_by`, `question_generation_request_id`, `subject_name`, `topic_name`, `subtopic_name`) VALUES
 ('02c6cbca-e6c7-43f9-be5f-69429e90ac9e', 'How do Pope\'s and Rajaji\'s translations differ in their approach to syntax and readability?', NULL, '[\"Pope\'s translation emphasizes maintaining the original structure, sometimes resulting in less natural-sounding English.\", \"Rajaji\'s translation prioritizes readability and naturalness in English, occasionally sacrificing strict adherence to the original Tamil syntax.\", \"Both Pope and Rajaji demonstrate a consistent adherence to the original Tamil syntax, ensuring a faithful representation of the source text\'s structure.\"]', '[\"Only statement 1 is correct\", \"Only statement 2 is correct\", \"Statements 1 and 2 are correct\", \"Statements 1, 2, and 3 are correct\"]', '2', 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, '', 'mcq', NULL, '2025-12-11 12:09:49.007254', '2025-12-11 12:09:49.007257', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, 'a3a7c18b-de78-451d-beee-e94f38cd4bf5', NULL, NULL, NULL),
 ('07f036e2-0768-4060-8312-00c959e68674', 'Which of the following statements accurately describe the comparative approaches of G.U. Pope and Rajaji in translating Thirukkural?', NULL, '[\"G.U. Pope\'s translation of Thirukkural prioritizes a literal, word-for-word rendering of the original Tamil text.\", \"Rajaji\'s translation of Thirukkural emphasizes capturing the essence and meaning of the verses in a way that resonates with the target audience, even if it deviates from the original wording.\", \"Both Pope and Rajaji aimed to create translations that are accessible and understandable to different audiences, but their approaches to achieving this goal varied significantly.\"]', '[\"Only 1\", \"1 and 2\", \"2 and 3\", \"1, 2, and 3\"]', '3', 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, '', 'mcq', NULL, '2025-12-11 12:16:55.748114', '2025-12-11 12:16:55.748117', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '5a1e3ecc-57f5-45b5-86f7-151733016d84', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
+('10a53e33-b557-4bf9-a22d-712b41a136ce', 'What is the significance of the \'Great Chain of Being\' in understanding Shakespearean tragedies?', NULL, '[]', '[\"It dictates the number of acts in a typical Shakespearean play.\", \"It provides a framework for understanding social hierarchy and the consequences of disrupting it.\", \"It establishes the roles of different characters in a comedy.\", \"It outlines the rules for iambic pentameter.\"]', 'It provides a framework for understanding social hierarchy and the consequences of disrupting it.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The \'Great Chain of Being\' was a prevalent belief in Shakespeare\'s time that posited a divinely ordained hierarchical order in the universe. Disrupting this order, often through ambition or transgression, was believed to lead to chaos and tragedy. This concept is central to understanding the motivations and consequences of characters\' actions in plays like Macbeth and Hamlet. The other options relate to structural and poetic elements, but not to this specific philosophical concept.', NULL, '', 'mcq', NULL, '2025-12-12 09:45:55.522587', '2025-12-12 09:45:55.522593', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '3dfbd039-4229-48de-9c16-cafea73fad5e', 'English Literature', 'Shakespeare', ''),
+('11038097-3618-488c-a7f7-133b96b862bf', 'Which central philosophical tension characterizes much of the American Renaissance\'s literature?', NULL, '[]', '[\"The conflict between Enlightenment rationalism and Romantic individualism.\", \"The debate between Puritanical dogma and Transcendentalist spirituality.\", \"The struggle for political power between Federalists and Anti-Federalists.\", \"The economic disparity between the industrial North and the agrarian South.\"]', 'The conflict between Enlightenment rationalism and Romantic individualism.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The American Renaissance saw a flourishing of Romantic ideals like individualism, intuition, and nature\'s importance, clashing with the Enlightenment\'s emphasis on reason and empiricism. This tension shaped the era\'s literary themes. Option B is incorrect because while Puritanism existed before, the central tension during the American Renaissance was more about the Enlightenment vs Romanticism, not Puritanism vs Transcendentalism. Options C and D are incorrect because they relate to political and economic contexts rather than the primary philosophical tension driving literary themes.', NULL, '', 'mcq', NULL, '2025-12-12 09:44:37.391190', '2025-12-12 09:44:37.391198', NULL, 'Bharathiyar University', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, 'ace9b1c3-5db8-460d-97d8-f4ac8acc4fb0', 'American Literature', 'American Renaissance', ''),
+('116fddbf-91da-47f0-8c92-27e639ba50a6', 'Which of the following best describes Shakespeare\'s use of iambic pentameter?', NULL, '[]', '[\"A rigid and inflexible structure, consistently maintained throughout his plays to create a sense of formality.\", \"A foundational rhythmic structure, often varied and broken for dramatic effect, character differentiation, and emphasis.\", \"An occasional stylistic choice employed only in his early comedies to denote the elevated status of certain characters.\", \"A purely decorative element, having no significant impact on the overall meaning or interpretation of his plays.\"]', 'A foundational rhythmic structure, often varied and broken for dramatic effect, character differentiation, and emphasis.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Shakespeare uses iambic pentameter as a base, but he frequently alters it to achieve dramatic effects. The variations in rhythm can signify a character\'s emotional state, emphasize important words or phrases, or differentiate between social classes. While formality exists, rigidity does not characterize his style. It\'s not limited to early comedies or purely decorative; it\'s fundamental and meaningfully integrated.', NULL, '', 'mcq', NULL, '2025-12-12 09:38:30.225443', '2025-12-12 09:38:30.225450', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '82d32140-db66-4bd5-89d5-2f6bfe984d98', 'English Literature', 'Shakespeare', ''),
+('11fa6b36-874b-4d49-9f12-e293adeae0a9', 'Which of the following is a defining stylistic characteristic commonly found in American Renaissance literature?', NULL, '[]', '[\"The use of complex, ornate prose with extensive allusions to classical literature.\", \"The employment of plain, direct language to convey moral and spiritual truths.\", \"The incorporation of stream-of-consciousness techniques to represent subjective experience.\", \"The reliance on satire and irony to critique social institutions and human behavior.\"]', 'The employment of plain, direct language to convey moral and spiritual truths.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'While some American Renaissance authors experimented with style, a common characteristic was the use of relatively plain and direct language, aiming to convey profound moral, spiritual, and philosophical ideas without excessive ornamentation. This aligns with the Transcendentalist emphasis on simplicity and sincerity. The other options describe styles associated with different literary periods or movements.', NULL, '', 'mcq', NULL, '2025-12-12 09:41:53.945174', '2025-12-12 09:41:53.945181', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '52b06d8f-5282-493f-aeeb-5b6fe24d6894', 'American Literature', 'American Renaissance', ''),
+('19337ded-41b0-4415-907b-f9503dc1c6d7', 'Which overarching theme most significantly defines the American Renaissance?', NULL, '[]', '[\"A rejection of European literary forms and a celebration of uniquely American experiences and ideals.\", \"A strict adherence to classical literary traditions and a focus on historical narratives.\", \"An emphasis on scientific rationalism and the diminishing role of individual intuition.\", \"A pessimistic outlook on the future of American society and a critique of democratic principles.\"]', 'A rejection of European literary forms and a celebration of uniquely American experiences and ideals.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The American Renaissance is characterized by its focus on establishing a distinct American literary identity. This involved moving away from European models and embracing themes, settings, and characters that reflected the unique aspects of American life and thought. The other options are incorrect because they either represent a continuation of European traditions, prioritize rationalism over intuition, or express a negative view of American society, all of which contrast with the celebratory and optimistic spirit of the American Renaissance.', NULL, '', 'mcq', NULL, '2025-12-12 09:41:52.945857', '2025-12-12 09:41:52.945868', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '52b06d8f-5282-493f-aeeb-5b6fe24d6894', 'American Literature', 'American Renaissance', ''),
+('1d15151a-4345-4d17-be26-da8263340acd', 'What is the function of the chorus in Shakespeare\'s *Henry V*?', NULL, '[]', '[\"To provide comic relief and entertain the audience with song and dance.\", \"To directly participate in the action of the play, influencing the decisions of the main characters.\", \"To comment on the action, provide historical context, and bridge the gaps in time and space inherent in staging the story.\", \"To serve as a mouthpiece for the playwright\'s personal opinions and political views.\"]', 'To comment on the action, provide historical context, and bridge the gaps in time and space inherent in staging the story.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'In *Henry V*, the Chorus is used to set the scene, provide context that is beyond the physical limitations of the stage, and encourage the audience\'s imagination. It doesn\'t directly participate, nor is its primary function comic relief or a direct reflection of Shakespeare\'s personal views, though interpretation might suggest his viewpoint indirectly emerges. The Chorus facilitates understanding of the play\'s historical scope and dramatic flow.', NULL, '', 'mcq', NULL, '2025-12-12 09:38:30.360168', '2025-12-12 09:38:30.360175', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '82d32140-db66-4bd5-89d5-2f6bfe984d98', 'English Literature', 'Shakespeare', ''),
+('1d6a4cdd-1260-47ab-9aac-14a6dce4712c', 'What philosophical movement heavily influenced the writers of the American Renaissance?', NULL, '[]', '[\"Existentialism\", \"Transcendentalism\", \"Realism\", \"Naturalism\"]', 'Transcendentalism', 'EASY', 'active', 'AI', 'PENDING', NULL, 'Transcendentalism, with its emphasis on individual intuition, inherent goodness, and the connection between humanity and nature, deeply influenced writers like Emerson and Thoreau during the American Renaissance. Existentialism, Realism, and Naturalism are later movements and not directly associated with this period. Therefore, Transcendentalism is the most accurate answer.', NULL, '', 'mcq', NULL, '2025-12-12 09:41:53.101237', '2025-12-12 09:41:53.101247', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '52b06d8f-5282-493f-aeeb-5b6fe24d6894', 'American Literature', 'American Renaissance', ''),
 ('21a11df3-ac43-434f-94db-1632ee8509bb', 'Based on the provided text, which of the following statements is/are true regarding the translation techniques used by G.U. Pope and Rajaji in their respective versions of the Thirukkural?', NULL, '[\"Pope’s translation of the Thirukkural frequently uses uncommon English collocations and expressions, which can make the text sound archaic or stilted to modern readers.\", \"Rajaji\'s translation sometimes involves omission, where certain phrases or nuances from the original Thirukkural are left out to simplify or streamline the text for better comprehension.\", \"Both translators consistently maintain a strict adherence to the original punctuation and structural elements of the Thirukkural, ensuring that the translated text closely mirrors the source material.\"]', '[\"Only 1\", \"Only 2\", \"1 and 2\", \"1, 2, and 3\"]', '2', 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, '', 'mcq', NULL, '2025-12-11 12:16:55.765241', '2025-12-11 12:16:55.765244', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '5a1e3ecc-57f5-45b5-86f7-151733016d84', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
+('2720fe74-ff26-457f-b4d0-59a310e475c4', 'Which of Shakespeare\'s plays is most explicitly concerned with the nature of justice and revenge?', NULL, '[]', '[\"Hamlet\", \"Othello\", \"King Lear\", \"Macbeth\"]', 'Hamlet', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Hamlet grapples directly with themes of justice and revenge following the murder of his father. While other plays such as Macbeth and Othello also explore themes of revenge, they are not as central to the plot as they are in Hamlet. King Lear focuses primarily on themes of power and familial relationships, not justice and revenge.', NULL, '', 'mcq', NULL, '2025-12-12 09:35:37.059540', '2025-12-12 09:35:37.059549', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '09194a3e-018a-4f90-9112-d63c92368cba', 'English Literature', 'Shakespeare', ''),
+('37b2a1c2-cd3d-4ab2-933d-d0111a32c5d0', 'Which element is most characteristic of Shakespearean comedies?', NULL, '[]', '[\"The downfall of a noble protagonist due to a tragic flaw.\", \"A happy ending, often involving marriage and social reconciliation.\", \"Extensive use of supernatural elements and prophecies.\", \"Themes of revenge and justice.\"]', 'A happy ending, often involving marriage and social reconciliation.', 'EASY', 'active', 'AI', 'PENDING', NULL, 'Shakespearean comedies typically conclude with a resolution that restores order and harmony, frequently through marriage and the integration of outsiders into the social fold. Tragedies, conversely, focus on the downfall of protagonists, while histories often deal with political power struggles. Supernatural elements can appear in multiple genres, but are not defining features of comedy. Revenge is most aligned with the tragedy genre.', NULL, '', 'mcq', NULL, '2025-12-12 09:45:55.655993', '2025-12-12 09:45:55.656002', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '3dfbd039-4229-48de-9c16-cafea73fad5e', 'English Literature', 'Shakespeare', ''),
+('38a959e1-dd49-41c2-a789-f629b2340164', 'How did the issue of slavery impact the literary landscape of the American Renaissance?', NULL, '[]', '[\"It was largely ignored by major authors, who focused on more universal themes.\", \"It was addressed indirectly through allegorical representations of oppression.\", \"It became a central theme in many works, sparking both abolitionist sentiments and defenses of the institution.\", \"It led to a decline in literary production due to widespread social unrest and censorship.\"]', 'It became a central theme in many works, sparking both abolitionist sentiments and defenses of the institution.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The issue of slavery was a major point of contention during the American Renaissance and significantly impacted its literature. Authors such as Frederick Douglass used their writings to advocate for abolition, while others attempted to defend the institution. Therefore, slavery became a prominent and divisive theme of the era. The other options are incorrect because slavery was not ignored, but rather a prominent subject of literary exploration and debate.', NULL, '', 'mcq', NULL, '2025-12-12 09:41:53.719969', '2025-12-12 09:41:53.719976', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '52b06d8f-5282-493f-aeeb-5b6fe24d6894', 'American Literature', 'American Renaissance', ''),
+('418add5e-1d1c-4ab7-b14c-677b40ef6640', 'What is the primary function of the Chorus in Shakespeare\'s \'Henry V\'?', NULL, '[]', '[\"To provide comic relief and entertain the audience.\", \"To offer a summary of events at the end of each act.\", \"To comment on the action, provide historical context, and engage the audience\'s imagination.\", \"To directly influence the plot and interact with the main characters.\"]', 'To comment on the action, provide historical context, and engage the audience\'s imagination.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'In \'Henry V,\' the Chorus serves to contextualize the events, comment on the action, and actively engage the audience\'s imagination in visualizing the scenes being described. The Chorus does not primarily offer comic relief, summarize the plot at the end of each act, or interact directly with the characters. The function is largely to provide information to the audience.', NULL, '', 'mcq', NULL, '2025-12-12 09:35:38.050524', '2025-12-12 09:35:38.050527', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '09194a3e-018a-4f90-9112-d63c92368cba', 'English Literature', 'Shakespeare', ''),
+('45293f97-418a-4f56-8d39-da7fd6ba8170', 'Which of the following best encapsulates the concept of \'dramatic irony\' as frequently employed by Shakespeare?', NULL, '[]', '[\"A character delivering a lengthy soliloquy expressing their inner thoughts.\", \"The audience knowing something that one or more characters in the play do not.\", \"A sudden and unexpected plot twist that changes the course of the play.\", \"The use of puns and wordplay for comedic effect.\"]', 'The audience knowing something that one or more characters in the play do not.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Dramatic irony occurs when the audience is aware of crucial information that characters within the drama are not. This discrepancy creates tension and allows for multiple interpretations of events. The other options describe soliloquies, plot twists, and comedic wordplay, which are distinct literary devices but not directly related to dramatic irony.', NULL, '', 'mcq', NULL, '2025-12-12 09:45:55.339692', '2025-12-12 09:45:55.339698', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '3dfbd039-4229-48de-9c16-cafea73fad5e', 'English Literature', 'Shakespeare', ''),
+('467f8c7a-c5a0-4bb7-b14c-dd7faf9ecdc8', 'Which of the following best describes the typical protagonist found in literature of the American Renaissance?', NULL, '[]', '[\"A disillusioned and cynical anti-hero, struggling against a meaningless universe.\", \"A pragmatic and self-reliant individual striving for social and economic advancement.\", \"An idealized, often isolated, figure seeking spiritual understanding and connection with nature.\", \"A member of the aristocracy whose primary concern is the fulfillment of duty and honor.\"]', 'An idealized, often isolated, figure seeking spiritual understanding and connection with nature.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The protagonists of the American Renaissance often embody Transcendentalist ideals, seeking meaning and truth through personal experience, intuition, and connection with nature. They are frequently portrayed as being at odds with the materialistic or conformist aspects of society. The other options describe characteristics associated with different literary periods or genres.', NULL, '', 'mcq', NULL, '2025-12-12 09:41:53.351398', '2025-12-12 09:41:53.351404', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '52b06d8f-5282-493f-aeeb-5b6fe24d6894', 'American Literature', 'American Renaissance', ''),
+('5e8b312e-6c91-4abb-b202-a9ed3feb2977', 'Which of the following best describes the role of female characters in Shakespeare\'s tragedies?', NULL, '[]', '[\"They are typically passive figures who lack agency and are primarily defined by their relationships with male characters.\", \"They are often portrayed as powerful and independent figures who actively challenge the patriarchal structures of their society.\", \"Their roles vary significantly, ranging from innocent victims to manipulative figures, reflecting a complex understanding of female experiences within a patriarchal society.\", \"They primarily serve as symbols of virtue and morality, providing a stark contrast to the corrupt and ambitious male characters.\"]', 'Their roles vary significantly, ranging from innocent victims to manipulative figures, reflecting a complex understanding of female experiences within a patriarchal society.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Shakespeare\'s female characters in tragedies are diverse. While constrained by the patriarchal context, they demonstrate a spectrum of behaviors and motivations. Some are victims, some are instigators, and their complexity defies easy categorization. Characters like Ophelia, Lady Macbeth, and Cleopatra represent a range of experiences and challenge simplistic interpretations. To suggest they are all passive or solely virtuous is an oversimplification, as is the claim that they are always powerful and independent, as that does not reflect their societal constraints.', NULL, '', 'mcq', NULL, '2025-12-12 09:38:30.953665', '2025-12-12 09:38:30.953671', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '82d32140-db66-4bd5-89d5-2f6bfe984d98', 'English Literature', 'Shakespeare', ''),
+('64b752d7-d4bd-4160-8c71-228dc73a987d', 'In Shakespeare\'s plays, what is the primary function of a \'fool\' or \'clown\'?', NULL, '[]', '[\"To solely provide slapstick humor and physical comedy.\", \"To offer insightful commentary on the actions of the main characters, often through wit and satire.\", \"To act as a messenger, delivering important news to the other characters.\", \"To serve as a romantic interest for one of the female characters.\"]', 'To offer insightful commentary on the actions of the main characters, often through wit and satire.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Shakespearean fools and clowns were not merely sources of amusement. They often possessed a keen understanding of human nature and used their wit to critique the flaws and follies of those in power. Their commentary provided a different perspective on the play\'s events, highlighting important themes and ideas. While they provided humor, their primary function was more complex than simply slapstick comedy.', NULL, '', 'mcq', NULL, '2025-12-12 09:45:55.789507', '2025-12-12 09:45:55.789513', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '3dfbd039-4229-48de-9c16-cafea73fad5e', 'English Literature', 'Shakespeare', ''),
+('65f44c0c-ae7c-4808-a4ae-4d5356acfd7b', 'How does Shakespeare typically employ the use of soliloquies in his plays?', NULL, '[]', '[\"To provide background information about events that occurred before the play began.\", \"To reveal a character\'s innermost thoughts and feelings directly to the audience.\", \"To create suspense by foreshadowing future events.\", \"To introduce new characters and their motivations.\"]', 'To reveal a character\'s innermost thoughts and feelings directly to the audience.', 'EASY', 'active', 'AI', 'PENDING', NULL, 'Soliloquies in Shakespeare\'s plays serve as a window into a character\'s mind, allowing the audience to understand their motivations, conflicts, and desires. It\'s a convention where characters speak their thoughts aloud when alone (or believing they are alone) on stage. While soliloquies can indirectly provide background or hint at future events, their primary function is to offer direct access to a character\'s inner life.', NULL, '', 'mcq', NULL, '2025-12-12 09:45:56.015987', '2025-12-12 09:45:56.015992', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '3dfbd039-4229-48de-9c16-cafea73fad5e', 'English Literature', 'Shakespeare', ''),
+('6fceb24a-d58b-4844-a46f-d8d6cceb60c1', 'The \'problem plays\' of Shakespeare, such as \'Measure for Measure,\' are characterized by:', NULL, '[]', '[\"A clear-cut distinction between heroes and villains.\", \"Their optimistic and celebratory tone.\", \"A complex moral ambiguity and unresolved conflicts.\", \"A focus on historical accuracy rather than thematic exploration.\"]', 'A complex moral ambiguity and unresolved conflicts.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Shakespeare\'s \'problem plays\' explore complex moral issues and often feature unresolved conflicts, making them morally ambiguous and challenging for audiences. This contrasts with the clearer moral landscapes and resolutions found in his earlier comedies and tragedies. The other options are incorrect because \'problem plays\' don\'t necessarily have clear heroes/villains, optimistic tones, or focus on historical accuracy.', NULL, '', 'mcq', NULL, '2025-12-12 09:35:37.790255', '2025-12-12 09:35:37.790257', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '09194a3e-018a-4f90-9112-d63c92368cba', 'English Literature', 'Shakespeare', ''),
+('7182651b-c60d-47ae-8596-c3b1153c20b6', 'What is the significance of mistaken identity in Shakespearean comedies?', NULL, '[]', '[\"It primarily serves to create confusion and frustration among the characters, hindering the plot\'s progression.\", \"It allows Shakespeare to explore themes of social mobility, deception, and the instability of personal identity.\", \"It is a superficial plot device solely intended to provide comic relief and avoid any deeper thematic resonance.\", \"It reflects the playwright\'s cynical view of human relationships, suggesting that people are inherently incapable of recognizing each other\'s true nature.\"]', 'It allows Shakespeare to explore themes of social mobility, deception, and the instability of personal identity.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Mistaken identity in Shakespearean comedies often functions as more than just a source of humor. It enables Shakespeare to delve into complex themes such as social class differences (as characters are misperceived or assume different roles), the nature of deception, and questions about the authenticity and fluidity of identity. While comic elements are present, they are often intertwined with these deeper thematic explorations. It is not solely negative or indicative of cynicism.', NULL, '', 'mcq', NULL, '2025-12-12 09:38:30.660567', '2025-12-12 09:38:30.660573', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '82d32140-db66-4bd5-89d5-2f6bfe984d98', 'English Literature', 'Shakespeare', ''),
+('9a31c5ed-5312-4cdd-9f6c-82c02f0cc6f2', 'In Shakespearean tragedies, the \'tragic flaw\' (hamartia) typically refers to:', NULL, '[]', '[\"An external force that dictates the character\'s fate.\", \"A supernatural intervention that causes the character\'s downfall.\", \"A character\'s inherent weakness or error in judgment that leads to their ruin.\", \"A series of unfortunate events that befall an otherwise virtuous character.\"]', 'A character\'s inherent weakness or error in judgment that leads to their ruin.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Hamartia, or the tragic flaw, is an inherent character weakness or error in judgment that ultimately leads to the protagonist\'s downfall. It is not an external force, supernatural intervention, or simply a series of unfortunate events, but rather a flaw within the character themselves.', NULL, '', 'mcq', NULL, '2025-12-12 09:35:37.933661', '2025-12-12 09:35:37.933663', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '09194a3e-018a-4f90-9112-d63c92368cba', 'English Literature', 'Shakespeare', ''),
+('a274e503-6975-4f0a-aa31-0ed0b514fd32', 'Which philosophical movement, deeply influential during the American Renaissance, emphasized inherent goodness of people and nature, and the importance of individual experience?', NULL, '[]', '[\"Puritanism\", \"Enlightenment Rationalism\", \"Transcendentalism\", \"Romanticism\"]', 'Transcendentalism', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Transcendentalism was a key philosophical and literary movement during the American Renaissance. It stressed the inherent goodness of both people and nature and believed that individuals could gain insight and understanding through intuition and personal experience. Puritanism predates the American Renaissance and emphasizes original sin. Enlightenment Rationalism emphasizes reason and logic, while Romanticism, though sharing some similarities with Transcendentalism, places a stronger emphasis on emotion and the sublime but less on innate human goodness.', NULL, '', 'mcq', NULL, '2025-12-12 09:43:14.074026', '2025-12-12 09:43:14.074033', NULL, 'Bharathiyar University', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, 'c779ed07-7dae-43ff-8efd-af08db309a63', 'American Literature', 'American Renaissance', ''),
+('a6252cb3-3912-43a3-ac7b-0b6be5b9b7fa', 'Shakespeare\'s use of dramatic irony in his tragedies primarily serves to:', NULL, '[]', '[\"Create comedic relief for the audience.\", \"Heighten the audience\'s suspense and emotional engagement.\", \"Confuse the audience about the characters\' true intentions.\", \"Minimize the impact of tragic events.\"]', 'Heighten the audience\'s suspense and emotional engagement.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Dramatic irony, where the audience knows more than the characters, creates suspense and emotional engagement as viewers anticipate the tragic outcomes. It does not provide comedic relief, confuse the audience, or minimize the impact of tragic events; instead, it amplifies the tragedy.', NULL, '', 'mcq', NULL, '2025-12-12 09:35:37.581585', '2025-12-12 09:35:37.581587', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '09194a3e-018a-4f90-9112-d63c92368cba', 'English Literature', 'Shakespeare', ''),
 ('a8ec5fd0-9d8d-4e6e-ba1f-900739f3b07a', 'When analyzing G.U. Pope\'s translation of Thirukkural, which translation technique is most evident in his work, sometimes leading to awkward phrasing?', NULL, '[]', '[\"Employing \'idiom choice principle\' to capture the cultural essence.\", \"Using \'open choice principle\' resulting in literal, word-to-word renderings.\", \"Applying \'modulation\' to adapt the text for a modern audience.\", \"Practicing \'omission\' to avoid redundancy in the target language.\"]', 'Option B - Using \'open choice principle\' resulting in literal, word-to-word renderings.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The provided text points out that G.U. Pope\'s translation tends to follow the \'open choice principle,\' which leads to a \'word to word\' translation. This often results in phrasing that, while faithful to the original text, may sound awkward or unnatural in English. The other options are incorrect because they describe translation techniques that are not characteristic of Pope\'s approach, as demonstrated in the text.', NULL, '', 'mcq', NULL, '2025-12-11 12:30:25.227572', '2025-12-11 12:30:25.227575', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '41e7099b-073a-45db-9323-634ee9fc4e56', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji'),
+('bfa1c9bb-4bdf-4315-9b49-7d954f10981d', 'Which of the following best describes the concept of \'tragic flaw\' (hamartia) in Shakespearean tragedies?', NULL, '[]', '[\"An external force or supernatural intervention that inevitably leads to the protagonist\'s downfall.\", \"A deliberate and conscious choice made by the protagonist, knowing it will result in their destruction.\", \"An inherent character weakness or error in judgment that contributes to the protagonist\'s demise.\", \"A series of unfortunate events and coincidences that conspire to bring about the protagonist\'s suffering.\"]', 'An inherent character weakness or error in judgment that contributes to the protagonist\'s demise.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'Hamartia, or tragic flaw, refers to a character\'s internal flaw, like pride (hubris) or ambition, that leads to their downfall. It\'s not solely external forces, a conscious choice of self-destruction, or mere bad luck, but rather a character trait that, under specific circumstances within the play, contributes to the tragic outcome. Examples include Macbeth\'s ambition or Othello\'s jealousy.', NULL, '', 'mcq', NULL, '2025-12-12 09:38:30.504962', '2025-12-12 09:38:30.504970', NULL, 'University of Madras', 'Ba English Literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '82d32140-db66-4bd5-89d5-2f6bfe984d98', 'English Literature', 'Shakespeare', ''),
 ('ef80d55c-6af5-4d66-9b4d-36ffe25b3809', 'Which of the following statements accurately reflect the comparative approaches of G.U. Pope and Rajaji in their translations of the Thirukkural?', NULL, '[\"G.U. Pope\'s translation of Thirukkural prioritizes a literal, word-for-word approach, aiming to maintain the original text\'s structure and vocabulary.\", \"Rajaji\'s translation adopts a sense-to-sense approach, focusing on conveying the meaning and essence of the Thirukkural verses in a way that resonates with the target audience, even if it means deviating from the original wording.\", \"Both translations effectively capture the cultural nuances and contextual subtleties embedded within the original Thirukkural, providing readers with a comprehensive understanding of its teachings.\"]', '[\"Only statement 1 is correct\", \"Only statement 2 is correct\", \"Statements 1 and 2 are correct\", \"Statements 1, 2, and 3 are correct\"]', '2', 'medium', 'active', 'AI', 'PENDING', NULL, '', NULL, '', 'mcq', NULL, '2025-12-11 12:09:48.987463', '2025-12-11 12:09:48.987469', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, 'a3a7c18b-de78-451d-beee-e94f38cd4bf5', NULL, NULL, NULL),
 ('ff5068e7-7b71-4fbc-b5e5-09b43ecc9faa', 'In the comparative study of G.U. Pope and Rajaji\'s translations of Thirukkural, what is the key difference in their approaches?', NULL, '[]', '[\"G.U. Pope focuses on a \'word-to-word\' translation, while Rajaji emphasizes a \'sense-to-sense\' translation.\", \"G.U. Pope prioritizes translating into Latin, while Rajaji focuses on English prose.\", \"G.U. Pope aims to provide a translation accessible only to native Tamil speakers, while Rajaji targets a Western audience.\", \"G.U. Pope includes Parimelalhagar\'s review in his translation, while Rajaji omits it.\"]', 'Option A - G.U. Pope focuses on a \'word-to-word\' translation, while Rajaji emphasizes a \'sense-to-sense\' translation.', 'MEDIUM', 'active', 'AI', 'PENDING', NULL, 'The provided text explicitly states that G.U. Pope\'s translation focuses on \'word-to-word\' correspondence, whereas Rajaji\'s translation is centered on conveying the overall \'sense-to-sense\'. The other options are incorrect because they misrepresent the translators\' approaches and target audiences as described in the document.', NULL, '', 'mcq', NULL, '2025-12-11 12:30:25.207981', '2025-12-11 12:30:25.207984', NULL, 'University of Madras', 'ba_english_literature', 'English', 5, 'Core', NULL, NULL, NULL, NULL, NULL, '41e7099b-073a-45db-9323-634ee9fc4e56', 'Core Elective – I: Introduction to Translation Studies', 'Comparative Analysis', 'A Comparative Study of Two Translations of Thirukkural by GU Pope and Rajaji');
 
@@ -794,6 +992,39 @@ INSERT INTO `semester_courses` (`id`, `program`, `semester`, `subject_id`, `is_m
 (42, 'BCA', 6, 34, 1, 0, '2024-2025', '2025-12-11 08:52:53', '2025-12-11 08:52:53'),
 (43, 'BCA', 6, 36, 1, 0, '2024-2025', '2025-12-11 08:52:53', '2025-12-11 08:52:53'),
 (46, 'BCA', 6, 35, 0, 1, '2024-2025', '2025-12-11 08:52:53', '2025-12-11 08:52:53');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `standalone_lessons`
+--
+
+CREATE TABLE `standalone_lessons` (
+  `id` bigint UNSIGNED NOT NULL,
+  `teacher_id` bigint UNSIGNED NOT NULL,
+  `curriculum_session_id` bigint UNSIGNED DEFAULT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `topic` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `grade_level` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'e.g., Grade 9, Undergraduate, etc.',
+  `duration` int NOT NULL COMMENT 'Duration in minutes',
+  `class_size` int DEFAULT NULL,
+  `class_vibe` enum('HIGH_ENGAGEMENT','MIXED','LOW_ENGAGEMENT','ADVANCED','STRUGGLING') COLLATE utf8mb4_unicode_ci DEFAULT 'MIXED',
+  `learning_objectives` json NOT NULL COMMENT 'Array of objectives',
+  `prerequisites` json DEFAULT NULL COMMENT 'Array of prerequisite knowledge',
+  `additional_notes` text COLLATE utf8mb4_unicode_ci,
+  `blueprint` json DEFAULT NULL COMMENT 'SessionBlueprint - same structure as curriculum',
+  `toolkit` json DEFAULT NULL COMMENT 'EngagementToolkit - same structure as curriculum',
+  `status` enum('DRAFT','GENERATED','REVIEWED','TAUGHT') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'DRAFT',
+  `is_substitute_lesson` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Created by substitute teacher',
+  `scheduled_date` date DEFAULT NULL,
+  `scheduled_time` time DEFAULT NULL,
+  `generated_at` datetime DEFAULT NULL,
+  `taught_at` datetime DEFAULT NULL,
+  `teacher_notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -2905,6 +3136,54 @@ ALTER TABLE `auth_user_user_permissions`
   ADD KEY `auth_user_user_permi_permission_id_1fbb5f2c_fk_auth_perm` (`permission_id`);
 
 --
+-- Indexes for table `curriculum_adaptations`
+--
+ALTER TABLE `curriculum_adaptations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_curriculum_adaptations_plan` (`curriculum_plan_id`);
+
+--
+-- Indexes for table `curriculum_calendar_events`
+--
+ALTER TABLE `curriculum_calendar_events`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_curriculum_calendar_session` (`session_id`),
+  ADD KEY `idx_curriculum_calendar_plan` (`curriculum_plan_id`),
+  ADD KEY `idx_curriculum_calendar_datetime` (`start_date_time`);
+
+--
+-- Indexes for table `curriculum_courses`
+--
+ALTER TABLE `curriculum_courses`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_curriculum_courses_teacher` (`teacher_id`);
+
+--
+-- Indexes for table `curriculum_plans`
+--
+ALTER TABLE `curriculum_plans`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_curriculum_plans_course_version` (`course_id`,`version`),
+  ADD KEY `idx_curriculum_plans_course` (`course_id`);
+
+--
+-- Indexes for table `curriculum_sessions`
+--
+ALTER TABLE `curriculum_sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_curriculum_sessions_plan_week_session` (`curriculum_plan_id`,`week_number`,`session_number`),
+  ADD KEY `idx_curriculum_sessions_plan` (`curriculum_plan_id`);
+
+--
+-- Indexes for table `curriculum_session_resources`
+--
+ALTER TABLE `curriculum_session_resources`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_session_resources_session` (`session_id`),
+  ADD KEY `idx_session_resources_type` (`resource_type`),
+  ADD KEY `idx_session_resources_relevance` (`relevance_score` DESC);
+
+--
 -- Indexes for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
@@ -3007,6 +3286,15 @@ ALTER TABLE `grade_scales`
   ADD KEY `idx_active` (`is_active`);
 
 --
+-- Indexes for table `lesson_resources`
+--
+ALTER TABLE `lesson_resources`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_lesson_resources_lesson` (`lesson_id`),
+  ADD KEY `idx_lesson_resources_type` (`resource_type`),
+  ADD KEY `idx_lesson_resources_relevance` (`relevance_score` DESC);
+
+--
 -- Indexes for table `live_classes`
 --
 ALTER TABLE `live_classes`
@@ -3086,6 +3374,17 @@ ALTER TABLE `semester_courses`
   ADD KEY `idx_program_semester` (`program`,`semester`),
   ADD KEY `idx_subject` (`subject_id`),
   ADD KEY `idx_academic_year` (`academic_year`);
+
+--
+-- Indexes for table `standalone_lessons`
+--
+ALTER TABLE `standalone_lessons`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_standalone_lessons_teacher` (`teacher_id`),
+  ADD KEY `idx_standalone_lessons_curriculum_session` (`curriculum_session_id`),
+  ADD KEY `idx_standalone_lessons_status` (`status`),
+  ADD KEY `idx_standalone_lessons_date` (`scheduled_date`),
+  ADD KEY `idx_standalone_lessons_subject` (`subject`);
 
 --
 -- Indexes for table `student_activity_logs`
@@ -3517,6 +3816,42 @@ ALTER TABLE `auth_user_user_permissions`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `curriculum_adaptations`
+--
+ALTER TABLE `curriculum_adaptations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `curriculum_calendar_events`
+--
+ALTER TABLE `curriculum_calendar_events`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `curriculum_courses`
+--
+ALTER TABLE `curriculum_courses`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `curriculum_plans`
+--
+ALTER TABLE `curriculum_plans`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `curriculum_sessions`
+--
+ALTER TABLE `curriculum_sessions`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `curriculum_session_resources`
+--
+ALTER TABLE `curriculum_session_resources`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
@@ -3583,6 +3918,12 @@ ALTER TABLE `grade_scales`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `lesson_resources`
+--
+ALTER TABLE `lesson_resources`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `live_classes`
 --
 ALTER TABLE `live_classes`
@@ -3593,6 +3934,12 @@ ALTER TABLE `live_classes`
 --
 ALTER TABLE `semester_courses`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+
+--
+-- AUTO_INCREMENT for table `standalone_lessons`
+--
+ALTER TABLE `standalone_lessons`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `student_discussion_comments`
@@ -3698,6 +4045,37 @@ ALTER TABLE `auth_user_user_permissions`
   ADD CONSTRAINT `auth_user_user_permissions_user_id_a95ead1b_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`);
 
 --
+-- Constraints for table `curriculum_adaptations`
+--
+ALTER TABLE `curriculum_adaptations`
+  ADD CONSTRAINT `fk_curriculum_adaptations_plan` FOREIGN KEY (`curriculum_plan_id`) REFERENCES `curriculum_plans` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `curriculum_calendar_events`
+--
+ALTER TABLE `curriculum_calendar_events`
+  ADD CONSTRAINT `fk_curriculum_calendar_plan` FOREIGN KEY (`curriculum_plan_id`) REFERENCES `curriculum_plans` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_curriculum_calendar_session` FOREIGN KEY (`session_id`) REFERENCES `curriculum_sessions` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `curriculum_plans`
+--
+ALTER TABLE `curriculum_plans`
+  ADD CONSTRAINT `fk_curriculum_plans_course` FOREIGN KEY (`course_id`) REFERENCES `curriculum_courses` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `curriculum_sessions`
+--
+ALTER TABLE `curriculum_sessions`
+  ADD CONSTRAINT `fk_curriculum_sessions_plan` FOREIGN KEY (`curriculum_plan_id`) REFERENCES `curriculum_plans` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `curriculum_session_resources`
+--
+ALTER TABLE `curriculum_session_resources`
+  ADD CONSTRAINT `fk_session_resources_session` FOREIGN KEY (`session_id`) REFERENCES `curriculum_sessions` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
@@ -3721,10 +4099,22 @@ ALTER TABLE `exam_subjects`
   ADD CONSTRAINT `fk_exam_subject_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
+-- Constraints for table `lesson_resources`
+--
+ALTER TABLE `lesson_resources`
+  ADD CONSTRAINT `fk_lesson_resources_lesson` FOREIGN KEY (`lesson_id`) REFERENCES `standalone_lessons` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `semester_courses`
 --
 ALTER TABLE `semester_courses`
   ADD CONSTRAINT `fk_semester_course_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `standalone_lessons`
+--
+ALTER TABLE `standalone_lessons`
+  ADD CONSTRAINT `fk_standalone_lessons_curriculum_session` FOREIGN KEY (`curriculum_session_id`) REFERENCES `curriculum_sessions` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `student_discussion_comments`

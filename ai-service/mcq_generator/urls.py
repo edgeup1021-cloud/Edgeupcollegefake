@@ -19,4 +19,7 @@ urlpatterns = [
     path("college/subjects", views.get_subjects, name="get-subjects"),
     path("college/topics", views.get_topics, name="get-topics"),
     path("college/subtopics", views.get_subtopics, name="get-subtopics"),
+
+    # Debug endpoint to list Qdrant collections
+    path("college/qdrant-collections", views.list_qdrant_collections, name="list-qdrant-collections"),
 ]

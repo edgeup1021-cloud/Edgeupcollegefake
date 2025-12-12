@@ -8,6 +8,7 @@ from .utils.loggers import setup_logger
 from .serializers import MCQGenerationSerializer, CollegeQuestionGenerationSerializer
 from .models.assessment_models import LiveMcqQuestions, LiveDescriptiveQuestions
 from .course_configs import load_all_configs
+from .connections.qdrant_client import QdrantService
 
 logger = setup_logger("django_logger")
 
@@ -121,7 +122,7 @@ async def generate_college_questions(request):
 
 @csrf_exempt
 def get_subjects(request):
-    """Get distinct subjects for a course from database and course config."""
+    """Get distinct subjects for a course from Qdrant collections."""
     if request.method != "GET":
         return JsonResponse({"error": "Invalid request method"}, status=400)
 
@@ -134,21 +135,57 @@ def get_subjects(request):
         # Map display names to course codes (case-insensitive)
         course_map = {
             'b.com': 'bcom',
-            'ba english literature': 'ba_english'
+            'ba english literature': 'ba_english_literature'
         }
 
         course_code = course_map.get(course.lower(), course.lower().replace(' ', '_'))
 
-        # Get subjects from course config
-        configs = load_all_configs()
-        config = configs.get(course_code, configs.get('default'))
+        # Query Qdrant to get actual subjects
+        try:
+            qdrant = QdrantService()
+            collections = qdrant.list_collections()
 
-        subjects = []
-        if config and 'subjects' in config:
-            subjects = [subj['name'] for subj in config['subjects']]
+            subjects_set = set()
+            prefix = f"{course_code}_"
 
-        logger.info(f"Retrieved {len(subjects)} subjects for course: {course}")
-        return JsonResponse(subjects, safe=False, status=200)
+            # Parse collection names to extract subjects
+            for coll in collections:
+                coll_name = coll['name']
+                if coll_name.startswith(prefix):
+                    # Format: {course}_{subject}_{topic}
+                    parts = coll_name[len(prefix):].split('_')
+                    if len(parts) >= 2:
+                        # Extract subject (everything before the last underscore which is topic)
+                        # Join all parts except last as subject
+                        subject_parts = parts[:-1]
+                        subject = ' '.join(subject_parts).title()
+                        subjects_set.add(subject)
+
+            subjects = sorted(list(subjects_set))
+            logger.info(f"Retrieved {len(subjects)} subjects from Qdrant for course: {course}")
+
+            # If no subjects found in Qdrant, fallback to config
+            if not subjects:
+                logger.warning(f"No subjects found in Qdrant for {course}, using config fallback")
+                # Map ba_english_literature to ba_english for config lookup
+                course_code_config = 'ba_english' if course_code == 'ba_english_literature' else course_code
+                configs = load_all_configs()
+                config = configs.get(course_code_config, configs.get('default'))
+                if config and 'subjects' in config:
+                    subjects = [subj['name'] for subj in config['subjects']]
+
+            return JsonResponse(subjects, safe=False, status=200)
+
+        except Exception as qdrant_error:
+            logger.error(f"Qdrant query failed: {str(qdrant_error)}, falling back to config")
+            # Fallback to config if Qdrant fails
+            course_code_config = 'ba_english' if course_code == 'ba_english_literature' else course_code
+            configs = load_all_configs()
+            config = configs.get(course_code_config, configs.get('default'))
+            subjects = []
+            if config and 'subjects' in config:
+                subjects = [subj['name'] for subj in config['subjects']]
+            return JsonResponse(subjects, safe=False, status=200)
 
     except Exception as e:
         logger.error(f"Error fetching subjects: {str(e)}", exc_info=True)
@@ -171,24 +208,61 @@ def get_topics(request):
         # Map display names to course codes (case-insensitive)
         course_map = {
             'b.com': 'bcom',
-            'ba english literature': 'ba_english'
+            'ba english literature': 'ba_english_literature'
         }
 
         course_code = course_map.get(course.lower(), course.lower().replace(' ', '_'))
+        subject_normalized = subject.lower().replace(' ', '_')
 
-        # Get topics from course config
-        configs = load_all_configs()
-        config = configs.get(course_code, configs.get('default'))
+        # Query Qdrant to get actual topics
+        try:
+            qdrant = QdrantService()
+            collections = qdrant.list_collections()
 
-        topics = []
-        if config and 'subjects' in config:
-            for subj in config['subjects']:
-                if subj['name'] == subject:
-                    topics = subj.get('topics', [])
-                    break
+            topics_set = set()
+            prefix = f"{course_code}_{subject_normalized}_"
 
-        logger.info(f"Retrieved {len(topics)} topics for course: {course}, subject: {subject}")
-        return JsonResponse(topics, safe=False, status=200)
+            # Parse collection names to extract topics
+            for coll in collections:
+                coll_name = coll['name']
+                if coll_name.startswith(prefix):
+                    # Format: {course}_{subject}_{topic}
+                    topic_part = coll_name[len(prefix):]
+                    # Convert back to readable format
+                    topic = topic_part.replace('_', ' ').title()
+                    topics_set.add(topic)
+
+            topics = sorted(list(topics_set))
+            logger.info(f"Retrieved {len(topics)} topics from Qdrant for course: {course}, subject: {subject}")
+
+            # If no topics found in Qdrant, fallback to config
+            if not topics:
+                logger.warning(f"No topics found in Qdrant for {course}/{subject}, using config fallback")
+                # Fallback to config
+                course_code_config = 'ba_english' if course_code == 'ba_english_literature' else course_code
+                configs = load_all_configs()
+                config = configs.get(course_code_config, configs.get('default'))
+                if config and 'subjects' in config:
+                    for subj in config['subjects']:
+                        if subj['name'] == subject:
+                            topics = subj.get('topics', [])
+                            break
+
+            return JsonResponse(topics, safe=False, status=200)
+
+        except Exception as qdrant_error:
+            logger.error(f"Qdrant query failed: {str(qdrant_error)}, falling back to config")
+            # Fallback to config if Qdrant fails
+            course_code_config = 'ba_english' if course_code == 'ba_english_literature' else course_code
+            configs = load_all_configs()
+            config = configs.get(course_code_config, configs.get('default'))
+            topics = []
+            if config and 'subjects' in config:
+                for subj in config['subjects']:
+                    if subj['name'] == subject:
+                        topics = subj.get('topics', [])
+                        break
+            return JsonResponse(topics, safe=False, status=200)
 
     except Exception as e:
         logger.error(f"Error fetching topics: {str(e)}", exc_info=True)
@@ -374,4 +448,37 @@ def get_semesters(request):
 
     except Exception as e:
         logger.error(f"Error fetching semesters: {str(e)}", exc_info=True)
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def list_qdrant_collections(request):
+    """List all Qdrant collections for debugging - shows what's available."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Invalid request method"}, status=400)
+
+    try:
+        course_filter = request.GET.get('course', '')
+
+        qdrant = QdrantService()
+        collections = qdrant.list_collections()
+
+        result = []
+        for coll in collections:
+            if course_filter:
+                # Filter by course
+                course_normalized = course_filter.lower().replace(' ', '_')
+                if course_normalized == 'ba_english_literature':
+                    course_normalized = 'ba_english_literature'
+
+                if coll['name'].startswith(course_normalized):
+                    result.append(coll)
+            else:
+                result.append(coll)
+
+        logger.info(f"Found {len(result)} collections" + (f" for course {course_filter}" if course_filter else ""))
+        return JsonResponse(result, safe=False, status=200)
+
+    except Exception as e:
+        logger.error(f"Error listing Qdrant collections: {str(e)}", exc_info=True)
         return JsonResponse({"error": str(e)}, status=500)
