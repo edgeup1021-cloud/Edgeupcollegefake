@@ -27,6 +27,7 @@ import {
   BookMarked,
   UserCog,
   FileText,
+  Sparkles,
 } from "lucide-react";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -50,6 +51,7 @@ const curriculumItems = [
 const smartAssessmentItems = [
   { label: "Assessment Overview", href: "/teacher/smart-assessment", icon: FileCheck },
   { label: "Tasks & Assignments", href: "/teacher/smart-assessment/tasks-assignments", icon: ClipboardList },
+  { label: "Question Generator", href: "/teacher/smart-assessment/question-generator", icon: Sparkles },
 ];
 
 // Growth Items

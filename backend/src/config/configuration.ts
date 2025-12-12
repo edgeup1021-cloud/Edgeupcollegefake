@@ -20,4 +20,7 @@ export default () => ({
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   },
+  aiService: {
+    url: process.env.AI_SERVICE_URL || 'http://localhost:8005',
+  },
 });

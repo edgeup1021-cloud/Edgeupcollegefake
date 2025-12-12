@@ -37,6 +37,7 @@ import { MessagingService } from './services/messaging.service';
 import { YouTubeApiService } from './services/youtube-api.service';
 import { MentorshipService } from './services/mentorship.service';
 import { PublicationsService } from './services/publications.service';
+import { QuestionGeneratorService } from './services/question-generator.service';
 import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
@@ -81,6 +82,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     YouTubeApiService,
     MentorshipService,
     PublicationsService,
+    QuestionGeneratorService,
   ],
   exports: [TeacherService],
 })
