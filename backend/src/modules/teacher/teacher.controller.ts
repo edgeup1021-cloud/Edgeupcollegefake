@@ -551,19 +551,19 @@ export class TeacherController {
   }
 
   // Teacher CRUD - placed after specific routes to avoid route conflicts
-  @Get(':id/courses')
+  @Get(':id(\\d+)/courses')
   @Public()
   getCourses(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.getTeacherCourses(id);
   }
 
-  @Get(':id')
+  @Get(':id(\\d+)')
   @Public()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch(':id(\\d+)')
   @Public()
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -572,7 +572,7 @@ export class TeacherController {
     return this.teacherService.update(id, updateTeacherDto);
   }
 
-  @Delete(':id')
+  @Delete(':id(\\d+)')
   @Public()
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.remove(id);
